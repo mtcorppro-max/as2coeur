@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -10,6 +11,8 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   const pro = useProSession();
   const estCoord = pro?.role === "coordinatrice";
   const peutChatter = pro?.role === "coordinatrice" || pro?.role === "chirurgien";
+
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
     <div className="min-h-screen">

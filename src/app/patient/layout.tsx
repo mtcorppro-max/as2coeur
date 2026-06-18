@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
@@ -16,6 +17,8 @@ const NAV = [
 
 export default function PatientLayout({ children }: { children: React.ReactNode }) {
   const patient = usePatientSession();
+
+  useEffect(() => { window.scrollTo(0, 0); }, []);
 
   return (
     <div className="min-h-screen bg-rose-50">
