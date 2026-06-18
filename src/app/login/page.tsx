@@ -15,6 +15,12 @@ export default function ChoixConnexion() {
         <Link href="/login/pro" className="btn-secondary w-full py-4 text-base">
           Équipe médicale
         </Link>
+        <Link
+          href="/"
+          className="mt-2 flex items-center justify-center gap-1.5 text-sm text-slate-400 hover:text-slate-600"
+        >
+          ← Retour à l'accueil
+        </Link>
       </div>
     </main>
   );
