@@ -60,7 +60,7 @@ export default function Landing() {
               </div>
               <h1 className="text-4xl font-bold leading-tight text-white drop-shadow-lg md:text-5xl">
                 Votre rétablissement{" "}
-                <span className="text-rose-300">suivi de près,</span>{" "}
+                <span className="text-white md:text-rose-300">suivi de près,</span>{" "}
                 à domicile.
               </h1>
               <p className="mt-5 max-w-lg text-lg leading-relaxed text-white drop-shadow-md">
