@@ -265,7 +265,7 @@ const FEATURES = [
     icon: "∿",
     titre: "Suivi des constantes",
     description:
-      "Température, tension artérielle, saturation en oxygène et poids — avec courbes, ligne de seuil rouge et tableau simplifié.",
+      "Température, tension artérielle, saturation en oxygène et poids, avec courbes, ligne de seuil rouge et tableau simplifié.",
   },
   {
     icon: "◎",
@@ -277,7 +277,7 @@ const FEATURES = [
     icon: "◇",
     titre: "Messagerie directe",
     description:
-      "Canal de chat sécurisé entre le patient et la coordinatrice ou le chirurgien — en temps réel. Le délégué est exclu par design.",
+      "Canal de chat sécurisé entre le patient et la coordinatrice ou le chirurgien, en temps réel. Le délégué est exclu par design.",
   },
   {
     icon: "◻",
