@@ -324,7 +324,7 @@ const FAQ = [
 
 const SECURITE = [
   "RLS active sur 100 % des tables",
-  "Accès par rôle (coordinatrice / chirurgien)",
+  "Accès par rôle (infirmière coordinatrice / délégué médical / chirurgien)",
   "Dossier patient strictement cloisonné",
   "Clé service_role côté serveur uniquement",
   "Code unique régénérable sans mot de passe",
