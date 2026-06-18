@@ -1,55 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
+import { useData } from "@/lib/hooks/useData";
 import type { Patient } from "@/lib/types";
 
 type AlerteInfo = { active: number; acquittees: number };
+type DashData = { patients: Patient[]; parPatient: Map<string, AlerteInfo>; totalActives: number };
+
+async function fetchDashboard(): Promise<DashData> {
+  const supabase = createClient();
+  const [{ data: pts }, { data: als }] = await Promise.all([
+    supabase.from("patient").select("id,nom,statut,code_postal,prestataire_id,user_id").order("nom"),
+    supabase.from("alerte").select("id,patient_id,statut").in("statut", ["declenchee", "escaladee", "acquittee"]),
+  ]);
+  const parPatient = new Map<string, AlerteInfo>();
+  (als ?? []).forEach((a) => {
+    const e = parPatient.get(a.patient_id) ?? { active: 0, acquittees: 0 };
+    if (a.statut === "declenchee" || a.statut === "escaladee") e.active += 1;
+    if (a.statut === "acquittee") e.acquittees += 1;
+    parPatient.set(a.patient_id, e);
+  });
+  const score = (p: Patient) => (parPatient.get(p.id)?.active ?? 0) * 100 + (parPatient.get(p.id)?.acquittees ?? 0);
+  const patients = [...(pts ?? [])].sort((a, b) => score(b as Patient) - score(a as Patient)) as Patient[];
+  const totalActives = [...parPatient.values()].reduce((s, e) => s + e.active, 0);
+  return { patients, parPatient, totalActives };
+}
 
 export default function Dashboard() {
-  useProSession(); // préchauffe le cache session
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [parPatient, setParPatient] = useState<Map<string, AlerteInfo>>(new Map());
-  const [ready, setReady] = useState(false);
+  useProSession();
+  const data = useData<DashData>("pro:dashboard", fetchDashboard);
 
-  useEffect(() => {
-    const supabase = createClient();
-    Promise.all([
-      supabase
-        .from("patient")
-        .select("id,nom,statut,code_postal,prestataire_id,user_id")
-        .order("nom"),
-      supabase
-        .from("alerte")
-        .select("id,patient_id,statut")
-        .in("statut", ["declenchee", "escaladee", "acquittee"]),
-    ]).then(([{ data: pts }, { data: als }]) => {
-      const map = new Map<string, AlerteInfo>();
-      (als ?? []).forEach((a) => {
-        const e = map.get(a.patient_id) ?? { active: 0, acquittees: 0 };
-        if (a.statut === "declenchee" || a.statut === "escaladee") e.active += 1;
-        if (a.statut === "acquittee") e.acquittees += 1;
-        map.set(a.patient_id, e);
-      });
-      setParPatient(map);
-      const score = (p: Patient) => {
-        const e = map.get(p.id);
-        return (e?.active ?? 0) * 100 + (e?.acquittees ?? 0);
-      };
-      setPatients([...(pts ?? [])].sort((a, b) => score(b as Patient) - score(a as Patient)) as Patient[]);
-      setReady(true);
-    });
-  }, []);
-
-  const totalActives = [...parPatient.values()].reduce((s, e) => s + e.active, 0);
+  const { patients, parPatient, totalActives } = useMemo(() => (
+    data ?? { patients: [], parPatient: new Map(), totalActives: 0 }
+  ), [data]);
 
   return (
     <div className="grid gap-5">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-800">Tableau de bord</h1>
-        {!ready ? (
+        {!data ? (
           <div className="h-6 w-32 animate-pulse rounded-full bg-rose-100" />
         ) : totalActives > 0 ? (
           <Link href="/pro/alertes" className="badge bg-critique text-white animate-pulse">
@@ -60,7 +52,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      {!ready ? (
+      {!data ? (
         <div className="grid gap-3 animate-pulse">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="h-16 rounded-2xl border border-rose-100 bg-white" />

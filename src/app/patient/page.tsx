@@ -1,47 +1,54 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { usePatientSession } from "@/lib/hooks/useSession";
+import { useData } from "@/lib/hooks/useData";
 import { MESURES, TYPES_MESURE } from "@/lib/constants";
 import { conseilDuJour, conseilMeteo, type ConseilMeteo } from "@/lib/conseils";
 import { ConseilCard } from "@/components/ConseilCard";
 import type { Mesure } from "@/lib/types";
 
+type AccueilData = { dernieres: Map<string, Mesure>; aujourdhui: number };
+
+async function fetchAccueil(patientId: string): Promise<AccueilData> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("mesure")
+    .select("id,patient_id,type,valeur,horodatage")
+    .eq("patient_id", patientId)
+    .order("horodatage", { ascending: false })
+    .limit(50);
+  const dernieres = new Map<string, Mesure>();
+  let aujourdhui = 0;
+  const today = new Date().toDateString();
+  (data ?? []).forEach((m) => {
+    if (!dernieres.has(m.type)) dernieres.set(m.type, m as Mesure);
+    if (new Date(m.horodatage).toDateString() === today) aujourdhui++;
+  });
+  return { dernieres, aujourdhui };
+}
+
 export default function PatientAccueil() {
   const patient = usePatientSession();
-  const [dernieres, setDernieres] = useState<Map<string, Mesure>>(new Map());
-  const [aujourdhui, setAujourdhui] = useState(0);
+  const data = useData<AccueilData>(
+    `patient:accueil:${patient?.id ?? ""}`,
+    () => fetchAccueil(patient!.id),
+    [patient?.id],
+  );
   const [meteo, setMeteo] = useState<ConseilMeteo | null>(null);
-  const duJour = conseilDuJour();
+  const duJour = useMemo(() => conseilDuJour(), []);
 
   useEffect(() => {
-    if (!patient) return;
-    const supabase = createClient();
-
-    supabase
-      .from("mesure")
-      .select("id,patient_id,type,valeur,horodatage")
-      .eq("patient_id", patient.id)
-      .order("horodatage", { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
-        const map = new Map<string, Mesure>();
-        let count = 0;
-        const today = new Date().toDateString();
-        (data ?? []).forEach((m) => {
-          if (!map.has(m.type)) map.set(m.type, m as Mesure);
-          if (new Date(m.horodatage).toDateString() === today) count++;
-        });
-        setDernieres(map);
-        setAujourdhui(count);
-      });
-
-    if (patient.code_postal) {
+    if (patient?.code_postal) {
       conseilMeteo(patient.code_postal).then(setMeteo);
     }
-  }, [patient?.id]);
+  }, [patient?.code_postal]);
+
+  const { dernieres, aujourdhui } = useMemo(() => (
+    data ?? { dernieres: new Map<string, Mesure>(), aujourdhui: 0 }
+  ), [data]);
 
   if (!patient) return <Skeleton />;
 

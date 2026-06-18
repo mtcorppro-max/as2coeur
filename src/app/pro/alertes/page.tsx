@@ -1,28 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
+import { useData } from "@/lib/hooks/useData";
 import { AlerteCard, type AlerteEnrichie } from "@/components/AlerteCard";
+
+async function fetchAlertes(): Promise<AlerteEnrichie[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("alerte")
+    .select("*, patient:patient_id(id, nom), mesure:mesure_id(type, valeur, horodatage)")
+    .in("statut", ["declenchee", "acquittee", "escaladee"])
+    .order("declenchee_le", { ascending: false });
+  return (data ?? []) as unknown as AlerteEnrichie[];
+}
 
 export default function CentreAlertes() {
   const pro = useProSession();
-  const [alertes, setAlertes] = useState<AlerteEnrichie[]>([]);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from("alerte")
-      .select("*, patient:patient_id(id, nom), mesure:mesure_id(type, valeur, horodatage)")
-      .in("statut", ["declenchee", "acquittee", "escaladee"])
-      .order("declenchee_le", { ascending: false })
-      .then(({ data }) => {
-        setAlertes((data ?? []) as unknown as AlerteEnrichie[]);
-        setReady(true);
-      });
-  }, []);
-
+  const alertes = useData<AlerteEnrichie[]>("pro:alertes", fetchAlertes);
   const peutTraiter = pro?.role === "coordinatrice";
 
   return (
@@ -40,7 +35,7 @@ export default function CentreAlertes() {
         </p>
       )}
 
-      {!ready ? (
+      {alertes === null ? (
         <div className="grid gap-3 animate-pulse">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="rounded-2xl border border-rose-100 bg-white p-5">
