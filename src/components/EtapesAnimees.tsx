@@ -8,7 +8,7 @@ const ETAPES = [
     icon: "∿",
     titre: "Le patient saisit ses constantes",
     description:
-      "Depuis son téléphone, le patient entre sa température, tension, SpO₂ ou poids en quelques secondes, à tout moment de la journée.",
+      "Le patient saisit ses constantes depuis son téléphone, ou l'infirmière présente lors de son passage les enregistre à sa place — température, tension, SpO₂, poids — en quelques secondes.",
   },
   {
     icon: "◎",
