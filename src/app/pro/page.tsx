@@ -61,7 +61,50 @@ export default async function Dashboard() {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-rose-100 bg-white">
+      {/* ── Cartes mobile ── */}
+      <div className="grid gap-3 md:hidden">
+        {tries.length === 0 && (
+          <p className="rounded-2xl border border-rose-100 bg-white px-4 py-8 text-center text-slate-400">
+            Aucun patient. Créez-en un depuis « Nouveau patient ».
+          </p>
+        )}
+        {tries.map((p) => {
+          const e = parPatient.get(p.id);
+          const critique = (e?.active ?? 0) > 0;
+          return (
+            <Link
+              key={p.id}
+              href={`/pro/patients/${p.id}`}
+              className={`flex items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-4 transition hover:shadow-md ${
+                critique ? "border-red-200 bg-red-50/40" : "border-rose-100"
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-sm font-bold text-brand">
+                  {p.nom.charAt(0)}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-slate-700">{p.nom}</p>
+                  <StatutSuivi statut={p.statut} />
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {critique ? (
+                  <span className="badge bg-critique text-white">{e?.active} alerte(s)</span>
+                ) : (e?.acquittees ?? 0) > 0 ? (
+                  <span className="badge bg-amber-100 text-attention">{e?.acquittees} acquittée(s)</span>
+                ) : (
+                  <span className="text-slate-300 text-sm">—</span>
+                )}
+                <span className="text-brand">→</span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* ── Tableau desktop ── */}
+      <div className="hidden overflow-hidden rounded-2xl border border-rose-100 bg-white md:block">
         <table className="w-full text-sm">
           <thead className="bg-rose-50 text-left text-xs uppercase text-slate-500">
             <tr>
@@ -83,34 +126,20 @@ export default async function Dashboard() {
               const e = parPatient.get(p.id);
               const critique = (e?.active ?? 0) > 0;
               return (
-                <tr
-                  key={p.id}
-                  className={critique ? "bg-red-50/60" : "hover:bg-rose-50/40"}
-                >
-                  <td className="px-4 py-3 font-semibold text-slate-700">
-                    {p.nom}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatutSuivi statut={p.statut} />
-                  </td>
+                <tr key={p.id} className={critique ? "bg-red-50/60" : "hover:bg-rose-50/40"}>
+                  <td className="px-4 py-3 font-semibold text-slate-700">{p.nom}</td>
+                  <td className="px-4 py-3"><StatutSuivi statut={p.statut} /></td>
                   <td className="px-4 py-3">
                     {critique ? (
-                      <span className="badge bg-critique text-white">
-                        {e?.active} active(s)
-                      </span>
+                      <span className="badge bg-critique text-white">{e?.active} active(s)</span>
                     ) : (e?.acquittees ?? 0) > 0 ? (
-                      <span className="badge bg-amber-100 text-attention">
-                        {e?.acquittees} acquittée(s)
-                      </span>
+                      <span className="badge bg-amber-100 text-attention">{e?.acquittees} acquittée(s)</span>
                     ) : (
                       <span className="text-slate-300">—</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/pro/patients/${p.id}`}
-                      className="text-sm font-medium text-brand hover:underline"
-                    >
+                    <Link href={`/pro/patients/${p.id}`} className="text-sm font-medium text-brand hover:underline">
                       Ouvrir →
                     </Link>
                   </td>
