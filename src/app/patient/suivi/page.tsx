@@ -49,7 +49,7 @@ export default function PageSuivi() {
       <div>
         <h1 className="text-xl font-bold text-slate-800">Mon suivi</h1>
         <p className="mt-1 text-sm text-slate-500">
-          La <span className="font-semibold text-critique">ligne rouge</span> est le seuil fixé par votre équipe médicale.
+          Si l&apos;une de vos valeurs dépasse une <span className="font-semibold text-critique">ligne rouge</span> sur le graphique, votre infirmière est aussitôt prévenue.
         </p>
       </div>
 
