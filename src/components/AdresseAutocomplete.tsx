@@ -12,11 +12,13 @@ export function AdresseAutocomplete({
   codePostal,
   ville,
   onChange,
+  required = false,
 }: {
   adresse: string;
   codePostal: string;
   ville: string;
   onChange: (v: { adresse: string; code_postal: string; ville: string }) => void;
+  required?: boolean;
 }) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [ouvert, setOuvert] = useState(false);
@@ -73,10 +75,11 @@ export function AdresseAutocomplete({
   return (
     <div className="grid gap-4">
       <div className="relative" ref={boxRef}>
-        <label className="label">Adresse</label>
+        <label className="label">Adresse{required ? " *" : ""}</label>
         <input
           className="input"
           value={adresse}
+          required={required}
           autoComplete="off"
           placeholder="Tapez l'adresse, ex. 12 rue de la Paix…"
           onChange={(e) => {
@@ -104,18 +107,20 @@ export function AdresseAutocomplete({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="label">Code postal</label>
+          <label className="label">Code postal{required ? " *" : ""}</label>
           <input
             className="input"
             value={codePostal}
+            required={required}
             onChange={(e) => onChange({ adresse, code_postal: e.target.value, ville })}
           />
         </div>
         <div>
-          <label className="label">Ville</label>
+          <label className="label">Ville{required ? " *" : ""}</label>
           <input
             className="input"
             value={ville}
+            required={required}
             onChange={(e) => onChange({ adresse, code_postal: codePostal, ville: e.target.value })}
           />
         </div>

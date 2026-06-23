@@ -93,8 +93,8 @@ export function NouveauPatientForm() {
       <div className="grid gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Prénom du patient</label>
-            <input className="input" value={form.prenom} onChange={set("prenom")} />
+            <label className="label">Prénom du patient *</label>
+            <input className="input" value={form.prenom} onChange={set("prenom")} required />
           </div>
           <div>
             <label className="label">Nom du patient *</label>
@@ -102,13 +102,13 @@ export function NouveauPatientForm() {
           </div>
         </div>
         <div>
-          <label className="label">Date de naissance</label>
-          <input type="date" className="input" value={form.date_naissance} onChange={set("date_naissance")} />
+          <label className="label">Date de naissance *</label>
+          <input type="date" className="input" value={form.date_naissance} onChange={set("date_naissance")} required />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Téléphone</label>
-            <input className="input" value={form.telephone} onChange={set("telephone")} placeholder="06…" inputMode="tel" />
+            <label className="label">Téléphone *</label>
+            <input className="input" value={form.telephone} onChange={set("telephone")} placeholder="06…" inputMode="tel" required />
           </div>
           <div>
             <label className="label">Adresse mail</label>
@@ -116,6 +116,7 @@ export function NouveauPatientForm() {
           </div>
         </div>
         <AdresseAutocomplete
+          required
           adresse={form.adresse}
           codePostal={form.code_postal}
           ville={form.ville}
@@ -137,27 +138,27 @@ export function NouveauPatientForm() {
           </div>
         </div>
         <div>
-          <label className="label">Chirurgien (qui a opéré)</label>
-          <input className="input" value={form.chirurgien} onChange={set("chirurgien")} placeholder="Dr…" />
+          <label className="label">Chirurgien (qui a opéré) *</label>
+          <input className="input" value={form.chirurgien} onChange={set("chirurgien")} placeholder="Dr…" required />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Pharmacie</label>
-            <input className="input" value={form.pharmacie} onChange={set("pharmacie")} placeholder="Nom / ville de la pharmacie" />
+            <label className="label">Pharmacie *</label>
+            <input className="input" value={form.pharmacie} onChange={set("pharmacie")} placeholder="Nom / ville de la pharmacie" required />
           </div>
           <div>
-            <label className="label">Tél. pharmacie</label>
-            <input className="input" value={form.pharmacie_tel} onChange={set("pharmacie_tel")} placeholder="0…" inputMode="tel" />
+            <label className="label">Tél. pharmacie *</label>
+            <input className="input" value={form.pharmacie_tel} onChange={set("pharmacie_tel")} placeholder="0…" inputMode="tel" required />
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Infirmière libérale</label>
-            <input className="input" value={form.infirmiere_nom} onChange={set("infirmiere_nom")} placeholder="Nom" />
+            <label className="label">Infirmière libérale *</label>
+            <input className="input" value={form.infirmiere_nom} onChange={set("infirmiere_nom")} placeholder="Nom" required />
           </div>
           <div>
-            <label className="label">Tél. infirmière libérale</label>
-            <input className="input" value={form.infirmiere_tel} onChange={set("infirmiere_tel")} placeholder="06…" inputMode="tel" />
+            <label className="label">Tél. infirmière libérale *</label>
+            <input className="input" value={form.infirmiere_tel} onChange={set("infirmiere_tel")} placeholder="06…" inputMode="tel" required />
           </div>
         </div>
       </div>
@@ -177,22 +178,22 @@ export function NouveauPatientForm() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="label">Alerte 1 — nom</label>
-            <input className="input" value={form.alerte_1_nom} onChange={set("alerte_1_nom")} placeholder="Nom du destinataire" />
+            <label className="label">Alerte 1 — nom *</label>
+            <input className="input" value={form.alerte_1_nom} onChange={set("alerte_1_nom")} placeholder="Nom du destinataire" required />
           </div>
           <div>
-            <label className="label">Alerte 1 — n°</label>
-            <input className="input" value={form.tel_alerte_1} onChange={set("tel_alerte_1")} placeholder="+33…" inputMode="tel" />
+            <label className="label">Alerte 1 — n° *</label>
+            <input className="input" value={form.tel_alerte_1} onChange={set("tel_alerte_1")} placeholder="+33…" inputMode="tel" required />
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="label">Alerte 2 (backup) — nom</label>
-            <input className="input" value={form.alerte_2_nom} onChange={set("alerte_2_nom")} placeholder="Nom du destinataire" />
+            <label className="label">Alerte 2 (backup) — nom *</label>
+            <input className="input" value={form.alerte_2_nom} onChange={set("alerte_2_nom")} placeholder="Nom du destinataire" required />
           </div>
           <div>
-            <label className="label">Alerte 2 (backup) — n°</label>
-            <input className="input" value={form.tel_alerte_2} onChange={set("tel_alerte_2")} placeholder="+33…" inputMode="tel" />
+            <label className="label">Alerte 2 (backup) — n° *</label>
+            <input className="input" value={form.tel_alerte_2} onChange={set("tel_alerte_2")} placeholder="+33…" inputMode="tel" required />
           </div>
         </div>
       </div>
