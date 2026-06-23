@@ -21,6 +21,11 @@ export function ChatBox({
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Sync quand initialMessages arrive après le fetch asynchrone
+  useEffect(() => {
+    if (initialMessages.length > 0) setMessages(initialMessages);
+  }, [initialMessages]);
+
   // Auto-scroll au dernier message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -53,16 +58,35 @@ export function ChatBox({
   async function envoyer() {
     const contenu = texte.trim();
     if (!contenu || envoi) return;
-    setEnvoi(true);
-    const supabase = createClient();
-    const { error } = await supabase.from("message").insert({
+
+    // Mise à jour optimiste : le message apparaît immédiatement
+    const tmpId = `tmp-${Date.now()}`;
+    const optimiste: Message = {
+      id: tmpId,
       patient_id: patientId,
       auteur_user_id: currentUserId,
       contenu,
-    });
-    if (!error) {
-      setTexte("");
-      inputRef.current?.focus();
+      horodatage: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, optimiste]);
+    setTexte("");
+    inputRef.current?.focus();
+    setEnvoi(true);
+
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("message")
+      .insert({ patient_id: patientId, auteur_user_id: currentUserId, contenu })
+      .select()
+      .single();
+
+    if (error) {
+      // Rollback si erreur
+      setMessages((prev) => prev.filter((m) => m.id !== tmpId));
+      setTexte(contenu);
+    } else if (data) {
+      // Remplace le message temporaire par le vrai (avec id et horodatage serveur)
+      setMessages((prev) => prev.map((m) => m.id === tmpId ? data as Message : m));
     }
     setEnvoi(false);
   }
