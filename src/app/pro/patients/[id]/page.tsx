@@ -7,6 +7,7 @@ import { MESURES, TYPES_MESURE } from "@/lib/constants";
 import { SeuilEditor } from "@/components/SeuilEditor";
 import { ChatBox } from "@/components/ChatBox";
 import { InfosPatient } from "@/components/InfosPatient";
+import { MarquerVisite } from "@/components/MarquerVisite";
 import { urlsSignees } from "@/lib/photos";
 import type { Mesure, Seuil, Photo, Message, Patient } from "@/lib/types";
 
@@ -214,6 +215,8 @@ export default async function FichePatient({ params }: { params: { id: string } 
           </Link>
         )}
       </div>
+
+      <MarquerVisite patientId={patient.id} />
 
       {/* ── Informations patient — instantané ── */}
       <InfosPatient patient={patient as Patient} modifiable={modifiableInfos} />

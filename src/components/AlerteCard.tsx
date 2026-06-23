@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { MESURES } from "@/lib/constants";
+import { dateVisite } from "@/lib/visites";
 import type { Alerte, TypeMesure } from "@/lib/types";
 
 export type AlerteEnrichie = Alerte & {
@@ -14,56 +15,38 @@ export type AlerteEnrichie = Alerte & {
 export function AlerteCard({
   alerte,
   peutTraiter,
-  proId,
   onUpdated,
 }: {
   alerte: AlerteEnrichie;
   peutTraiter: boolean;
-  proId: string;
+  proId?: string;
   onUpdated?: () => void;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  const [escaladeOuverte, setEscaladeOuverte] = useState(false);
-  const [vers, setVers] = useState("");
-  const [note, setNote] = useState("");
+  const [checkee, setCheckee] = useState(false);
 
-  const lien = `/pro/patients/${alerte.patient?.id ?? ""}`;
-
+  const patientId = alerte.patient?.id ?? "";
+  const lien = `/pro/patients/${patientId}`;
   const meta = alerte.mesure ? MESURES[alerte.mesure.type] : null;
 
-  async function maj(patch: Record<string, unknown>) {
+  // La fiche a-t-elle été consultée depuis le déclenchement de l'alerte ?
+  useEffect(() => {
+    const v = dateVisite(patientId);
+    setCheckee(v != null && v >= new Date(alerte.declenchee_le).getTime());
+  }, [patientId, alerte.declenchee_le]);
+
+  async function finAlerte() {
     setBusy(true);
     const supabase = createClient();
     const { error } = await supabase
       .from("alerte")
-      .update(patch)
+      .update({ statut: "resolue", resolue_le: new Date().toISOString() })
       .eq("id", alerte.id);
     setBusy(false);
     if (!error) onUpdated?.();
     else alert("Action refusée (droits insuffisants ou erreur réseau).");
   }
-
-  const acquitter = () =>
-    maj({
-      statut: "acquittee",
-      acquittee_par: proId,
-      acquittee_le: new Date().toISOString(),
-    });
-
-  const escalader = () => {
-    maj({
-      statut: "escaladee",
-      escalade_vers: vers || null,
-      escalade_note: note || null,
-      escalade_le: new Date().toISOString(),
-      canal: "telephone",
-    });
-    setEscaladeOuverte(false);
-  };
-
-  const resoudre = () =>
-    maj({ statut: "resolue", resolue_le: new Date().toISOString() });
 
   const couleur =
     alerte.statut === "declenchee"
@@ -76,9 +59,9 @@ export function AlerteCard({
     <div
       role="link"
       tabIndex={0}
-      onClick={() => alerte.patient?.id && router.push(lien)}
+      onClick={() => patientId && router.push(lien)}
       onKeyDown={(e) => {
-        if ((e.key === "Enter" || e.key === " ") && alerte.patient?.id) {
+        if ((e.key === "Enter" || e.key === " ") && patientId) {
           e.preventDefault();
           router.push(lien);
         }
@@ -107,76 +90,26 @@ export function AlerteCard({
           <p className="mt-0.5 text-xs text-slate-400">
             Déclenchée le {new Date(alerte.declenchee_le).toLocaleString("fr-FR")}
           </p>
-          {alerte.escalade_le && (
-            <p className="mt-1 text-xs text-attention">
-              Escaladée le {new Date(alerte.escalade_le).toLocaleString("fr-FR")}
-              {alerte.escalade_vers ? ` → ${alerte.escalade_vers}` : ""}
-              {alerte.escalade_note ? ` · « ${alerte.escalade_note} »` : ""}
-            </p>
-          )}
         </div>
 
         {peutTraiter && (
-          <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
-            {alerte.statut === "declenchee" && (
-              <button onClick={acquitter} disabled={busy} className="btn-secondary">
-                Acquitter
-              </button>
-            )}
-            {alerte.statut !== "escaladee" && (
-              <button
-                onClick={() => setEscaladeOuverte((v) => !v)}
-                disabled={busy}
-                className="btn-danger"
-              >
-                J&apos;ai prévenu l&apos;hôpital
-              </button>
-            )}
-            <button onClick={resoudre} disabled={busy} className="btn-secondary">
-              Résoudre
+          <div className="flex flex-col items-end gap-1" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={finAlerte}
+              disabled={busy || !checkee}
+              title={checkee ? undefined : "Consultez d'abord la fiche du patient"}
+              className="btn-primary disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {busy ? "…" : "Fin de l'alerte"}
             </button>
+            {!checkee && (
+              <span className="text-[11px] text-slate-400">
+                Ouvrez la fiche patient pour clôturer
+              </span>
+            )}
           </div>
         )}
       </div>
-
-      {escaladeOuverte && peutTraiter && (
-        <div className="mt-4 grid gap-3 rounded-xl bg-rose-50 p-4" onClick={(e) => e.stopPropagation()}>
-          <p className="text-xs text-slate-500">
-            Horodatage automatique à l&apos;enregistrement —{" "}
-            {new Date().toLocaleString("fr-FR")}
-          </p>
-          <div>
-            <label className="label">Prévenu (ex. « Dr Martin, urgences »)</label>
-            <input
-              className="input"
-              value={vers}
-              onChange={(e) => setVers(e.target.value)}
-              placeholder="Service / médecin contacté"
-            />
-          </div>
-          <div>
-            <label className="label">Note</label>
-            <textarea
-              className="input"
-              rows={2}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="ex. patient adressé aux urgences à 14h32"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setEscaladeOuverte(false)}
-              className="btn-secondary flex-1"
-            >
-              Annuler
-            </button>
-            <button onClick={escalader} disabled={busy} className="btn-danger flex-1">
-              Enregistrer l&apos;escalade
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
