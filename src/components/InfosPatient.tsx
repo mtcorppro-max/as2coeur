@@ -6,8 +6,8 @@ import type { Patient } from "@/lib/types";
 
 // Champs administratifs éditables de la fiche patient.
 const CHAMPS = [
-  "telephone", "email", "adresse", "code_postal",
-  "chirurgien", "pharmacie", "infirmiere_nom", "infirmiere_tel",
+  "date_naissance", "telephone", "email", "adresse", "code_postal", "ville",
+  "operation", "date_operation", "chirurgien", "pharmacie", "infirmiere_nom", "infirmiere_tel",
   "proche_nom", "proche_tel", "tel_alerte_1", "tel_alerte_2",
 ] as const;
 
@@ -19,6 +19,24 @@ function depuisPatient(p: Patient): Form {
     acc[c] = (p[c] as string | null) ?? "";
     return acc;
   }, {} as Form);
+}
+
+// "YYYY-MM-DD" -> "JJ/MM/AAAA"
+function formatDate(iso: string): string {
+  if (!iso) return "";
+  const [a, m, j] = iso.split("-");
+  return j && m && a ? `${j}/${m}/${a}` : iso;
+}
+
+function age(iso: string): number | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  const now = new Date();
+  let ans = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) ans--;
+  return ans;
 }
 
 export function InfosPatient({
@@ -66,15 +84,23 @@ export function InfosPatient({
         <div className="grid gap-4">
           <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Coordonnées</p>
           <div className="grid gap-4 sm:grid-cols-2">
+            <Champ label="Date de naissance" type="date" value={form.date_naissance} onChange={set("date_naissance")} />
             <Champ label="Téléphone" value={form.telephone} onChange={set("telephone")} />
-            <Champ label="Adresse mail" value={form.email} onChange={set("email")} />
           </div>
+          <Champ label="Adresse mail" value={form.email} onChange={set("email")} />
           <Champ label="Adresse" value={form.adresse} onChange={set("adresse")} />
-          <Champ label="Code postal" value={form.code_postal} onChange={set("code_postal")} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Champ label="Code postal" value={form.code_postal} onChange={set("code_postal")} />
+            <Champ label="Ville" value={form.ville} onChange={set("ville")} />
+          </div>
         </div>
 
         <div className="grid gap-4 border-t border-rose-100 pt-4">
           <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Parcours de soins</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Champ label="Opération subie" value={form.operation} onChange={set("operation")} />
+            <Champ label="Date de l'opération" type="date" value={form.date_operation} onChange={set("date_operation")} />
+          </div>
           <Champ label="Chirurgien" value={form.chirurgien} onChange={set("chirurgien")} />
           <Champ label="Pharmacie" value={form.pharmacie} onChange={set("pharmacie")} />
           <div className="grid gap-4 sm:grid-cols-2">
@@ -109,6 +135,8 @@ export function InfosPatient({
 
   // ── Mode lecture ──────────────────────────────────────────────────
   const aucune = CHAMPS.every((c) => !vue[c]);
+  const ageAns = age(vue.date_naissance);
+  const villeLigne = [vue.code_postal, vue.ville].filter(Boolean).join(" ");
 
   return (
     <section className="card grid gap-4">
@@ -128,12 +156,22 @@ export function InfosPatient({
       ) : (
         <div className="grid gap-5 sm:grid-cols-2">
           <Bloc titre="Coordonnées">
+            <Ligne
+              label="Naissance"
+              value={vue.date_naissance ? `${formatDate(vue.date_naissance)}${ageAns != null ? ` (${ageAns} ans)` : ""}` : ""}
+            />
             <Ligne label="Téléphone" value={vue.telephone} href={vue.telephone ? `tel:${vue.telephone}` : undefined} />
             <Ligne label="Email" value={vue.email} href={vue.email ? `mailto:${vue.email}` : undefined} />
             <Ligne label="Adresse" value={vue.adresse} />
+            <Ligne label="Ville" value={villeLigne} />
           </Bloc>
 
           <Bloc titre="Parcours de soins">
+            <Ligne
+              label="Opération"
+              value={vue.operation}
+              extra={vue.date_operation ? formatDate(vue.date_operation) : undefined}
+            />
             <Ligne label="Chirurgien" value={vue.chirurgien} />
             <Ligne label="Pharmacie" value={vue.pharmacie} />
             <Ligne
@@ -195,7 +233,11 @@ function Ligne({
         {extra && value && (
           <>
             {" · "}
-            <a href={href} className="text-brand hover:underline">{extra}</a>
+            {href ? (
+              <a href={href} className="text-brand hover:underline">{extra}</a>
+            ) : (
+              <span>{extra}</span>
+            )}
           </>
         )}
       </span>
@@ -207,15 +249,17 @@ function Champ({
   label,
   value,
   onChange,
+  type = "text",
 }: {
   label: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
 }) {
   return (
     <div>
       <label className="label">{label}</label>
-      <input className="input" value={value} onChange={onChange} />
+      <input type={type} className="input" value={value} onChange={onChange} />
     </div>
   );
 }

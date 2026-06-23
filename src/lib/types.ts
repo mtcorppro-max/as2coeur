@@ -48,6 +48,11 @@ export interface Patient {
   infirmiere_tel: string | null;
   proche_nom: string | null;
   proche_tel: string | null;
+  // Ville, naissance & opération (cf. migration 0004)
+  ville: string | null;
+  date_naissance: string | null;
+  operation: string | null;
+  date_operation: string | null;
   created_at: string;
 }
 

@@ -81,6 +81,10 @@ export async function POST(request: Request) {
       infirmiere_tel: body.infirmiere_tel || null,
       proche_nom: body.proche_nom || null,
       proche_tel: body.proche_tel || null,
+      ville: body.ville || null,
+      date_naissance: body.date_naissance || null,
+      operation: body.operation || null,
+      date_operation: body.date_operation || null,
     })
     .select("id")
     .single();

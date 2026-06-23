@@ -5,10 +5,14 @@ import Link from "next/link";
 
 const VIDE = {
   nom: "",
+  date_naissance: "",
   code_postal: "",
+  ville: "",
   telephone: "",
   email: "",
   adresse: "",
+  operation: "",
+  date_operation: "",
   chirurgien: "",
   pharmacie: "",
   infirmiere_nom: "",
@@ -82,9 +86,15 @@ export function NouveauPatientForm() {
     <form onSubmit={onSubmit} className="card grid gap-5">
       {/* ── Identité ── */}
       <div className="grid gap-4">
-        <div>
-          <label className="label">Nom du patient *</label>
-          <input className="input" value={form.nom} onChange={set("nom")} required />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">Nom du patient *</label>
+            <input className="input" value={form.nom} onChange={set("nom")} required />
+          </div>
+          <div>
+            <label className="label">Date de naissance</label>
+            <input type="date" className="input" value={form.date_naissance} onChange={set("date_naissance")} />
+          </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -98,17 +108,33 @@ export function NouveauPatientForm() {
         </div>
         <div>
           <label className="label">Adresse</label>
-          <input className="input" value={form.adresse} onChange={set("adresse")} placeholder="N°, rue, ville" />
+          <input className="input" value={form.adresse} onChange={set("adresse")} placeholder="N°, rue" />
         </div>
-        <div>
-          <label className="label">Code postal (conseils météo)</label>
-          <input className="input" value={form.code_postal} onChange={set("code_postal")} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">Ville</label>
+            <input className="input" value={form.ville} onChange={set("ville")} />
+          </div>
+          <div>
+            <label className="label">Code postal (conseils météo)</label>
+            <input className="input" value={form.code_postal} onChange={set("code_postal")} />
+          </div>
         </div>
       </div>
 
       {/* ── Parcours de soins ── */}
       <div className="grid gap-4 border-t border-rose-100 pt-4">
         <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Parcours de soins</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">Opération subie</label>
+            <input className="input" value={form.operation} onChange={set("operation")} placeholder="ex. appendicectomie" />
+          </div>
+          <div>
+            <label className="label">Date de l&apos;opération</label>
+            <input type="date" className="input" value={form.date_operation} onChange={set("date_operation")} />
+          </div>
+        </div>
         <div>
           <label className="label">Chirurgien (qui a opéré)</label>
           <input className="input" value={form.chirurgien} onChange={set("chirurgien")} placeholder="Dr…" />
