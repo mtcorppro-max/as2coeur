@@ -31,7 +31,8 @@ export function SeuilEditor({
   const [etat, setEtat] = useState<"idle" | "saving" | "ok">("idle");
 
   const minNum = min === "" ? null : Number(min);
-  const maxNum = max === "" ? null : Number(max);
+  // SpO₂ (et assimilés) : pas de seuil max.
+  const maxNum = meta.sansSeuilMax || max === "" ? null : Number(max);
 
   async function enregistrer() {
     setEtat("saving");
@@ -71,7 +72,7 @@ export function SeuilEditor({
 
       {modifiable ? (
         <div className="mt-4 grid gap-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid gap-3 ${meta.sansSeuilMax ? "grid-cols-1" : "grid-cols-2"}`}>
             <label className="text-xs text-slate-500">
               Seuil min
               <input
@@ -83,17 +84,19 @@ export function SeuilEditor({
                 placeholder="—"
               />
             </label>
-            <label className="text-xs text-slate-500">
-              Seuil max
-              <input
-                type="number"
-                step={meta.pas}
-                className="input mt-1"
-                value={max}
-                onChange={(e) => setMax(e.target.value)}
-                placeholder="—"
-              />
-            </label>
+            {!meta.sansSeuilMax && (
+              <label className="text-xs text-slate-500">
+                Seuil max
+                <input
+                  type="number"
+                  step={meta.pas}
+                  className="input mt-1"
+                  value={max}
+                  onChange={(e) => setMax(e.target.value)}
+                  placeholder="—"
+                />
+              </label>
+            )}
           </div>
           <button
             onClick={enregistrer}
@@ -109,7 +112,9 @@ export function SeuilEditor({
         </div>
       ) : (
         <p className="mt-3 text-xs text-slate-400">
-          Seuil : {minNum ?? "—"} / {maxNum ?? "—"} {meta.unite} (lecture seule)
+          {meta.sansSeuilMax
+            ? `Seuil min : ${minNum ?? "—"} ${meta.unite} (lecture seule)`
+            : `Seuil : ${minNum ?? "—"} / ${maxNum ?? "—"} ${meta.unite} (lecture seule)`}
         </p>
       )}
     </div>

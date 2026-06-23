@@ -15,6 +15,7 @@ export const MESURES: Record<
     pas: number;
     seuilDefautMin: number | null;
     seuilDefautMax: number | null;
+    sansSeuilMax?: boolean; // mesure avec seuil minimum uniquement (ex. SpO₂)
   }
 > = {
   temperature: {
@@ -56,6 +57,7 @@ export const MESURES: Record<
     pas: 1,
     seuilDefautMin: 92,
     seuilDefautMax: null,
+    sansSeuilMax: true,
   },
   poids: {
     label: "Poids",
