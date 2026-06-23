@@ -6,8 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 import { MESURES, TYPES_MESURE } from "@/lib/constants";
 import { SeuilEditor } from "@/components/SeuilEditor";
 import { ChatBox } from "@/components/ChatBox";
+import { InfosPatient } from "@/components/InfosPatient";
 import { urlsSignees } from "@/lib/photos";
-import type { Mesure, Seuil, Photo, Message } from "@/lib/types";
+import type { Mesure, Seuil, Photo, Message, Patient } from "@/lib/types";
 
 // ── Sections asynchrones streamées indépendamment ───────────────────
 
@@ -163,7 +164,7 @@ export default async function FichePatient({ params }: { params: { id: string } 
   const [{ data: patient }, { data: alertes }, { data: dernieresRaw }] = await Promise.all([
     supabase
       .from("patient")
-      .select("id,nom,code_unique,code_postal,statut,prestataire_id")
+      .select("*")
       .eq("id", params.id)
       .maybeSingle(),
     supabase
@@ -210,6 +211,9 @@ export default async function FichePatient({ params }: { params: { id: string } 
           </Link>
         )}
       </div>
+
+      {/* ── Informations patient — instantané ── */}
+      <InfosPatient patient={patient as Patient} modifiable={modifiable} />
 
       {/* ── Dernières valeurs — instantané ── */}
       <section>

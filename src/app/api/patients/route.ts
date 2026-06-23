@@ -72,6 +72,15 @@ export async function POST(request: Request) {
       code_postal: body.code_postal || null,
       tel_alerte_1: body.tel_alerte_1 || null,
       tel_alerte_2: body.tel_alerte_2 || null,
+      telephone: body.telephone || null,
+      email: body.email || null,
+      adresse: body.adresse || null,
+      chirurgien: body.chirurgien || null,
+      pharmacie: body.pharmacie || null,
+      infirmiere_nom: body.infirmiere_nom || null,
+      infirmiere_tel: body.infirmiere_tel || null,
+      proche_nom: body.proche_nom || null,
+      proche_tel: body.proche_tel || null,
     })
     .select("id")
     .single();

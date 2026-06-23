@@ -1,0 +1,221 @@
+"use client";
+
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { Patient } from "@/lib/types";
+
+// Champs administratifs éditables de la fiche patient.
+const CHAMPS = [
+  "telephone", "email", "adresse", "code_postal",
+  "chirurgien", "pharmacie", "infirmiere_nom", "infirmiere_tel",
+  "proche_nom", "proche_tel", "tel_alerte_1", "tel_alerte_2",
+] as const;
+
+type Champ = (typeof CHAMPS)[number];
+type Form = Record<Champ, string>;
+
+function depuisPatient(p: Patient): Form {
+  return CHAMPS.reduce((acc, c) => {
+    acc[c] = (p[c] as string | null) ?? "";
+    return acc;
+  }, {} as Form);
+}
+
+export function InfosPatient({
+  patient,
+  modifiable,
+}: {
+  patient: Patient;
+  modifiable: boolean;
+}) {
+  const [edition, setEdition] = useState(false);
+  const [form, setForm] = useState<Form>(() => depuisPatient(patient));
+  const [vue, setVue] = useState<Form>(() => depuisPatient(patient));
+  const [busy, setBusy] = useState(false);
+
+  const set = (k: Champ) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  async function enregistrer() {
+    setBusy(true);
+    const supabase = createClient();
+    const payload = CHAMPS.reduce((acc, c) => {
+      acc[c] = form[c].trim() || null;
+      return acc;
+    }, {} as Record<Champ, string | null>);
+
+    const { error } = await supabase.from("patient").update(payload).eq("id", patient.id);
+    setBusy(false);
+    if (error) {
+      alert("Enregistrement refusé (droits ou réseau).");
+      return;
+    }
+    setVue({ ...form });
+    setEdition(false);
+  }
+
+  function annuler() {
+    setForm({ ...vue });
+    setEdition(false);
+  }
+
+  // ── Mode édition ──────────────────────────────────────────────────
+  if (edition) {
+    return (
+      <section className="card grid gap-5">
+        <div className="grid gap-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Coordonnées</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Champ label="Téléphone" value={form.telephone} onChange={set("telephone")} />
+            <Champ label="Adresse mail" value={form.email} onChange={set("email")} />
+          </div>
+          <Champ label="Adresse" value={form.adresse} onChange={set("adresse")} />
+          <Champ label="Code postal" value={form.code_postal} onChange={set("code_postal")} />
+        </div>
+
+        <div className="grid gap-4 border-t border-rose-100 pt-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Parcours de soins</p>
+          <Champ label="Chirurgien" value={form.chirurgien} onChange={set("chirurgien")} />
+          <Champ label="Pharmacie" value={form.pharmacie} onChange={set("pharmacie")} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Champ label="Infirmière libérale" value={form.infirmiere_nom} onChange={set("infirmiere_nom")} />
+            <Champ label="Tél. infirmière" value={form.infirmiere_tel} onChange={set("infirmiere_tel")} />
+          </div>
+        </div>
+
+        <div className="grid gap-4 border-t border-rose-100 pt-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Contacts d&apos;urgence</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Champ label="Personne proche" value={form.proche_nom} onChange={set("proche_nom")} />
+            <Champ label="Tél. personne proche" value={form.proche_tel} onChange={set("proche_tel")} />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Champ label="N° alerte 1" value={form.tel_alerte_1} onChange={set("tel_alerte_1")} />
+            <Champ label="N° alerte 2" value={form.tel_alerte_2} onChange={set("tel_alerte_2")} />
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button onClick={annuler} className="btn-secondary flex-1" disabled={busy}>
+            Annuler
+          </button>
+          <button onClick={enregistrer} className="btn-primary flex-1" disabled={busy}>
+            {busy ? "Enregistrement…" : "Enregistrer"}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  // ── Mode lecture ──────────────────────────────────────────────────
+  const aucune = CHAMPS.every((c) => !vue[c]);
+
+  return (
+    <section className="card grid gap-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-slate-600">Informations patient</h2>
+        {modifiable && (
+          <button onClick={() => { setForm({ ...vue }); setEdition(true); }} className="text-sm font-medium text-brand hover:underline">
+            {aucune ? "Compléter" : "Modifier"}
+          </button>
+        )}
+      </div>
+
+      {aucune ? (
+        <p className="text-sm text-slate-400">
+          Aucune information renseignée.{modifiable ? " Cliquez sur « Compléter »." : ""}
+        </p>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Bloc titre="Coordonnées">
+            <Ligne label="Téléphone" value={vue.telephone} href={vue.telephone ? `tel:${vue.telephone}` : undefined} />
+            <Ligne label="Email" value={vue.email} href={vue.email ? `mailto:${vue.email}` : undefined} />
+            <Ligne label="Adresse" value={vue.adresse} />
+          </Bloc>
+
+          <Bloc titre="Parcours de soins">
+            <Ligne label="Chirurgien" value={vue.chirurgien} />
+            <Ligne label="Pharmacie" value={vue.pharmacie} />
+            <Ligne
+              label="Infirmière libérale"
+              value={vue.infirmiere_nom}
+              extra={vue.infirmiere_tel}
+              href={vue.infirmiere_tel ? `tel:${vue.infirmiere_tel}` : undefined}
+            />
+          </Bloc>
+
+          <Bloc titre="Contacts d'urgence">
+            <Ligne
+              label="Personne proche"
+              value={vue.proche_nom || vue.proche_tel}
+              extra={vue.proche_nom ? vue.proche_tel : undefined}
+              href={vue.proche_tel ? `tel:${vue.proche_tel}` : undefined}
+            />
+            <Ligne label="N° alerte 1" value={vue.tel_alerte_1} href={vue.tel_alerte_1 ? `tel:${vue.tel_alerte_1}` : undefined} />
+            <Ligne label="N° alerte 2" value={vue.tel_alerte_2} href={vue.tel_alerte_2 ? `tel:${vue.tel_alerte_2}` : undefined} />
+          </Bloc>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ── Sous-composants ───────────────────────────────────────────────────
+
+function Bloc({ titre, children }: { titre: string; children: React.ReactNode }) {
+  return (
+    <div className="grid gap-2">
+      <p className="text-xs font-bold uppercase tracking-widest text-rose-400">{titre}</p>
+      <div className="grid gap-1.5">{children}</div>
+    </div>
+  );
+}
+
+function Ligne({
+  label,
+  value,
+  extra,
+  href,
+}: {
+  label: string;
+  value: string;
+  extra?: string;
+  href?: string;
+}) {
+  if (!value && !extra) return null;
+  return (
+    <div className="flex justify-between gap-3 text-sm">
+      <span className="shrink-0 text-slate-400">{label}</span>
+      <span className="text-right font-medium text-slate-700">
+        {href ? (
+          <a href={href} className="text-brand hover:underline">{value || extra}</a>
+        ) : (
+          value
+        )}
+        {extra && value && (
+          <>
+            {" · "}
+            <a href={href} className="text-brand hover:underline">{extra}</a>
+          </>
+        )}
+      </span>
+    </div>
+  );
+}
+
+function Champ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <div>
+      <label className="label">{label}</label>
+      <input className="input" value={value} onChange={onChange} />
+    </div>
+  );
+}

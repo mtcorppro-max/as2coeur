@@ -38,6 +38,16 @@ export interface Patient {
   code_postal: string | null;
   tel_alerte_1: string | null;
   tel_alerte_2: string | null;
+  // Coordonnées & contacts (cf. migration 0002)
+  telephone: string | null;
+  email: string | null;
+  adresse: string | null;
+  chirurgien: string | null;
+  pharmacie: string | null;
+  infirmiere_nom: string | null;
+  infirmiere_tel: string | null;
+  proche_nom: string | null;
+  proche_tel: string | null;
   created_at: string;
 }
 

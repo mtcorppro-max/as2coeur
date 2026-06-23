@@ -3,13 +3,24 @@
 import { useState } from "react";
 import Link from "next/link";
 
+const VIDE = {
+  nom: "",
+  code_postal: "",
+  telephone: "",
+  email: "",
+  adresse: "",
+  chirurgien: "",
+  pharmacie: "",
+  infirmiere_nom: "",
+  infirmiere_tel: "",
+  proche_nom: "",
+  proche_tel: "",
+  tel_alerte_1: "",
+  tel_alerte_2: "",
+};
+
 export function NouveauPatientForm() {
-  const [form, setForm] = useState({
-    nom: "",
-    code_postal: "",
-    tel_alerte_1: "",
-    tel_alerte_2: "",
-  });
+  const [form, setForm] = useState({ ...VIDE });
   const [code, setCode] = useState<string | null>(null);
   const [patientId, setPatientId] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -56,7 +67,7 @@ export function NouveauPatientForm() {
           <button
             onClick={() => {
               setCode(null);
-              setForm({ nom: "", code_postal: "", tel_alerte_1: "", tel_alerte_2: "" });
+              setForm({ ...VIDE });
             }}
             className="btn-secondary flex-1"
           >
@@ -68,35 +79,81 @@ export function NouveauPatientForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="card grid gap-4">
-      <div>
-        <label className="label">Nom du patient *</label>
-        <input className="input" value={form.nom} onChange={set("nom")} required />
-      </div>
-      <div>
-        <label className="label">Code postal (conseils météo)</label>
-        <input className="input" value={form.code_postal} onChange={set("code_postal")} />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
+    <form onSubmit={onSubmit} className="card grid gap-5">
+      {/* ── Identité ── */}
+      <div className="grid gap-4">
         <div>
-          <label className="label">N° alerte 1</label>
-          <input
-            className="input"
-            value={form.tel_alerte_1}
-            onChange={set("tel_alerte_1")}
-            placeholder="+33…"
-          />
+          <label className="label">Nom du patient *</label>
+          <input className="input" value={form.nom} onChange={set("nom")} required />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">Téléphone</label>
+            <input className="input" value={form.telephone} onChange={set("telephone")} placeholder="06…" inputMode="tel" />
+          </div>
+          <div>
+            <label className="label">Adresse mail</label>
+            <input className="input" value={form.email} onChange={set("email")} placeholder="nom@email.fr" inputMode="email" />
+          </div>
         </div>
         <div>
-          <label className="label">N° alerte 2 (backup)</label>
-          <input
-            className="input"
-            value={form.tel_alerte_2}
-            onChange={set("tel_alerte_2")}
-            placeholder="+33…"
-          />
+          <label className="label">Adresse</label>
+          <input className="input" value={form.adresse} onChange={set("adresse")} placeholder="N°, rue, ville" />
+        </div>
+        <div>
+          <label className="label">Code postal (conseils météo)</label>
+          <input className="input" value={form.code_postal} onChange={set("code_postal")} />
         </div>
       </div>
+
+      {/* ── Parcours de soins ── */}
+      <div className="grid gap-4 border-t border-rose-100 pt-4">
+        <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Parcours de soins</p>
+        <div>
+          <label className="label">Chirurgien (qui a opéré)</label>
+          <input className="input" value={form.chirurgien} onChange={set("chirurgien")} placeholder="Dr…" />
+        </div>
+        <div>
+          <label className="label">Pharmacie</label>
+          <input className="input" value={form.pharmacie} onChange={set("pharmacie")} placeholder="Nom / ville de la pharmacie" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">Infirmière libérale</label>
+            <input className="input" value={form.infirmiere_nom} onChange={set("infirmiere_nom")} placeholder="Nom" />
+          </div>
+          <div>
+            <label className="label">Tél. infirmière libérale</label>
+            <input className="input" value={form.infirmiere_tel} onChange={set("infirmiere_tel")} placeholder="06…" inputMode="tel" />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Contacts d'urgence ── */}
+      <div className="grid gap-4 border-t border-rose-100 pt-4">
+        <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Contacts d&apos;urgence</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">Personne proche à appeler</label>
+            <input className="input" value={form.proche_nom} onChange={set("proche_nom")} placeholder="Nom (conjoint, enfant…)" />
+          </div>
+          <div>
+            <label className="label">Tél. personne proche</label>
+            <input className="input" value={form.proche_tel} onChange={set("proche_tel")} placeholder="06…" inputMode="tel" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label">N° alerte 1</label>
+            <input className="input" value={form.tel_alerte_1} onChange={set("tel_alerte_1")} placeholder="+33…" inputMode="tel" />
+          </div>
+          <div>
+            <label className="label">N° alerte 2 (backup)</label>
+            <input className="input" value={form.tel_alerte_2} onChange={set("tel_alerte_2")} placeholder="+33…" inputMode="tel" />
+          </div>
+        </div>
+      </div>
+
       {erreur && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-critique">{erreur}</p>
       )}
