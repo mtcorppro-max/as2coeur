@@ -150,7 +150,7 @@ export default function FichePatient() {
       {/* ── Dernières valeurs ── */}
       <section>
         <h2 className="mb-2 text-sm font-semibold text-slate-600">Dernières valeurs</h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
           {TYPES_MESURE.map((type) => {
             const v = dernieres.get(type);
             const meta = MESURES[type];

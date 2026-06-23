@@ -7,6 +7,7 @@ export type TypeMesure =
   | "ta_systolique"
   | "ta_diastolique"
   | "spo2"
+  | "bpm"
   | "poids";
 
 export type StatutAlerte = "declenchee" | "acquittee" | "escaladee" | "resolue";

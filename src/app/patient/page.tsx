@@ -73,7 +73,7 @@ export default function PatientAccueil() {
 
         <section>
           <h2 className="mb-3 text-sm font-semibold text-slate-600">Mes dernières valeurs</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {TYPES_MESURE.map((type) => {
               const m = dernieres.get(type);
               const meta = MESURES[type];

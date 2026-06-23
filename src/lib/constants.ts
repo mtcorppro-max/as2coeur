@@ -59,6 +59,16 @@ export const MESURES: Record<
     seuilDefautMax: null,
     sansSeuilMax: true,
   },
+  bpm: {
+    label: "Fréquence cardiaque",
+    court: "Pouls",
+    unite: "bpm",
+    min: 30,
+    max: 200,
+    pas: 1,
+    seuilDefautMin: 50,
+    seuilDefautMax: 120,
+  },
   poids: {
     label: "Poids",
     court: "Poids",

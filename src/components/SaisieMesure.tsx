@@ -7,12 +7,13 @@ import { invalidate } from "@/lib/hooks/useData";
 import { MESURES } from "@/lib/constants";
 import type { TypeMesure } from "@/lib/types";
 
-type Choix = "temperature" | "tension" | "spo2" | "poids";
+type Choix = "temperature" | "tension" | "spo2" | "bpm" | "poids";
 
 const CHOIX: { key: Choix; label: string; icon: string }[] = [
   { key: "temperature", label: "Température", icon: "🌡️" },
   { key: "tension", label: "Tension", icon: "💓" },
   { key: "spo2", label: "Saturation O₂", icon: "🫁" },
+  { key: "bpm", label: "Pouls", icon: "💗" },
   { key: "poids", label: "Poids", icon: "⚖️" },
 ];
 
