@@ -94,6 +94,10 @@ export function InfosPatient({
             <Champ label="Code postal" value={form.code_postal} onChange={set("code_postal")} />
             <Champ label="Ville" value={form.ville} onChange={set("ville")} />
           </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Champ label="Personne proche" value={form.proche_nom} onChange={set("proche_nom")} />
+            <Champ label="Tél. personne proche" value={form.proche_tel} onChange={set("proche_tel")} />
+          </div>
         </div>
 
         <div className="grid gap-4 border-t border-rose-100 pt-4">
@@ -107,14 +111,6 @@ export function InfosPatient({
           <div className="grid gap-4 sm:grid-cols-2">
             <Champ label="Infirmière libérale" value={form.infirmiere_nom} onChange={set("infirmiere_nom")} />
             <Champ label="Tél. infirmière" value={form.infirmiere_tel} onChange={set("infirmiere_tel")} />
-          </div>
-        </div>
-
-        <div className="grid gap-4 border-t border-rose-100 pt-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Contacts d&apos;urgence</p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Champ label="Personne proche" value={form.proche_nom} onChange={set("proche_nom")} />
-            <Champ label="Tél. personne proche" value={form.proche_tel} onChange={set("proche_tel")} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Champ label="Alerte 1 — nom" value={form.alerte_1_nom} onChange={set("alerte_1_nom")} />
@@ -169,6 +165,12 @@ export function InfosPatient({
             <Ligne label="Email" value={vue.email} href={vue.email ? `mailto:${vue.email}` : undefined} />
             <Ligne label="Adresse" value={vue.adresse} />
             <Ligne label="Ville" value={villeLigne} />
+            <Ligne
+              label="Personne proche"
+              value={vue.proche_nom || vue.proche_tel}
+              extra={vue.proche_nom ? vue.proche_tel : undefined}
+              href={vue.proche_tel ? `tel:${vue.proche_tel}` : undefined}
+            />
           </Bloc>
 
           <Bloc titre="Environnement de soins">
@@ -184,15 +186,6 @@ export function InfosPatient({
               value={vue.infirmiere_nom}
               extra={vue.infirmiere_tel}
               href={vue.infirmiere_tel ? `tel:${vue.infirmiere_tel}` : undefined}
-            />
-          </Bloc>
-
-          <Bloc titre="Contacts d'urgence">
-            <Ligne
-              label="Personne proche"
-              value={vue.proche_nom || vue.proche_tel}
-              extra={vue.proche_nom ? vue.proche_tel : undefined}
-              href={vue.proche_tel ? `tel:${vue.proche_tel}` : undefined}
             />
             <Ligne
               label={vue.alerte_1_nom ? `Alerte 1 · ${vue.alerte_1_nom}` : "N° alerte 1"}
