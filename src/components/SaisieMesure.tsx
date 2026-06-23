@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { invalidate } from "@/lib/hooks/useData";
 import { MESURES } from "@/lib/constants";
 import type { TypeMesure } from "@/lib/types";
 
@@ -52,9 +53,12 @@ export function SaisieMesure({ patientId }: { patientId: string }) {
     }
     setEtat("ok");
     setMessage("Mesure enregistrée ✓");
+    // Invalide les caches client pour que la nouvelle mesure apparaisse,
+    // sans router.refresh() (qui repasse par le serveur et casse la session).
+    invalidate(`patient:accueil:${patientId}`);
+    invalidate(`patient:suivi:${patientId}`);
     setTimeout(() => {
       router.push("/patient");
-      router.refresh();
     }, 900);
   }
 

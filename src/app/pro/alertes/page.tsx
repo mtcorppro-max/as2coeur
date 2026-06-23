@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
-import { useData } from "@/lib/hooks/useData";
+import { useData, invalidate } from "@/lib/hooks/useData";
 import { AlerteCard, type AlerteEnrichie } from "@/components/AlerteCard";
 
 async function fetchAlertes(): Promise<AlerteEnrichie[]> {
@@ -17,8 +18,18 @@ async function fetchAlertes(): Promise<AlerteEnrichie[]> {
 
 export default function CentreAlertes() {
   const pro = useProSession();
-  const alertes = useData<AlerteEnrichie[]>("pro:alertes", fetchAlertes);
+  const [reloadKey, setReloadKey] = useState(0);
+  const alertes = useData<AlerteEnrichie[]>("pro:alertes", fetchAlertes, [reloadKey]);
   const peutTraiter = pro?.role === "coordinatrice";
+
+  // Après une action (acquitter/escalader/résoudre) : recharge la liste
+  // sans router.refresh() (qui repasserait par le serveur et risquerait la
+  // déconnexion par conflit de refresh token).
+  const recharger = () => {
+    invalidate("pro:alertes");
+    invalidate("pro:dashboard");
+    setReloadKey((k) => k + 1);
+  };
 
   return (
     <div className="grid gap-5">
@@ -49,7 +60,7 @@ export default function CentreAlertes() {
       ) : (
         <div className="grid gap-3">
           {alertes.map((a) => (
-            <AlerteCard key={a.id} alerte={a} peutTraiter={peutTraiter} proId={pro?.id ?? ""} />
+            <AlerteCard key={a.id} alerte={a} peutTraiter={peutTraiter} proId={pro?.id ?? ""} onUpdated={recharger} />
           ))}
         </div>
       )}

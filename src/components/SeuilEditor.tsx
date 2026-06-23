@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { MESURES } from "@/lib/constants";
 import { MesureChart } from "@/components/MesureChart";
@@ -22,7 +21,6 @@ export function SeuilEditor({
   seuil: Seuil | null;
   modifiable: boolean;
 }) {
-  const router = useRouter();
   const meta = MESURES[type];
   const [min, setMin] = useState<string>(
     seuil?.valeur_min != null ? String(seuil.valeur_min) : ""
@@ -54,7 +52,6 @@ export function SeuilEditor({
       return;
     }
     setEtat("ok");
-    router.refresh();
     setTimeout(() => setEtat("idle"), 1500);
   }
 

@@ -47,7 +47,7 @@ export default function PagePhotos() {
         <p className="mt-1 text-sm text-slate-500">Envoyez une photo à votre équipe médicale pour le suivi de la cicatrisation.</p>
       </div>
 
-      <PhotoUpload />
+      <PhotoUpload onUploaded={() => { if (patient) charger(patient.id); }} />
 
       <section className="grid gap-3">
         <h2 className="text-sm font-semibold text-slate-600">Mes envois</h2>

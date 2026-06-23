@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { MESURES } from "@/lib/constants";
@@ -16,12 +15,13 @@ export function AlerteCard({
   alerte,
   peutTraiter,
   proId,
+  onUpdated,
 }: {
   alerte: AlerteEnrichie;
   peutTraiter: boolean;
   proId: string;
+  onUpdated?: () => void;
 }) {
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [escaladeOuverte, setEscaladeOuverte] = useState(false);
   const [vers, setVers] = useState("");
@@ -37,7 +37,7 @@ export function AlerteCard({
       .update(patch)
       .eq("id", alerte.id);
     setBusy(false);
-    if (!error) router.refresh();
+    if (!error) onUpdated?.();
     else alert("Action refusée (droits insuffisants ou erreur réseau).");
   }
 

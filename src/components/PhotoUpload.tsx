@@ -1,12 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 
 // Envoi d'une photo de cicatrice. Sur mobile, `capture` propose l'appareil
 // photo ; sur desktop, la sélection de fichier classique.
-export function PhotoUpload() {
-  const router = useRouter();
+export function PhotoUpload({ onUploaded }: { onUploaded?: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [fichier, setFichier] = useState<File | null>(null);
   const [apercu, setApercu] = useState<string | null>(null);
@@ -48,7 +46,7 @@ export function PhotoUpload() {
     setEtat("ok");
     setMessage("Photo envoyée ✓");
     reset();
-    router.refresh();
+    onUploaded?.();
     setTimeout(() => setEtat("idle"), 1500);
   }
 
