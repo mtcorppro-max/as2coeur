@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { MESURES } from "@/lib/constants";
 import type { Alerte, TypeMesure } from "@/lib/types";
@@ -22,10 +22,13 @@ export function AlerteCard({
   proId: string;
   onUpdated?: () => void;
 }) {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [escaladeOuverte, setEscaladeOuverte] = useState(false);
   const [vers, setVers] = useState("");
   const [note, setNote] = useState("");
+
+  const lien = `/pro/patients/${alerte.patient?.id ?? ""}`;
 
   const meta = alerte.mesure ? MESURES[alerte.mesure.type] : null;
 
@@ -70,16 +73,24 @@ export function AlerteCard({
         : "border-l-rose-300";
 
   return (
-    <div className={`card border-l-4 ${couleur}`}>
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={() => alerte.patient?.id && router.push(lien)}
+      onKeyDown={(e) => {
+        if ((e.key === "Enter" || e.key === " ") && alerte.patient?.id) {
+          e.preventDefault();
+          router.push(lien);
+        }
+      }}
+      className={`card cursor-pointer border-l-4 transition hover:shadow-md ${couleur}`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <Link
-              href={`/pro/patients/${alerte.patient?.id ?? ""}`}
-              className="font-semibold text-slate-800 hover:text-brand"
-            >
+            <span className="font-semibold text-slate-800">
               {alerte.patient?.nom ?? "Patient"}
-            </Link>
+            </span>
             <StatutBadge statut={alerte.statut} />
           </div>
           {alerte.mesure && meta && (
@@ -106,7 +117,7 @@ export function AlerteCard({
         </div>
 
         {peutTraiter && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
             {alerte.statut === "declenchee" && (
               <button onClick={acquitter} disabled={busy} className="btn-secondary">
                 Acquitter
@@ -129,7 +140,7 @@ export function AlerteCard({
       </div>
 
       {escaladeOuverte && peutTraiter && (
-        <div className="mt-4 grid gap-3 rounded-xl bg-rose-50 p-4">
+        <div className="mt-4 grid gap-3 rounded-xl bg-rose-50 p-4" onClick={(e) => e.stopPropagation()}>
           <p className="text-xs text-slate-500">
             Horodatage automatique à l&apos;enregistrement —{" "}
             {new Date().toLocaleString("fr-FR")}
