@@ -96,7 +96,7 @@ export function InfosPatient({
         </div>
 
         <div className="grid gap-4 border-t border-rose-100 pt-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Parcours de soins</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Environnement de soins</p>
           <div className="grid gap-4 sm:grid-cols-2">
             <Champ label="Opération subie" value={form.operation} onChange={set("operation")} />
             <Champ label="Date de l'opération" type="date" value={form.date_operation} onChange={set("date_operation")} />
@@ -166,7 +166,7 @@ export function InfosPatient({
             <Ligne label="Ville" value={villeLigne} />
           </Bloc>
 
-          <Bloc titre="Parcours de soins">
+          <Bloc titre="Environnement de soins">
             <Ligne
               label="Opération"
               value={vue.operation}

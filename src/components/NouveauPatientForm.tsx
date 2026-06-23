@@ -122,9 +122,9 @@ export function NouveauPatientForm() {
         </div>
       </div>
 
-      {/* ── Parcours de soins ── */}
+      {/* ── Environnement de soins ── */}
       <div className="grid gap-4 border-t border-rose-100 pt-4">
-        <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Parcours de soins</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Environnement de soins</p>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label">Opération subie</label>
