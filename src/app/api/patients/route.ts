@@ -38,7 +38,11 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => ({}));
-  const nom = (body.nom ?? "").trim();
+  // Nom complet = « Prénom Nom » (le prénom est facultatif).
+  const nom = [body.prenom, body.nom]
+    .map((s: string) => (s ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
   if (!nom) {
     return NextResponse.json({ message: "Nom requis." }, { status: 400 });
   }

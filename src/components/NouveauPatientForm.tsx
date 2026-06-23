@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 const VIDE = {
+  prenom: "",
   nom: "",
   date_naissance: "",
   code_postal: "",
@@ -90,13 +91,17 @@ export function NouveauPatientForm() {
       <div className="grid gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
+            <label className="label">Prénom du patient</label>
+            <input className="input" value={form.prenom} onChange={set("prenom")} />
+          </div>
+          <div>
             <label className="label">Nom du patient *</label>
             <input className="input" value={form.nom} onChange={set("nom")} required />
           </div>
-          <div>
-            <label className="label">Date de naissance</label>
-            <input type="date" className="input" value={form.date_naissance} onChange={set("date_naissance")} />
-          </div>
+        </div>
+        <div>
+          <label className="label">Date de naissance</label>
+          <input type="date" className="input" value={form.date_naissance} onChange={set("date_naissance")} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
