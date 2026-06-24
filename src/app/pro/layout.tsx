@@ -59,7 +59,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         <NavItem href="/pro" icon="⊞" label="Tableau" />
         <NavItem href="/pro/alertes" icon="◎" label="Alertes" />
         {peutChatter && <NavItem href="/pro/messagerie" icon="◇" label="Messagerie" />}
-        <NavItem href="/pro/calendrier" icon="🗓" label="Organisation" />
+        <NavItem href="/pro/calendrier" icon="▦" label="Organisation" />
         {estCoord && <NavItem href="/pro/nouveau-patient" icon="＋" label="Nouveau" />}
       </nav>
     </div>
