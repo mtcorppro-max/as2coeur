@@ -145,6 +145,20 @@ export default function FichePatient() {
       {/* ── Alertes en cours — clôturables ici ── */}
       <AlertesPatient patientId={patient.id} />
 
+      {/* ── Suivis (fiches quotidiennes + PDF) ── */}
+      <SuiviPatient
+        patient={patient}
+        constantes={{
+          ta:
+            dernieres.has("ta_systolique") || dernieres.has("ta_diastolique")
+              ? `${dernieres.get("ta_systolique") ?? "—"}/${dernieres.get("ta_diastolique") ?? "—"}`
+              : "",
+          pouls: dernieres.get("bpm")?.toString() ?? "",
+          temperature: dernieres.get("temperature")?.toString() ?? "",
+          spo2: dernieres.get("spo2")?.toString() ?? "",
+        }}
+      />
+
       {/* ── Informations patient ── */}
       <InfosPatient patient={patient} modifiable={modifiableInfos} />
 
@@ -164,20 +178,6 @@ export default function FichePatient() {
           })}
         </div>
       </section>
-
-      {/* ── Suivis (fiches quotidiennes + PDF) ── */}
-      <SuiviPatient
-        patient={patient}
-        constantes={{
-          ta:
-            dernieres.has("ta_systolique") || dernieres.has("ta_diastolique")
-              ? `${dernieres.get("ta_systolique") ?? "—"}/${dernieres.get("ta_diastolique") ?? "—"}`
-              : "",
-          pouls: dernieres.get("bpm")?.toString() ?? "",
-          temperature: dernieres.get("temperature")?.toString() ?? "",
-          spo2: dernieres.get("spo2")?.toString() ?? "",
-        }}
-      />
 
       {/* ── Courbes + seuils ── */}
       {!courbes ? (
