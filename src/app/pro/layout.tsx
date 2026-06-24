@@ -29,7 +29,16 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               <Onglet href="/pro/alertes" label="Alertes" />
               {peutChatter && <Onglet href="/pro/messagerie" label="Messagerie" />}
               <Onglet href="/pro/calendrier" label="Organisation" />
-              {estCoord && <Onglet href="/pro/nouveau-patient" label="Nouveau patient" />}
+              {estCoord && (
+                <Link
+                  href="/pro/nouveau-patient"
+                  prefetch={true}
+                  className="ml-1 inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+                >
+                  <span className="text-base leading-none">＋</span>
+                  Nouveau patient
+                </Link>
+              )}
             </nav>
           </div>
           <div className="flex items-center gap-3 text-right">
