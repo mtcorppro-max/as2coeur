@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { useData } from "@/lib/hooks/useData";
+import { AstreinteAlerte } from "@/components/AstreinteAlerte";
 import type { Patient } from "@/lib/types";
 
 type AlerteInfo = { active: number; acquittees: number };
@@ -41,6 +42,7 @@ export default function Dashboard() {
 
   return (
     <div className="grid gap-5">
+      <AstreinteAlerte />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-800">Tableau de bord</h1>
         {!data ? (

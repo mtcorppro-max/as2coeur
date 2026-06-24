@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { LIBELLE_ROLE } from "@/lib/roles";
+import { isoDate, semainesAVenir, astreintesIncompletes } from "@/lib/astreinte";
 import type { RolePro } from "@/lib/types";
 
 type ProLite = { id: string; nom: string; role: RolePro };
@@ -50,6 +51,8 @@ export default function CalendrierSoignant() {
   const [absences, setAbsences] = useState<AbsenceLigne[]>([]);
   const [equipe, setEquipe] = useState<ProLite[]>([]);
   const [ready, setReady] = useState(false);
+  // Astreintes : clé "YYYY-MM-DD|semaine" / "YYYY-MM-DD|weekend" -> professionnel_id
+  const [astreintes, setAstreintes] = useState<Map<string, string>>(new Map());
 
   // Mois affiché dans le calendrier
   const [mois, setMois] = useState(() => {
@@ -67,15 +70,19 @@ export default function CalendrierSoignant() {
 
   async function charger() {
     const supabase = createClient();
-    const [{ data: abs }, { data: pros }] = await Promise.all([
+    const [{ data: abs }, { data: pros }, { data: astr }] = await Promise.all([
       supabase
         .from("absence")
         .select("*, professionnel:professionnel_id(nom,role), remplacant:remplacant_id(nom,role)")
         .order("date_debut", { ascending: true }),
       supabase.from("professionnel").select("id,nom,role").order("nom"),
+      supabase.from("astreinte").select("semaine_debut,type,professionnel_id"),
     ]);
     setAbsences((abs ?? []) as unknown as AbsenceLigne[]);
     setEquipe((pros ?? []) as ProLite[]);
+    const m = new Map<string, string>();
+    (astr ?? []).forEach((a) => m.set(`${a.semaine_debut}|${a.type}`, a.professionnel_id));
+    setAstreintes(m);
     setReady(true);
   }
 
@@ -113,6 +120,37 @@ export default function CalendrierSoignant() {
     const supabase = createClient();
     const { error } = await supabase.from("absence").delete().eq("id", id);
     if (!error) setAbsences((prev) => prev.filter((a) => a.id !== id));
+  }
+
+  async function definirAstreinte(semaineISO: string, type: "semaine" | "weekend", proId: string) {
+    if (!pro) return;
+    const supabase = createClient();
+    const cle = `${semaineISO}|${type}`;
+    // Optimiste
+    setAstreintes((prev) => {
+      const m = new Map(prev);
+      if (proId) m.set(cle, proId);
+      else m.delete(cle);
+      return m;
+    });
+    if (!proId) {
+      await supabase
+        .from("astreinte")
+        .delete()
+        .eq("prestataire_id", pro.prestataire_id)
+        .eq("semaine_debut", semaineISO)
+        .eq("type", type);
+    } else {
+      await supabase.from("astreinte").upsert(
+        {
+          prestataire_id: pro.prestataire_id,
+          semaine_debut: semaineISO,
+          type,
+          professionnel_id: proId,
+        },
+        { onConflict: "prestataire_id,semaine_debut,type" }
+      );
+    }
   }
 
   // ── Calcul des barres du calendrier pour le mois affiché ──────────
@@ -168,6 +206,12 @@ export default function CalendrierSoignant() {
             Calendrier des congés de l&apos;équipe. Une couleur par soignant.
           </p>
         </div>
+
+        {ready && astreintesIncompletes(new Set(astreintes.keys())) && (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-attention">
+            ⚠️ Astreintes non renseignées pour les 15 prochains jours. Merci de désigner les soignants d&apos;astreinte ci-dessous.
+          </p>
+        )}
 
         {/* ── Calendrier mensuel ── */}
         <div className="card">
@@ -242,6 +286,61 @@ export default function CalendrierSoignant() {
             </div>
           )}
         </div>
+
+        {/* ── Astreintes ── */}
+        <section className="card grid gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-700">Astreintes</h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Désignez l&apos;astreinte semaine (lun–ven) et week-end (sam–dim), au moins 15 jours à l&apos;avance.
+            </p>
+          </div>
+          {!ready ? (
+            <div className="h-32 animate-pulse rounded-xl bg-rose-50" />
+          ) : (
+            <div className="grid gap-3">
+              {semainesAVenir(6).map((lundi) => {
+                const k = isoDate(lundi);
+                const dimanche = new Date(lundi);
+                dimanche.setDate(dimanche.getDate() + 6);
+                const label = `${lundi.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })} – ${dimanche.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}`;
+                const semaineVide = !astreintes.has(`${k}|semaine`);
+                const weekendVide = !astreintes.has(`${k}|weekend`);
+                return (
+                  <div key={k} className="grid gap-2 border-t border-rose-50 pt-3 sm:grid-cols-[120px_1fr_1fr] sm:items-center">
+                    <span className="text-sm font-medium text-slate-600">Sem. {label}</span>
+                    <label className="grid gap-1">
+                      <span className="text-[11px] text-slate-400">Semaine (lun–ven)</span>
+                      <select
+                        className={`input ${semaineVide ? "border-amber-300" : ""}`}
+                        value={astreintes.get(`${k}|semaine`) ?? ""}
+                        onChange={(e) => definirAstreinte(k, "semaine", e.target.value)}
+                      >
+                        <option value="">— À désigner —</option>
+                        {equipe.map((p) => (
+                          <option key={p.id} value={p.id}>{p.nom}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="grid gap-1">
+                      <span className="text-[11px] text-slate-400">Week-end (sam–dim)</span>
+                      <select
+                        className={`input ${weekendVide ? "border-amber-300" : ""}`}
+                        value={astreintes.get(`${k}|weekend`) ?? ""}
+                        onChange={(e) => definirAstreinte(k, "weekend", e.target.value)}
+                      >
+                        <option value="">— À désigner —</option>
+                        {equipe.map((p) => (
+                          <option key={p.id} value={p.id}>{p.nom}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         {/* ── Liste détaillée ── */}
         <section className="grid gap-3">
