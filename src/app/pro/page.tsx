@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { useData } from "@/lib/hooks/useData";
@@ -31,6 +32,7 @@ async function fetchDashboard(): Promise<DashData> {
 
 export default function Dashboard() {
   useProSession();
+  const router = useRouter();
   const data = useData<DashData>("pro:dashboard", fetchDashboard);
 
   const { patients, parPatient, totalActives } = useMemo(() => (
@@ -123,7 +125,11 @@ export default function Dashboard() {
                   const e = parPatient.get(p.id);
                   const critique = (e?.active ?? 0) > 0;
                   return (
-                    <tr key={p.id} className={critique ? "bg-red-50/60" : "hover:bg-rose-50/40"}>
+                    <tr
+                      key={p.id}
+                      onClick={() => router.push(`/pro/patients/${p.id}`)}
+                      className={`cursor-pointer ${critique ? "bg-red-50/60 hover:bg-red-100/60" : "hover:bg-rose-50/40"}`}
+                    >
                       <td className="px-4 py-3 font-semibold text-slate-700">{p.nom}</td>
                       <td className="px-4 py-3"><StatutSuivi statut={p.statut} /></td>
                       <td className="px-4 py-3">
