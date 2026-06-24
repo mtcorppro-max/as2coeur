@@ -81,7 +81,8 @@ export function SuiviPatient({
       .single();
     setBusy(false);
     if (error || !data) {
-      alert("Échec de l'enregistrement du suivi.");
+      console.error("Suivi insert error:", error);
+      alert(`Échec de l'enregistrement du suivi.\n\n${error?.message ?? ""}${error?.hint ? `\n${error.hint}` : ""}`);
       return;
     }
     const nouveau = data as Suivi;
