@@ -107,20 +107,18 @@ export function AdresseAutocomplete({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="label">Code postal{required ? " *" : ""}</label>
+          <label className="label">Code postal</label>
           <input
             className="input"
             value={codePostal}
-            required={required}
             onChange={(e) => onChange({ adresse, code_postal: e.target.value, ville })}
           />
         </div>
         <div>
-          <label className="label">Ville{required ? " *" : ""}</label>
+          <label className="label">Ville</label>
           <input
             className="input"
             value={ville}
-            required={required}
             onChange={(e) => onChange({ adresse, code_postal: codePostal, ville: e.target.value })}
           />
         </div>

@@ -102,8 +102,8 @@ export function NouveauPatientForm() {
           </div>
         </div>
         <div>
-          <label className="label">Date de naissance *</label>
-          <input type="date" className="input" value={form.date_naissance} onChange={set("date_naissance")} required />
+          <label className="label">Date de naissance</label>
+          <input type="date" className="input" value={form.date_naissance} onChange={set("date_naissance")} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -148,47 +148,47 @@ export function NouveauPatientForm() {
           </div>
         </div>
         <div>
-          <label className="label">Chirurgien (qui a opéré) *</label>
-          <input className="input" value={form.chirurgien} onChange={set("chirurgien")} placeholder="Dr…" required />
+          <label className="label">Chirurgien (qui a opéré)</label>
+          <input className="input" value={form.chirurgien} onChange={set("chirurgien")} placeholder="Dr…" />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Pharmacie *</label>
-            <input className="input" value={form.pharmacie} onChange={set("pharmacie")} placeholder="Nom / ville de la pharmacie" required />
+            <label className="label">Pharmacie</label>
+            <input className="input" value={form.pharmacie} onChange={set("pharmacie")} placeholder="Nom / ville de la pharmacie" />
           </div>
           <div>
-            <label className="label">Tél. pharmacie *</label>
-            <input className="input" value={form.pharmacie_tel} onChange={set("pharmacie_tel")} placeholder="0…" inputMode="tel" required />
+            <label className="label">Tél. pharmacie</label>
+            <input className="input" value={form.pharmacie_tel} onChange={set("pharmacie_tel")} placeholder="0…" inputMode="tel" />
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Infirmière libérale *</label>
-            <input className="input" value={form.infirmiere_nom} onChange={set("infirmiere_nom")} placeholder="Nom" required />
+            <label className="label">Infirmière libérale</label>
+            <input className="input" value={form.infirmiere_nom} onChange={set("infirmiere_nom")} placeholder="Nom" />
           </div>
           <div>
-            <label className="label">Tél. infirmière libérale *</label>
-            <input className="input" value={form.infirmiere_tel} onChange={set("infirmiere_tel")} placeholder="06…" inputMode="tel" required />
+            <label className="label">Tél. infirmière libérale</label>
+            <input className="input" value={form.infirmiere_tel} onChange={set("infirmiere_tel")} placeholder="06…" inputMode="tel" />
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="label">Alerte 1 — nom *</label>
-            <input className="input" value={form.alerte_1_nom} onChange={set("alerte_1_nom")} placeholder="Nom du destinataire" required />
+            <label className="label">Alerte 1 — nom</label>
+            <input className="input" value={form.alerte_1_nom} onChange={set("alerte_1_nom")} placeholder="Nom du destinataire" />
           </div>
           <div>
-            <label className="label">Alerte 1 — n° *</label>
-            <input className="input" value={form.tel_alerte_1} onChange={set("tel_alerte_1")} placeholder="+33…" inputMode="tel" required />
+            <label className="label">Alerte 1 — n°</label>
+            <input className="input" value={form.tel_alerte_1} onChange={set("tel_alerte_1")} placeholder="+33…" inputMode="tel" />
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="label">Alerte 2 (backup) — nom *</label>
-            <input className="input" value={form.alerte_2_nom} onChange={set("alerte_2_nom")} placeholder="Nom du destinataire" required />
+            <label className="label">Alerte 2 (backup) — nom</label>
+            <input className="input" value={form.alerte_2_nom} onChange={set("alerte_2_nom")} placeholder="Nom du destinataire" />
           </div>
           <div>
-            <label className="label">Alerte 2 (backup) — n° *</label>
-            <input className="input" value={form.tel_alerte_2} onChange={set("tel_alerte_2")} placeholder="+33…" inputMode="tel" required />
+            <label className="label">Alerte 2 (backup) — n°</label>
+            <input className="input" value={form.tel_alerte_2} onChange={set("tel_alerte_2")} placeholder="+33…" inputMode="tel" />
           </div>
         </div>
       </div>
