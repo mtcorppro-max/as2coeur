@@ -110,3 +110,13 @@ export interface Alerte {
   resolue_le: string | null;
   canal: string | null;
 }
+
+export interface Absence {
+  id: string;
+  professionnel_id: string;
+  remplacant_id: string | null;
+  date_debut: string;
+  date_fin: string;
+  motif: string | null;
+  created_at: string;
+}
