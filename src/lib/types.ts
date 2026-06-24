@@ -111,6 +111,26 @@ export interface Alerte {
   canal: string | null;
 }
 
+export interface Suivi {
+  id: string;
+  patient_id: string;
+  auteur_user_id: string | null;
+  auteur_nom: string | null;
+  etat_general: string | null;
+  ta: string | null;
+  pouls: string | null;
+  temperature: string | null;
+  spo2: string | null;
+  douleur_en: string | null;
+  alimentation: string | null;
+  hydratation: string | null;
+  transit: string | null;
+  cicatrisation: string | null;
+  mobilisation: string | null;
+  bilan_sanguin: string | null;
+  created_at: string;
+}
+
 export interface Absence {
   id: string;
   professionnel_id: string;

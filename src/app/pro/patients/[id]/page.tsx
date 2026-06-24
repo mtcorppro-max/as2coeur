@@ -11,6 +11,7 @@ import { ChatBox } from "@/components/ChatBox";
 import { InfosPatient } from "@/components/InfosPatient";
 import { MarquerVisite } from "@/components/MarquerVisite";
 import { AlertesPatient } from "@/components/AlertesPatient";
+import { SuiviPatient } from "@/components/SuiviPatient";
 import type { Mesure, Seuil, Photo, Message, Patient } from "@/lib/types";
 
 // ── Fetchers (navigateur → Supabase, sans round-trip serveur) ───────
@@ -163,6 +164,20 @@ export default function FichePatient() {
           })}
         </div>
       </section>
+
+      {/* ── Suivis (fiches quotidiennes + PDF) ── */}
+      <SuiviPatient
+        patient={patient}
+        constantes={{
+          ta:
+            dernieres.has("ta_systolique") || dernieres.has("ta_diastolique")
+              ? `${dernieres.get("ta_systolique") ?? "—"}/${dernieres.get("ta_diastolique") ?? "—"}`
+              : "",
+          pouls: dernieres.get("bpm")?.toString() ?? "",
+          temperature: dernieres.get("temperature")?.toString() ?? "",
+          spo2: dernieres.get("spo2")?.toString() ?? "",
+        }}
+      />
 
       {/* ── Courbes + seuils ── */}
       {!courbes ? (
