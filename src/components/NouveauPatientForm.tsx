@@ -190,7 +190,7 @@ export function NouveauPatientForm() {
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="label">Alerte 1 — soignant</label>
-            <select className="input" value={form.alerte_1_nom} onChange={(e) => setVal("alerte_1_nom", e.target.value)}>
+            <select className="select" value={form.alerte_1_nom} onChange={(e) => setVal("alerte_1_nom", e.target.value)}>
               <option value="">— Choisir un compte —</option>
               {soignants.map((s) => (
                 <option key={s.id} value={s.nom}>{s.nom} ({LIBELLE_ROLE[s.role]})</option>
@@ -208,7 +208,7 @@ export function NouveauPatientForm() {
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <label className="label">Alerte 2 (backup) — soignant</label>
-            <select className="input" value={form.alerte_2_nom} onChange={(e) => setVal("alerte_2_nom", e.target.value)}>
+            <select className="select" value={form.alerte_2_nom} onChange={(e) => setVal("alerte_2_nom", e.target.value)}>
               <option value="">— Choisir un compte —</option>
               {soignants.map((s) => (
                 <option key={s.id} value={s.nom}>{s.nom} ({LIBELLE_ROLE[s.role]})</option>

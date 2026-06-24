@@ -34,6 +34,12 @@ body {
   .input {
     @apply w-full rounded-xl border border-rose-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-rose-200;
   }
+  .select {
+    @apply input cursor-pointer appearance-none bg-no-repeat pr-10 text-slate-700;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20fill='none'%20viewBox='0%200%2024%2024'%20stroke='%23be185d'%20stroke-width='2.2'%3E%3Cpath%20stroke-linecap='round'%20stroke-linejoin='round'%20d='M6%209l6%206%206-6'/%3E%3C/svg%3E");
+    background-position: right 0.7rem center;
+    background-size: 1.05rem 1.05rem;
+  }
   .label {
     @apply mb-1.5 block text-sm font-medium text-slate-600;
   }

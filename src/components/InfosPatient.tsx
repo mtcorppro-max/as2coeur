@@ -309,7 +309,7 @@ function SelectSoignant({
   return (
     <div>
       <label className="label">{label}</label>
-      <select className="input" value={value} onChange={(e) => onChange(e.target.value)}>
+      <select className="select" value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="">— Choisir un compte —</option>
         {soignants.map((s) => (
           <option key={s.id} value={s.nom}>

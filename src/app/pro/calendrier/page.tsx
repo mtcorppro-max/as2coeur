@@ -312,7 +312,7 @@ export default function CalendrierSoignant() {
                     <label className="grid gap-1">
                       <span className="text-[11px] text-slate-400">Semaine (lun–ven)</span>
                       <select
-                        className={`input ${semaineVide ? "border-rose-300" : ""}`}
+                        className={`select ${semaineVide ? "border-rose-300" : ""}`}
                         value={astreintes.get(`${k}|semaine`) ?? ""}
                         onChange={(e) => definirAstreinte(k, "semaine", e.target.value)}
                       >
@@ -325,7 +325,7 @@ export default function CalendrierSoignant() {
                     <label className="grid gap-1">
                       <span className="text-[11px] text-slate-400">Week-end (sam–dim)</span>
                       <select
-                        className={`input ${weekendVide ? "border-rose-300" : ""}`}
+                        className={`select ${weekendVide ? "border-rose-300" : ""}`}
                         value={astreintes.get(`${k}|weekend`) ?? ""}
                         onChange={(e) => definirAstreinte(k, "weekend", e.target.value)}
                       >
@@ -360,7 +360,7 @@ export default function CalendrierSoignant() {
           </div>
           <div>
             <label className="label">Remplacé(e) par</label>
-            <select className="input" value={remplacant} onChange={(e) => setRemplacant(e.target.value)}>
+            <select className="select" value={remplacant} onChange={(e) => setRemplacant(e.target.value)}>
               <option value="">— Choisir un soignant —</option>
               {autresPros.map((p) => (
                 <option key={p.id} value={p.id}>
