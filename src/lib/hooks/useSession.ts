@@ -32,18 +32,16 @@ let memPro: SessionPro | null = null;
 // ── Patient ──────────────────────────────────────────────────────────
 
 export function usePatientSession() {
-  // Initialisation synchrone : mémoire → localStorage → null
-  // Pas d'effet de flash, les données sont là dès le premier render
-  const [patient, setPatient] = useState<SessionPatient | null>(() => {
-    if (memPatient) return memPatient;
-    if (typeof window === "undefined") return null;
-    const cached = lsGet<SessionPatient>(LS_PATIENT);
-    if (cached) { memPatient = cached; return cached; }
-    return null;
-  });
+  // Init = cache mémoire uniquement (null au 1er chargement, donc identique
+  // côté serveur et client → pas d'erreur d'hydratation). Le localStorage est
+  // lu après le montage. Lors des navigations suivantes, memPatient est déjà
+  // rempli → affichage instantané sans flash.
+  const [patient, setPatient] = useState<SessionPatient | null>(memPatient);
 
   useEffect(() => {
-    if (patient) return; // déjà en cache
+    if (patient) return; // déjà en cache mémoire
+    const cached = lsGet<SessionPatient>(LS_PATIENT);
+    if (cached) { memPatient = cached; setPatient(cached); return; }
     fetchPatient().then((p) => { if (p) setPatient(p); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -71,16 +69,12 @@ async function fetchPatient(): Promise<SessionPatient | null> {
 // ── Pro ──────────────────────────────────────────────────────────────
 
 export function useProSession() {
-  const [pro, setPro] = useState<SessionPro | null>(() => {
-    if (memPro) return memPro;
-    if (typeof window === "undefined") return null;
-    const cached = lsGet<SessionPro>(LS_PRO);
-    if (cached) { memPro = cached; return cached; }
-    return null;
-  });
+  const [pro, setPro] = useState<SessionPro | null>(memPro);
 
   useEffect(() => {
     if (pro) return;
+    const cached = lsGet<SessionPro>(LS_PRO);
+    if (cached) { memPro = cached; setPro(cached); return; }
     fetchPro().then((p) => { if (p) setPro(p); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
