@@ -2,13 +2,13 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SoignantCoco — Télésurveillance post-opératoire",
+  title: "AS2CŒUR — Télésurveillance post-opératoire",
   description: "Suivi à domicile des patients récemment opérés du système digestif.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "SoignantCoco",
+    title: "AS2CŒUR",
   },
   icons: {
     icon: "/favicon.png",

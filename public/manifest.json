@@ -1,6 +1,6 @@
 {
-  "name": "SoignantCoco",
-  "short_name": "SoignantCoco",
+  "name": "AS2CŒUR",
+  "short_name": "AS2CŒUR",
   "description": "Télésurveillance post-opératoire à domicile",
   "start_url": "/patient",
   "scope": "/",

@@ -5,7 +5,7 @@ export function Logo({ className = "" }: { className?: string }) {
         ❤
       </span>
       <span className="text-brand">
-        Soignant<span className="text-rose-400">Coco</span>
+        AS2<span className="text-rose-400">CŒUR</span>
       </span>
     </span>
   );

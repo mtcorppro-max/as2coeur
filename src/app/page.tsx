@@ -12,7 +12,7 @@ export default function Landing() {
           {/* Desktop : logo complet — Mobile : cœur uniquement */}
           <span className="inline-flex items-center gap-2 font-bold text-lg">
             <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand text-white shrink-0">❤</span>
-            <span className="hidden md:inline text-brand">Soignant<span className="text-rose-400">Coco</span></span>
+            <span className="hidden md:inline text-brand">AS2<span className="text-rose-400">CŒUR</span></span>
           </span>
           <nav className="hidden gap-1 md:flex">
             {[
@@ -68,7 +68,7 @@ export default function Landing() {
                 à domicile.
               </h1>
               <p className="mt-5 max-w-lg text-lg leading-relaxed text-white drop-shadow-md">
-                SoignantCoco accompagne les patients après une opération
+                AS2CŒUR accompagne les patients après une opération
                 digestive : mesure des constantes, alertes automatiques et
                 messagerie directe avec votre équipe soignante.
               </p>
@@ -249,7 +249,7 @@ export default function Landing() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-slate-400 sm:flex-row">
           <Logo />
           <p>Prototype — Télésurveillance post-opératoire à domicile</p>
-          <p>© 2026 SoignantCoco</p>
+          <p>© 2026 AS2CŒUR</p>
         </div>
       </footer>
     </div>
@@ -320,7 +320,7 @@ const FEATURES = [
 const FAQ = [
   {
     q: "Le patient a-t-il besoin d'un smartphone récent ?",
-    a: "Non. SoignantCoco fonctionne sur n'importe quel navigateur mobile, sans installation d'application. Un téléphone basique avec accès internet suffit.",
+    a: "Non. AS2CŒUR fonctionne sur n'importe quel navigateur mobile, sans installation d'application. Un téléphone basique avec accès internet suffit.",
   },
   {
     q: "Comment le patient reçoit-il son code de connexion ?",
@@ -376,7 +376,7 @@ function PhoneMockup() {
         <div className="mt-12 px-4 pb-4">
           {/* En-tête app */}
           <div className="mb-4 flex items-center justify-between">
-            <span className="text-[10px] font-bold text-brand">SoignantCoco</span>
+            <span className="text-[10px] font-bold text-brand">AS2CŒUR</span>
             <span className="text-[10px] text-slate-400">Bonjour Marie</span>
           </div>
 

@@ -1,4 +1,4 @@
-# SoignantCoco — Télésurveillance post-opératoire à domicile
+# AS2CŒUR — Télésurveillance post-opératoire à domicile
 
 Fondation **Next.js + Supabase** (web responsive, thème rose foncé / blanc).
 Suivi à domicile des patients récemment opérés du système digestif :
