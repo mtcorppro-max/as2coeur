@@ -203,14 +203,14 @@ export default function Landing() {
             </div>
             <div className="mt-12 grid gap-4">
               {FAQ.map((item) => (
-                <details key={item.q} className="group rounded-2xl border border-white/30 bg-rose-900/50 px-6 py-5 open:shadow-lg transition-shadow">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold text-white">
+                <details key={item.q} className="group overflow-hidden rounded-2xl border border-white/30 bg-rose-900/50 open:shadow-lg transition-shadow">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-6 py-5 font-semibold text-white">
                     {item.q}
                     <span className="shrink-0 text-rose-300 transition-transform duration-200 group-open:rotate-45">
                       ＋
                     </span>
                   </summary>
-                  <p className="mt-4 text-sm leading-relaxed text-rose-200">{item.a}</p>
+                  <p className="px-6 pb-5 text-sm leading-relaxed text-rose-200">{item.a}</p>
                 </details>
               ))}
             </div>
