@@ -101,11 +101,24 @@ export function InfosPatient({
       : null;
 
     const { error } = await supabase.from("patient").update(payload).eq("id", patient.id);
-    setBusy(false);
     if (error) {
+      setBusy(false);
       alert("Enregistrement refusé (droits ou réseau).");
       return;
     }
+
+    // Rattachement déduit du chirurgien + des coordinatrices d'alerte choisis.
+    const noms = [form.chirurgien, form.alerte_1_nom, form.alerte_2_nom].filter(Boolean);
+    const ids = [...new Set(soignants.filter((s) => noms.includes(s.nom)).map((s) => s.id))];
+    // On resynchronise : suppression puis réinsertion (droits coordinatrice/niveau 1).
+    await supabase.from("patient_soignant").delete().eq("patient_id", patient.id);
+    if (ids.length) {
+      await supabase
+        .from("patient_soignant")
+        .insert(ids.map((professionnel_id) => ({ patient_id: patient.id, professionnel_id })));
+    }
+
+    setBusy(false);
     setVue({ ...form });
     setEdition(false);
   }
