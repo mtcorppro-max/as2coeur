@@ -111,6 +111,9 @@ export async function POST(request: Request) {
           cryotherapie_duree: body.cryotherapie === true ? texteOuNull(body.cryotherapie_duree) : null,
           cryotherapie_machine: body.cryotherapie === true ? texteOuNull(body.cryotherapie_machine) : null,
           envoi_ordo: Array.isArray(body.envoi_ordo) && body.envoi_ordo.length > 0 ? body.envoi_ordo : null,
+          pharmacie_per_os: body.pharmacie_per_os === true,
+          pharmacie_per_os_detail: body.pharmacie_per_os === true ? texteOuNull(body.pharmacie_per_os_detail) : null,
+          materiel_paramedical: texteOuNull(body.materiel_paramedical),
         }
       : {
           prenom: texteOuNull(body.prenom),

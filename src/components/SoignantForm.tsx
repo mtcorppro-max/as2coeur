@@ -31,6 +31,9 @@ const VIDE = {
   cryotherapie: false,
   cryotherapie_duree: "",
   cryotherapie_machine: "",
+  pharmacie_per_os: false,
+  pharmacie_per_os_detail: "",
+  materiel_paramedical: "",
   protocole: "",
 };
 
@@ -363,7 +366,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
 
             {/* Envoi Ordo / CR */}
             <div className="grid gap-2">
-              <label className="label mb-0">Envoi des ordonnances / comptes rendus (Ordo/CR)</label>
+              <label className="label mb-0">Envoi des ordonnances / comptes rendus</label>
               <div className="flex flex-wrap gap-2">
                 {[
                   { v: "secretariat", l: "Secrétariat" },
@@ -386,6 +389,35 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
                   );
                 })}
               </div>
+            </div>
+
+            {/* Pharmacie / Per os */}
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between gap-3">
+                <label className="label mb-0">Médicaments Per os à commander en pharmacie ?</label>
+                <OuiNon valeur={form.pharmacie_per_os} onChange={(v) => setForm((f) => ({ ...f, pharmacie_per_os: v }))} nom="pharmacie_per_os" />
+              </div>
+              {form.pharmacie_per_os && (
+                <textarea
+                  className="input"
+                  rows={3}
+                  value={form.pharmacie_per_os_detail}
+                  onChange={set("pharmacie_per_os_detail")}
+                  placeholder="Lesquels ? (molécule, dosage, quantité…)"
+                />
+              )}
+            </div>
+
+            {/* Matériel paramédical */}
+            <div>
+              <label className="label">Matériel paramédical à commander</label>
+              <textarea
+                className="input"
+                rows={3}
+                value={form.materiel_paramedical}
+                onChange={set("materiel_paramedical")}
+                placeholder="ex. Attelle de genou, bas de contention…"
+              />
             </div>
 
             <div>
