@@ -296,7 +296,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
                       className="input"
                       value={m.posologie}
                       onChange={(e) => majMolecule(i, { posologie: e.target.value })}
-                      placeholder="Posologie (ex. 1 cp x3/j si douleur)"
+                      placeholder="Posologie IV (ex. 1 amp. IV x3/j)"
                     />
                   )}
                 </div>
