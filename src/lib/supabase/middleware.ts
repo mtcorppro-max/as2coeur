@@ -40,8 +40,13 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Non connecté + zone protégée -> login
+  // Non connecté + zone protégée
   if (!user) {
+    // Les routes API renvoient un 401 JSON (sinon le client reçoit du HTML
+    // de redirection et plante au res.json() : « Unexpected token '<' »).
+    if (path.startsWith("/api/")) {
+      return NextResponse.json({ message: "Session expirée, reconnectez-vous." }, { status: 401 });
+    }
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
