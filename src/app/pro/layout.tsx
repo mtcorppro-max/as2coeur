@@ -27,6 +27,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               <Onglet href="/pro" label="Tableau de bord" />
               <Onglet href="/pro/alertes" label="Alertes" />
               <Onglet href="/pro/calendrier" label="Organisation" />
+              {estCoord && <Onglet href="/pro/nouveau-soignant" label="Comptes soignants" />}
               {estCoord && (
                 <Link
                   href="/pro/nouveau-patient"
