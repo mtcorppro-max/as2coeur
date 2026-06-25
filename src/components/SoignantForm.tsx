@@ -6,19 +6,19 @@ type Prestataire = { id: string; nom: string };
 
 const VIDE = {
   nom: "",
+  prenom: "",
+  titre: "Docteur",
   email: "",
   motDePasse: "",
   role: "chirurgien",
   prestataire_id: "",
-  // Consignes chirurgien / médecin
+  telephone: "",
   specialite: "",
   cabinets: "",
-  telephone: "",
   secretariat_nom: "",
   secretariat_email: "",
   secretariat_tel: "",
   duree_prise_en_charge: "",
-  nb_suivis: "",
   protocole: "",
 };
 
@@ -28,6 +28,7 @@ const VIDE = {
 // coordinatrice connectée (géré côté API).
 export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] }) {
   const [form, setForm] = useState({ ...VIDE });
+  const [joursActifs, setJoursActifs] = useState<number[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [cree, setCree] = useState<{ email: string; motDePasse: string } | null>(null);
@@ -45,7 +46,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
       const res = await fetch("/api/soignants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, jours_suivi: joursActifs }),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.message ?? "Erreur.");
@@ -68,7 +69,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
         <p className="text-xs text-slate-400">
           À transmettre au soignant. Connexion sur l&apos;écran « Équipe médicale ».
         </p>
-        <button onClick={() => { setCree(null); setForm({ ...VIDE }); }} className="btn-secondary">
+        <button onClick={() => { setCree(null); setForm({ ...VIDE }); setJoursActifs([]); }} className="btn-secondary">
           Créer un autre compte
         </button>
       </div>
@@ -79,18 +80,42 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
     <form onSubmit={onSubmit} className="card grid gap-5">
       {/* ── Identité & connexion ── */}
       <div className="grid gap-4">
+        <div>
+          <label className="label">Rôle *</label>
+          <select className="select" value={form.role} onChange={set("role")}>
+            <option value="chirurgien">Chirurgien / Médecin</option>
+            <option value="coordinatrice">Infirmière coordinatrice</option>
+            <option value="delegue">Délégué médical</option>
+          </select>
+        </div>
+        {estChirurgien && (
+          <>
+            <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Médecin</p>
+            <div className="flex gap-4">
+              {(["Interne", "Docteur", "Professeur"] as const).map((t) => (
+                <label key={t} className="flex cursor-pointer items-center gap-1.5 text-sm text-slate-700">
+                  <input
+                    type="radio"
+                    name="titre"
+                    value={t}
+                    checked={form.titre === t}
+                    onChange={() => setForm((f) => ({ ...f, titre: t }))}
+                    className="accent-brand"
+                  />
+                  {t}
+                </label>
+              ))}
+            </div>
+          </>
+        )}
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="label">Nom *</label>
-            <input className="input" value={form.nom} onChange={set("nom")} placeholder="Dr STOURBE Olivier" required />
+            <label className="label">Prénom *</label>
+            <input className="input" value={form.prenom} onChange={set("prenom")} placeholder={estChirurgien ? "Jean" : "Marie"} required />
           </div>
           <div>
-            <label className="label">Rôle *</label>
-            <select className="select" value={form.role} onChange={set("role")}>
-              <option value="chirurgien">Chirurgien / Médecin</option>
-              <option value="coordinatrice">Coordinatrice</option>
-              <option value="delegue">Délégué médical</option>
-            </select>
+            <label className="label">Nom *</label>
+            <input className="input" value={form.nom} onChange={set("nom")} placeholder={estChirurgien ? "MARTIN" : "DUPONT"} required />
           </div>
         </div>
         {prestataires && (
@@ -102,6 +127,12 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
                 <option key={p.id} value={p.id}>{p.nom}</option>
               ))}
             </select>
+          </div>
+        )}
+        {!estChirurgien && (
+          <div>
+            <label className="label">Téléphone</label>
+            <input className="input" value={form.telephone} onChange={set("telephone")} placeholder="06…" inputMode="tel" />
           </div>
         )}
         <div className="grid gap-4 sm:grid-cols-2">
@@ -120,7 +151,6 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
       {estChirurgien && (
         <>
           <div className="grid gap-4 border-t border-rose-100 pt-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Coordonnées du médecin</p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="label">Spécialité</label>
@@ -156,17 +186,53 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
           </div>
 
           <div className="grid gap-4 border-t border-rose-100 pt-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Prise en charge</p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="label">Nombre de jours de prise en charge</label>
-                <input className="input" value={form.duree_prise_en_charge} onChange={set("duree_prise_en_charge")} placeholder="ex. 30" inputMode="numeric" />
-              </div>
-              <div>
-                <label className="label">Nombre de suivis souhaités</label>
-                <input className="input" value={form.nb_suivis} onChange={set("nb_suivis")} placeholder="ex. 3" inputMode="numeric" />
-              </div>
+            <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Consigne prescripteur</p>
+            <div>
+              <label className="label">Combien de jours de prise en charge ?</label>
+              <input
+                className="input"
+                value={form.duree_prise_en_charge}
+                onChange={(e) => {
+                  set("duree_prise_en_charge")(e);
+                  setJoursActifs([]);
+                }}
+                placeholder="ex. 30"
+                inputMode="numeric"
+              />
             </div>
+            {(() => {
+              const nb = parseInt(form.duree_prise_en_charge, 10);
+              if (!nb || nb < 1) return null;
+              const total = Math.min(nb, 60);
+              return (
+                <div>
+                  <label className="label">Jours de suivi</label>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {Array.from({ length: total }, (_, i) => i + 1).map((j) => {
+                      const actif = joursActifs.includes(j);
+                      return (
+                        <button
+                          key={j}
+                          type="button"
+                          onClick={() =>
+                            setJoursActifs((prev) =>
+                              actif ? prev.filter((x) => x !== j) : [...prev, j].sort((a, b) => a - b)
+                            )
+                          }
+                          className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+                            actif
+                              ? "border-brand bg-brand text-white"
+                              : "border-rose-200 bg-white text-slate-600 hover:border-brand hover:text-brand"
+                          }`}
+                        >
+                          J{j}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
             <div>
               <label className="label">Protocole / consignes</label>
               <textarea

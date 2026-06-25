@@ -89,10 +89,12 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2. Ligne professionnel (consignes uniquement pour un chirurgien/médecin)
-  const consignes =
+  // 2. Ligne professionnel
+  const extras =
     role === "chirurgien"
       ? {
+          titre: texteOuNull(body.titre),
+          prenom: texteOuNull(body.prenom),
           specialite: texteOuNull(body.specialite),
           cabinets: texteOuNull(body.cabinets),
           telephone: texteOuNull(body.telephone),
@@ -101,9 +103,12 @@ export async function POST(request: Request) {
           secretariat_tel: texteOuNull(body.secretariat_tel),
           protocole: texteOuNull(body.protocole),
           duree_prise_en_charge: intOuNull(body.duree_prise_en_charge),
-          nb_suivis: intOuNull(body.nb_suivis),
+          jours_suivi: Array.isArray(body.jours_suivi) && body.jours_suivi.length > 0 ? body.jours_suivi : null,
         }
-      : {};
+      : {
+          prenom: texteOuNull(body.prenom),
+          telephone: texteOuNull(body.telephone),
+        };
 
   const { error: errPro } = await admin.from("professionnel").insert({
     user_id: created.user.id,
@@ -111,7 +116,7 @@ export async function POST(request: Request) {
     nom,
     email,
     role,
-    ...consignes,
+    ...extras,
   });
 
   if (errPro) {

@@ -24,6 +24,8 @@ export interface Professionnel {
   user_id: string;
   prestataire_id: string;
   nom: string;
+  prenom: string | null;
+  titre: string | null;
   email: string | null;
   role: RolePro;
   // Consignes médecin / chirurgien (cf. migration 0015)
@@ -35,7 +37,7 @@ export interface Professionnel {
   secretariat_tel: string | null;
   protocole: string | null;
   duree_prise_en_charge: number | null;
-  nb_suivis: number | null;
+  jours_suivi: number[] | null;
   created_at: string;
 }
 
