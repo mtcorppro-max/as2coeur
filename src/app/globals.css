@@ -162,3 +162,46 @@ body {
   text-shadow: 0 0 2px hsla(var(--highlight-hue, 340deg), 100%, 90%, 0.9);
   animation: none;
 }
+
+/* ── Bord lumineux animé (cartes) ─────────────────────────────────── */
+@property --bord-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.bord-anim {
+  position: relative;
+}
+.bord-anim::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.7px; /* épaisseur du liseré */
+  background: conic-gradient(
+    from var(--bord-angle),
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(249, 168, 212, 0.85) 9%,
+    #ffffff 15%,
+    rgba(249, 168, 212, 0.85) 21%,
+    rgba(255, 255, 255, 0.14) 30%,
+    rgba(255, 255, 255, 0.14) 100%
+  );
+  /* ne garde que l'anneau (le contour), pas l'intérieur */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: bord-rotation 5s linear infinite;
+  pointer-events: none;
+}
+@keyframes bord-rotation {
+  to {
+    --bord-angle: 360deg;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bord-anim::before {
+    animation: none;
+  }
+}

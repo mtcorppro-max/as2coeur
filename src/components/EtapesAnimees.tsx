@@ -6,21 +6,27 @@ import { motion, useAnimate, useInView } from "framer-motion";
 const ETAPES = [
   {
     icon: "∿",
-    titre: "Le patient saisit ses constantes",
+    titre: "Le patient transmet ses données",
     description:
-      "Le patient saisit ses constantes depuis son téléphone, ou l'infirmière présente lors de son passage les enregistre à sa place — température, tension, SpO₂, poids — en quelques secondes.",
+      "Constantes (température, tension, SpO₂, fréquence cardiaque, poids) et photos de cicatrice depuis son téléphone, ou saisies par l'infirmière lors de son passage.",
   },
   {
     icon: "◎",
-    titre: "Alerte automatique",
+    titre: "Surveillance & alertes",
     description:
-      "Si une valeur dépasse le seuil fixé par le chirurgien, une alerte est générée instantanément sans aucune intervention manuelle.",
+      "Dès qu'une valeur franchit un seuil, une alerte est générée automatiquement et envoyée par SMS, avec escalade vers un second contact en l'absence de réponse.",
   },
   {
-    icon: "✦",
-    titre: "L'équipe soignante intervient",
+    icon: "◇",
+    titre: "Suivi & échanges",
     description:
-      "La coordinatrice reçoit l'alerte sur son cockpit, peut contacter le patient par messagerie et tracer chaque action.",
+      "L'équipe échange avec le patient par messagerie, avec des suivis planifiés à J1 et au dernier jour de prise en charge, et des rappels d'actions à réaliser.",
+  },
+  {
+    icon: "▤",
+    titre: "Compte rendu & coordination",
+    description:
+      "Chaque suivi génère un compte rendu PDF (courbes et photos). Protocoles médecin et organisation de l'équipe centralisés pour fluidifier l'hôpital ↔ domicile.",
   },
 ];
 
@@ -30,8 +36,9 @@ const BAR_DELAY   = 0.4;   // secondes avant le départ
 
 const PULSE_DELAYS_MS = [
   BAR_DELAY * 1000,                              // étape 1 : départ
-  (BAR_DELAY + BAR_DURATION * 0.38) * 1000,     // étape 2 : ~38 % du trajet
-  (BAR_DELAY + BAR_DURATION * 0.76) * 1000,     // étape 3 : ~76 % du trajet
+  (BAR_DELAY + BAR_DURATION * 0.30) * 1000,     // étape 2 : ~30 % du trajet
+  (BAR_DELAY + BAR_DURATION * 0.60) * 1000,     // étape 3 : ~60 % du trajet
+  (BAR_DELAY + BAR_DURATION * 0.90) * 1000,     // étape 4 : ~90 % du trajet
 ];
 
 function pulseIcon(
@@ -63,7 +70,7 @@ export function EtapesAnimees() {
   }, [inView, animate]);
 
   return (
-    <div ref={scope} className="relative mt-14 grid gap-10 md:grid-cols-3">
+    <div ref={scope} className="relative mt-14 grid gap-10 md:grid-cols-4">
 
       {/* Piste grise fond */}
       <div className="absolute left-6 right-6 top-6 hidden h-0.5 bg-rose-100 md:block" />

@@ -76,7 +76,7 @@ export default function Landing() {
                 <Link href="/login/patient" className="rounded-xl bg-brand px-7 py-3 text-base font-semibold text-white shadow-lg hover:bg-brand-dark">
                   Accès patient
                 </Link>
-                <Link href="/login/pro" className="rounded-xl border border-white/60 bg-white/20 px-7 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/30">
+                <Link href="/login/pro" className="bord-anim rounded-xl bg-white/20 px-7 py-3 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/30">
                   Équipe médicale
                 </Link>
               </div>
@@ -118,7 +118,7 @@ export default function Landing() {
             </div>
             <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {FEATURES.map((f) => (
-                <div key={f.titre} className="flex flex-col gap-3 rounded-2xl border border-white/40 bg-rose-900/50 p-5 transition hover:bg-rose-900/70">
+                <div key={f.titre} className="bord-anim flex flex-col gap-3 rounded-2xl bg-rose-900/50 p-5 transition hover:bg-rose-900/70">
                   <div className="grid h-11 w-11 place-items-center rounded-xl bg-white/20 text-xl text-white">
                     {f.icon}
                   </div>
