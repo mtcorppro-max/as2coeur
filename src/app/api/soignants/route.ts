@@ -104,12 +104,15 @@ export async function POST(request: Request) {
           telephone: texteOuNull(body.telephone),
         };
 
+  const niveau = body.niveau === 1 || body.niveau === "1" ? 1 : 2;
+
   const { error: errPro } = await admin.from("professionnel").insert({
     user_id: created.user.id,
     prestataire_id: prestataireId,
     nom,
     email,
     role,
+    niveau,
     ...extras,
   });
 

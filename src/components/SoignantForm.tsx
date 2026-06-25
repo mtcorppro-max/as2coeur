@@ -81,6 +81,7 @@ const VIDE = {
   email: "",
   motDePasse: "",
   role: "chirurgien",
+  niveau: "2",
   prestataire_id: "",
   telephone: "",
   specialite: "",
@@ -208,6 +209,13 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
             <option value="chirurgien">Chirurgien / Médecin</option>
             <option value="coordinatrice">Infirmière coordinatrice</option>
             <option value="delegue">Délégué médical</option>
+          </select>
+        </div>
+        <div>
+          <label className="label">Niveau d&apos;accès *</label>
+          <select className="select" value={form.niveau} onChange={set("niveau")}>
+            <option value="1">Niveau 1 — accès à tous les patients</option>
+            <option value="2">Niveau 2 — uniquement les patients rattachés</option>
           </select>
         </div>
         {estChirurgien && (

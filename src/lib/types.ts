@@ -28,6 +28,7 @@ export interface Professionnel {
   titre: string | null;
   email: string | null;
   role: RolePro;
+  niveau: number;
   // Consignes médecin / chirurgien (cf. migration 0015)
   specialite: string | null;
   cabinets: string | null;
