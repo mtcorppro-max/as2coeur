@@ -2,6 +2,26 @@ const ROSE: [number, number, number] = [190, 24, 93];
 const GRIS: [number, number, number] = [90, 90, 90];
 const NOIR: [number, number, number] = [40, 40, 40];
 
+type Med = { nom: string; posologie: string };
+
+export type ProtocolePdf = {
+  intervention: string;
+  duree: string;
+  jours: number[];
+  molecules: Med[];
+  pansement: boolean;
+  pansement_detail: string;
+  cryotherapie: boolean;
+  cryotherapie_duree: string;
+  cryotherapie_machine: string;
+  envoi_ordo: string[];
+  pharmacie_per_os: boolean;
+  medicaments_per_os: Med[];
+  materiel: boolean;
+  materiel_paramedical: string;
+  autres: string;
+};
+
 export type ConsignesData = {
   titre: string;
   prenom: string;
@@ -12,20 +32,7 @@ export type ConsignesData = {
   secretariat_nom: string;
   secretariat_email: string;
   secretariat_tel: string;
-  duree_prise_en_charge: string;
-  jours_suivi: number[];
-  molecules: { nom: string; posologie: string }[];
-  pansement: boolean;
-  pansement_detail: string;
-  cryotherapie: boolean;
-  cryotherapie_duree: string;
-  cryotherapie_machine: string;
-  envoi_ordo: string[];
-  pharmacie_per_os: boolean;
-  medicaments_per_os: { nom: string; posologie: string }[];
-  materiel: boolean;
-  materiel_paramedical: string;
-  protocole: string;
+  protocoles: ProtocolePdf[];
 };
 
 // Charge le logo AS2CŒUR (PNG transparent) en data-URL.
@@ -119,17 +126,26 @@ export async function genererPdfConsignes(
     y += 11;
   };
 
+  const sousTitre = (texte: string) => {
+    sautSiBesoin(8);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.5);
+    doc.setTextColor(...ROSE);
+    doc.text(texte.toUpperCase(), M, y);
+    y += 5;
+  };
+
   const ligne = (label: string, valeur: string) => {
     if (!valeur || !valeur.trim()) return;
     sautSiBesoin(6);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9.5);
     doc.setTextColor(...GRIS);
-    doc.text(label, M, y);
+    doc.text(label, M + 2, y);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...NOIR);
-    const wrapped = doc.splitTextToSize(valeur, L - 45);
-    doc.text(wrapped, M + 45, y);
+    const wrapped = doc.splitTextToSize(valeur, L - 47);
+    doc.text(wrapped, M + 47, y);
     y += Math.max(wrapped.length * 5, 5.5);
   };
 
@@ -139,26 +155,26 @@ export async function genererPdfConsignes(
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(...NOIR);
-    const wrapped = doc.splitTextToSize(texte, L);
-    doc.text(wrapped, M, y);
+    const wrapped = doc.splitTextToSize(texte, L - 2);
+    doc.text(wrapped, M + 2, y);
     y += wrapped.length * 5 + 2;
   };
 
-  const listeMolecules = (items: { nom: string; posologie: string }[]) => {
+  const listeMolecules = (items: Med[]) => {
     items.forEach((m) => {
       if (!m.nom) return;
       sautSiBesoin(6);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(10);
       doc.setTextColor(...ROSE);
-      doc.text("•", M, y);
+      doc.text("•", M + 2, y);
       doc.setTextColor(...NOIR);
-      doc.text(m.nom, M + 4, y);
+      doc.text(m.nom, M + 6, y);
       if (m.posologie) {
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...GRIS);
-        const wrapped = doc.splitTextToSize(m.posologie, L - 55);
-        doc.text(wrapped, M + 55, y);
+        const wrapped = doc.splitTextToSize(m.posologie, L - 57);
+        doc.text(wrapped, M + 57, y);
         y += Math.max(wrapped.length * 5, 5.5);
       } else {
         y += 5.5;
@@ -180,50 +196,50 @@ export async function genererPdfConsignes(
     ligne("Téléphone :", d.secretariat_tel);
   }
 
-  // ── Prise en charge ───────────────────────────────────────────────
-  bandeau("PRISE EN CHARGE");
-  ligne("Durée :", d.duree_prise_en_charge ? `${d.duree_prise_en_charge} jours` : "");
-  ligne("Jours de suivi :", d.jours_suivi.length ? d.jours_suivi.map((j) => `J${j}`).join(", ") : "");
-  if (!d.duree_prise_en_charge && !d.jours_suivi.length) paragraphe("—");
+  // ── Protocoles ────────────────────────────────────────────────────
+  d.protocoles.forEach((p, i) => {
+    const titre = p.intervention ? p.intervention : `Protocole ${i + 1}`;
+    bandeau(`PROTOCOLE ${i + 1} — ${titre.toUpperCase()}`);
 
-  // ── Molécules IV ──────────────────────────────────────────────────
-  if (d.molecules.length) {
-    bandeau("MOLÉCULES PRESCRITES (IV)");
-    listeMolecules(d.molecules);
-  }
+    ligne("Durée :", p.duree ? `${p.duree} jours` : "");
+    ligne("Jours de suivi :", p.jours.length ? p.jours.map((j) => `J${j}`).join(", ") : "");
 
-  // ── Médicaments Per os ────────────────────────────────────────────
-  if (d.pharmacie_per_os && d.medicaments_per_os.length) {
-    bandeau("MÉDICAMENTS PER OS À COMMANDER EN PHARMACIE");
-    listeMolecules(d.medicaments_per_os);
-  }
-
-  // ── Pansement / Cryothérapie / Envoi / Matériel ───────────────────
-  const aSoins =
-    d.pansement || d.cryotherapie || d.envoi_ordo.length || d.materiel;
-  if (aSoins) {
-    bandeau("SOINS & LOGISTIQUE");
-    if (d.pansement) ligne("Pansement :", d.pansement_detail || "Oui");
-    if (d.cryotherapie) {
-      const cryo = [d.cryotherapie_machine, d.cryotherapie_duree ? `prêt ${d.cryotherapie_duree}` : ""]
-        .filter(Boolean)
-        .join(" — ");
-      ligne("Cryothérapie :", cryo || "Oui");
+    if (p.molecules.length) {
+      sousTitre("Molécules prescrites (IV)");
+      listeMolecules(p.molecules);
     }
-    if (d.envoi_ordo.length) {
-      const cibles = d.envoi_ordo
-        .map((c) => (c === "secretariat" ? "Secrétariat" : c === "medecin" ? "Médecin" : c))
-        .join(" et ");
-      ligne("Envoi Ordo/CR :", cibles);
-    }
-    if (d.materiel) ligne("Matériel :", d.materiel_paramedical || "Oui");
-  }
 
-  // ── Autres consignes ──────────────────────────────────────────────
-  if (d.protocole && d.protocole.trim()) {
-    bandeau("AUTRES CONSIGNES");
-    paragraphe(d.protocole);
-  }
+    if (p.pharmacie_per_os && p.medicaments_per_os.length) {
+      sousTitre("Médicaments Per os à commander");
+      listeMolecules(p.medicaments_per_os);
+    }
+
+    const aSoins = p.pansement || p.cryotherapie || p.envoi_ordo.length || p.materiel;
+    if (aSoins) {
+      sousTitre("Soins & logistique");
+      if (p.pansement) ligne("Pansement :", p.pansement_detail || "Oui");
+      if (p.cryotherapie) {
+        const cryo = [p.cryotherapie_machine, p.cryotherapie_duree ? `prêt ${p.cryotherapie_duree}` : ""]
+          .filter(Boolean)
+          .join(" — ");
+        ligne("Cryothérapie :", cryo || "Oui");
+      }
+      if (p.envoi_ordo.length) {
+        const cibles = p.envoi_ordo
+          .map((c) => (c === "secretariat" ? "Secrétariat" : c === "medecin" ? "Médecin" : c))
+          .join(" et ");
+        ligne("Envoi Ordo/CR :", cibles);
+      }
+      if (p.materiel) ligne("Matériel :", p.materiel_paramedical || "Oui");
+    }
+
+    if (p.autres && p.autres.trim()) {
+      sousTitre("Autres consignes");
+      paragraphe(p.autres);
+    }
+
+    y += 3;
+  });
 
   // ── Sortie ────────────────────────────────────────────────────────
   if (mode === "bloburl") {

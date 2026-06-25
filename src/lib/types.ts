@@ -48,7 +48,27 @@ export interface Professionnel {
   pharmacie_per_os: boolean | null;
   medicaments_per_os: { nom: string; posologie: string }[] | null;
   materiel_paramedical: string | null;
+  // Protocoles par intervention (cf. migration 0023)
+  protocoles: ProtocoleConsigne[] | null;
   created_at: string;
+}
+
+export interface ProtocoleConsigne {
+  intervention: string;
+  duree: string;
+  jours: number[];
+  molecules: { nom: string; posologie: string }[];
+  pansement: boolean;
+  pansement_detail: string;
+  cryotherapie: boolean;
+  cryotherapie_duree: string;
+  cryotherapie_machine: string;
+  envoi_ordo: string[];
+  pharmacie_per_os: boolean;
+  medicaments_per_os: { nom: string; posologie: string }[];
+  materiel: boolean;
+  materiel_paramedical: string;
+  autres: string;
 }
 
 export interface Patient {

@@ -13,10 +13,6 @@ function genererMotDePasse(): string {
   return Array.from(bytes).map((b) => chars[b % chars.length]).join("");
 }
 
-function intOuNull(v: unknown): number | null {
-  const n = Number(v);
-  return v != null && v !== "" && isFinite(n) ? Math.trunc(n) : null;
-}
 function texteOuNull(v: unknown): string | null {
   const s = (v ?? "").toString().trim();
   return s || null;
@@ -101,22 +97,7 @@ export async function POST(request: Request) {
           secretariat_nom: texteOuNull(body.secretariat_nom),
           secretariat_email: texteOuNull(body.secretariat_email),
           secretariat_tel: texteOuNull(body.secretariat_tel),
-          protocole: texteOuNull(body.protocole),
-          duree_prise_en_charge: intOuNull(body.duree_prise_en_charge),
-          jours_suivi: Array.isArray(body.jours_suivi) && body.jours_suivi.length > 0 ? body.jours_suivi : null,
-          molecules: Array.isArray(body.molecules) && body.molecules.length > 0 ? body.molecules : null,
-          pansement: body.pansement === true,
-          pansement_detail: body.pansement === true ? texteOuNull(body.pansement_detail) : null,
-          cryotherapie: body.cryotherapie === true,
-          cryotherapie_duree: body.cryotherapie === true ? texteOuNull(body.cryotherapie_duree) : null,
-          cryotherapie_machine: body.cryotherapie === true ? texteOuNull(body.cryotherapie_machine) : null,
-          envoi_ordo: Array.isArray(body.envoi_ordo) && body.envoi_ordo.length > 0 ? body.envoi_ordo : null,
-          pharmacie_per_os: body.pharmacie_per_os === true,
-          medicaments_per_os:
-            body.pharmacie_per_os === true && Array.isArray(body.medicaments_per_os) && body.medicaments_per_os.length > 0
-              ? body.medicaments_per_os
-              : null,
-          materiel_paramedical: body.materiel === true ? texteOuNull(body.materiel_paramedical) : null,
+          protocoles: Array.isArray(body.protocoles) && body.protocoles.length > 0 ? body.protocoles : null,
         }
       : {
           prenom: texteOuNull(body.prenom),
