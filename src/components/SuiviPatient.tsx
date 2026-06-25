@@ -156,6 +156,20 @@ export function SuiviPatient({
     }
   }
 
+  // Aperçu du PDF dans un nouvel onglet (sans téléchargement). On ouvre
+  // l'onglet immédiatement (geste utilisateur) pour éviter le blocage popup,
+  // puis on y charge l'URL blob une fois le PDF généré.
+  async function apercu(s: Suivi) {
+    const win = window.open("", "_blank");
+    const url = await genererPdfSuivi(patient, s, "bloburl");
+    if (typeof url === "string") {
+      if (win) win.location.href = url;
+      else window.open(url, "_blank");
+    } else {
+      win?.close();
+    }
+  }
+
   return (
     <section className="grid gap-3">
       <div className="flex items-center justify-between">
@@ -289,6 +303,17 @@ export function SuiviPatient({
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
+                  <button
+                    onClick={() => apercu(s)}
+                    className="text-brand hover:text-brand-dark"
+                    title="Aperçu du compte rendu"
+                    aria-label="Aperçu du compte rendu"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+                      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
                   <button onClick={() => genererPdfSuivi(patient, s)} className="text-sm font-medium text-brand hover:underline">
                     PDF
                   </button>

@@ -249,7 +249,11 @@ async function chargerLogo(): Promise<string | null> {
 }
 
 // Génère et télécharge le PDF "Compte rendu" d'une fiche de suivi.
-export async function genererPdfSuivi(patient: Patient, s: Suivi) {
+export async function genererPdfSuivi(
+  patient: Patient,
+  s: Suivi,
+  mode: "download" | "bloburl" = "download"
+): Promise<string | void> {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const M = 15; // marge
@@ -496,5 +500,8 @@ export async function genererPdfSuivi(patient: Patient, s: Suivi) {
   doc.text("Asdia Perfusion", 210 - M, ph - 11, { align: "right" });
 
   const nomFichier = `compte-rendu-${patient.nom.replace(/\s+/g, "-").toLowerCase()}-${fdate(s.created_at).replace(/\//g, "-")}.pdf`;
+  if (mode === "bloburl") {
+    return doc.output("bloburl") as unknown as string;
+  }
   doc.save(nomFichier);
 }
