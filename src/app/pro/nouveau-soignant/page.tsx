@@ -6,11 +6,11 @@ import { SoignantForm } from "@/components/SoignantForm";
 export default function NouveauSoignant() {
   const pro = useProSession();
 
-  // Réservé aux comptes de niveau 1
-  if (pro && pro.niveau !== 1) {
+  // Réservé aux comptes de niveau 1 (hors médecins / chirurgiens)
+  if (pro && (pro.niveau !== 1 || pro.role === "chirurgien")) {
     return (
       <div className="card text-sm text-slate-500">
-        La création de comptes soignants est réservée aux comptes de niveau 1.
+        La création de comptes soignants n&apos;est pas accessible à ce compte.
       </div>
     );
   }

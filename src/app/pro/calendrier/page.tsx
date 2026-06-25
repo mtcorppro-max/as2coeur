@@ -49,6 +49,8 @@ function statutPeriode(debut: string, fin: string): "en_cours" | "a_venir" | "pa
 export default function CalendrierSoignant() {
   const pro = useProSession();
   const [absences, setAbsences] = useState<AbsenceLigne[]>([]);
+  // Organisation interdite aux médecins / chirurgiens
+  const interdit = pro?.role === "chirurgien";
   const [equipe, setEquipe] = useState<ProLite[]>([]);
   const [ready, setReady] = useState(false);
   // Astreintes : clé "YYYY-MM-DD|semaine" / "YYYY-MM-DD|weekend" -> professionnel_id
@@ -194,6 +196,14 @@ export default function CalendrierSoignant() {
 
   function changerMois(delta: number) {
     setMois(new Date(annee, moisIdx + delta, 1));
+  }
+
+  if (interdit) {
+    return (
+      <div className="card text-sm text-slate-500">
+        L&apos;organisation n&apos;est pas accessible aux médecins / chirurgiens.
+      </div>
+    );
   }
 
   return (

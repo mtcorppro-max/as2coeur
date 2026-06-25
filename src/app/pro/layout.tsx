@@ -12,6 +12,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   const pro = useProSession();
   const pathname = usePathname();
   const estCoord = pro?.role === "coordinatrice";
+  const estChir = pro?.role === "chirurgien";
   const estNiveau1 = pro?.niveau === 1;
 
   // Remonte en haut à chaque changement de page (évite la restauration de
@@ -27,9 +28,9 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
             <nav className="hidden gap-1 sm:flex">
               <Onglet href="/pro" label="Tableau de bord" />
               <Onglet href="/pro/alertes" label="Alertes" />
-              <Onglet href="/pro/calendrier" label="Organisation" />
-              {estNiveau1 && <Onglet href="/pro/equipe" label="Équipe soignante" />}
-              {(estCoord || estNiveau1) && (
+              {!estChir && <Onglet href="/pro/calendrier" label="Organisation" />}
+              {estNiveau1 && !estChir && <Onglet href="/pro/equipe" label="Équipe soignante" />}
+              {(estCoord || estChir || estNiveau1) && (
                 <Link
                   href="/pro/nouveau"
                   prefetch={true}
@@ -58,9 +59,9 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-rose-100 bg-white sm:hidden">
         <NavItem href="/pro" icon="⊞" label="Tableau" />
         <NavItem href="/pro/alertes" icon="◎" label="Alertes" />
-        <NavItem href="/pro/calendrier" icon="▦" label="Organisation" />
-        {estNiveau1 && <NavItem href="/pro/equipe" icon="👥" label="Équipe" />}
-        {(estCoord || estNiveau1) && <NavItem href="/pro/nouveau" icon="＋" label="Nouveau" />}
+        {!estChir && <NavItem href="/pro/calendrier" icon="▦" label="Organisation" />}
+        {estNiveau1 && !estChir && <NavItem href="/pro/equipe" icon="👥" label="Équipe" />}
+        {(estCoord || estChir || estNiveau1) && <NavItem href="/pro/nouveau" icon="＋" label="Nouveau" />}
       </nav>
     </div>
   );

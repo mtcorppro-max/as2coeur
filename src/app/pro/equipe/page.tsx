@@ -44,10 +44,10 @@ export default function EquipePage() {
       });
   }, []);
 
-  if (pro && pro.niveau !== 1) {
+  if (pro && (pro.niveau !== 1 || pro.role === "chirurgien")) {
     return (
       <div className="card text-sm text-slate-500">
-        L&apos;équipe soignante est réservée aux comptes de niveau 1.
+        L&apos;équipe soignante n&apos;est pas accessible à ce compte.
       </div>
     );
   }

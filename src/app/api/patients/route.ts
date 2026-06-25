@@ -26,13 +26,13 @@ export async function POST(request: Request) {
 
   const { data: pro } = await supabase
     .from("professionnel")
-    .select("role, prestataire_id")
+    .select("id, role, prestataire_id")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!pro || pro.role !== "coordinatrice") {
+  if (!pro || (pro.role !== "coordinatrice" && pro.role !== "chirurgien")) {
     return NextResponse.json(
-      { message: "Seule la coordinatrice peut créer un patient." },
+      { message: "Seuls la coordinatrice ou un chirurgien peuvent créer un patient." },
       { status: 403 }
     );
   }
@@ -110,9 +110,11 @@ export async function POST(request: Request) {
 
   // 2b. Rattachement aux soignants sélectionnés (niveau 2 = accès restreint).
   // On ne garde que les professionnels du même prestataire.
-  const ids: string[] = Array.isArray(body.rattachements)
-    ? [...new Set(body.rattachements.filter((x: unknown) => typeof x === "string"))] as string[]
+  const recus: string[] = Array.isArray(body.rattachements)
+    ? body.rattachements.filter((x: unknown) => typeof x === "string")
     : [];
+  // Le créateur est toujours rattaché (utile pour un chirurgien de niveau 2).
+  const ids: string[] = [...new Set([...recus, pro.id])];
   if (ids.length) {
     const { data: prosOk } = await admin
       .from("professionnel")

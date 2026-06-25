@@ -5,13 +5,13 @@ import { useProSession } from "@/lib/hooks/useSession";
 
 export default function NouveauHub() {
   const pro = useProSession();
-  const peutPatient = pro?.role === "coordinatrice";
-  const peutSoignant = pro?.niveau === 1;
+  const peutPatient = pro?.role === "coordinatrice" || pro?.role === "chirurgien";
+  const peutSoignant = pro?.niveau === 1 && pro?.role !== "chirurgien";
 
   if (pro && !peutPatient && !peutSoignant) {
     return (
       <div className="card text-sm text-slate-500">
-        La création est réservée à la coordinatrice et aux comptes de niveau 1.
+        La création n&apos;est pas accessible à ce compte.
       </div>
     );
   }
