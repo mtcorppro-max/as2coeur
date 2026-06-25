@@ -5,6 +5,7 @@ const ROSE: [number, number, number] = [190, 24, 93];
 const ROSE_CLAIR: [number, number, number] = [233, 128, 170];
 const GRIS: [number, number, number] = [90, 90, 90];
 const GRIS_CLAIR: [number, number, number] = [200, 200, 200];
+const QUADRILLAGE: [number, number, number] = [228, 228, 228];
 const ROUGE: [number, number, number] = [220, 70, 70];
 const NOIR: [number, number, number] = [40, 40, 40];
 
@@ -155,12 +156,28 @@ function dessinerCourbe(
 
   const dec = vmax - vmin < 8 ? 1 : 0;
 
-  // Libellés d'axe Y (max en haut, min en bas)
+  // Quadrillage de fond + libellés d'axe Y (valeurs réparties sur la hauteur)
+  const nH = 4; // divisions horizontales
+  const nV = 6; // divisions verticales
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.5);
-  doc.setTextColor(...GRIS);
-  doc.text(vmax.toFixed(dec), x0 - 1.5, y0 + 2, { align: "right" });
-  doc.text(vmin.toFixed(dec), x0 - 1.5, y1, { align: "right" });
+  for (let i = 0; i <= nH; i++) {
+    const yy = y0 + (i / nH) * (y1 - y0);
+    const val = vmax - (i / nH) * (vmax - vmin);
+    if (i > 0 && i < nH) {
+      doc.setDrawColor(...QUADRILLAGE);
+      doc.setLineWidth(0.1);
+      doc.line(x0, yy, x1, yy);
+    }
+    doc.setTextColor(...GRIS);
+    doc.text(val.toFixed(dec), x0 - 1.5, yy + 1, { align: "right" });
+  }
+  for (let i = 1; i < nV; i++) {
+    const xx = x0 + (i / nV) * (x1 - x0);
+    doc.setDrawColor(...QUADRILLAGE);
+    doc.setLineWidth(0.1);
+    doc.line(xx, y0, xx, y1);
+  }
 
   // Seuils (lignes pointillées rouges)
   const ligneSeuil = (v: number | null | undefined) => {
@@ -380,9 +397,8 @@ export async function genererPdfSuivi(
     const colW = (L - 8) / 2;
     const plotH = 38;
     const blockH = 56;
-    const hauteurCourbes = 12 + 4 + 2 * blockH;
+    const hauteurCourbes = 4 + 2 * blockH;
     if (y + hauteurCourbes > 285) { doc.addPage(); y = M; }
-    bandeau("Courbes de surveillance");
 
     const charts: { titre: string; unite: string; series: Serie[]; seuil?: Seuil }[] = [
       {
@@ -452,27 +468,22 @@ export async function genererPdfSuivi(
   bandeau("Surveillance clinique");
   champ("État général", s.etat_general);
 
-  // Constantes sur une ligne
-  if (y > 275) { doc.addPage(); y = M; }
+  // Constantes : uniquement les graphiques (pas de valeurs écrites)
+  if (y > 250) { doc.addPage(); y = M; }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(...ROSE);
   doc.text("CONSTANTES", M, y);
-  y += 4.5;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(...NOIR);
-  const constantes = [
-    `TA : ${s.ta || "—"}`,
-    `Pouls : ${s.pouls || "—"}`,
-    `T° : ${s.temperature || "—"}`,
-    `SpO2 : ${s.spo2 || "—"}`,
-  ].join("      ");
-  doc.text(constantes, M, y);
-  y += 9;
-
-  // Courbes de surveillance juste après les constantes
-  if (aDesMesures) dessinerCourbes();
+  y += 6;
+  if (aDesMesures) {
+    dessinerCourbes();
+  } else {
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.setTextColor(...GRIS);
+    doc.text("Aucune mesure enregistrée.", M, y);
+    y += 8;
+  }
 
   champ("Douleurs (EN)", s.douleur_en);
   champ("Alimentation", s.alimentation);
