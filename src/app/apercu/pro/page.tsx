@@ -52,7 +52,7 @@ export default function ApercuProDashboard() {
                         </span>
                       ) : p.acquittees > 0 ? (
                         <span className="badge bg-amber-100 text-attention">
-                          {p.acquittees} acquittée(s)
+                          {p.acquittees} traitée(s)
                         </span>
                       ) : (
                         <span className="text-slate-300">—</span>

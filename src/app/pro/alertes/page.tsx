@@ -42,7 +42,7 @@ export default function CentreAlertes() {
 
       {pro && !peutTraiter && (
         <p className="rounded-xl bg-rose-800 px-4 py-3 text-sm font-medium text-white">
-          Accès en lecture seule — seule la coordinatrice peut acquitter ou escalader.
+          Accès en lecture seule — seule la coordinatrice peut traiter ou escalader.
         </p>
       )}
 

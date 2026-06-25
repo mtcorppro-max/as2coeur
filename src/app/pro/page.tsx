@@ -199,7 +199,7 @@ export default function Dashboard() {
                     {critique ? (
                       <span className="badge bg-critique text-white">{e?.active} alerte(s)</span>
                     ) : (e?.acquittees ?? 0) > 0 ? (
-                      <span className="badge bg-amber-100 text-attention">{e?.acquittees} acquittée(s)</span>
+                      <span className="badge bg-amber-100 text-attention">{e?.acquittees} traitée(s)</span>
                     ) : null}
                     {(messages.get(p.id) ?? 0) > 0 && (
                       <span className="badge bg-rose-800 text-white">
@@ -262,7 +262,7 @@ export default function Dashboard() {
                         {critique ? (
                           <span className="badge bg-critique text-white">{e?.active} active(s)</span>
                         ) : (e?.acquittees ?? 0) > 0 ? (
-                          <span className="badge bg-amber-100 text-attention">{e?.acquittees} acquittée(s)</span>
+                          <span className="badge bg-amber-100 text-attention">{e?.acquittees} traitée(s)</span>
                         ) : (
                           <span className="text-slate-300">—</span>
                         )}

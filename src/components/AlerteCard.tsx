@@ -117,7 +117,7 @@ export function AlerteCard({
 function StatutBadge({ statut }: { statut: Alerte["statut"] }) {
   const map = {
     declenchee: { c: "bg-critique text-white", l: "Déclenchée" },
-    acquittee: { c: "bg-amber-100 text-attention", l: "Acquittée" },
+    acquittee: { c: "bg-amber-100 text-attention", l: "Traitée" },
     escaladee: { c: "bg-orange-100 text-orange-700", l: "Escaladée" },
     resolue: { c: "bg-green-100 text-ok", l: "Résolue" },
   } as const;

@@ -319,16 +319,24 @@ const FEATURES = [
 
 const FAQ = [
   {
-    q: "Le patient a-t-il besoin d'un smartphone récent ?",
-    a: "Non. AS2CŒUR fonctionne sur n'importe quel navigateur mobile, sans installation d'application. Un téléphone basique avec accès internet suffit.",
-  },
-  {
     q: "Comment le patient reçoit-il son code de connexion ?",
     a: "La coordinatrice crée le dossier patient depuis son cockpit et génère un code unique à usage personnel. Ce code est remis directement au patient, sans email ni mot de passe à retenir.",
   },
   {
-    q: "Que se passe-t-il si une alerte n'est pas acquittée ?",
+    q: "Que se passe-t-il si une alerte n'est pas traitée ?",
     a: "Un SMS est envoyé automatiquement au premier numéro d'urgence. Sans réponse dans le délai paramétré, le second numéro est contacté. Chaque étape est horodatée et tracée dans le dossier.",
+  },
+  {
+    q: "Comment se passe le suivi du patient ?",
+    a: "Au-delà des constantes, l'équipe réalise des suivis structurés (état général, douleur, cicatrisation, alimentation…), planifiés notamment à J1 et au dernier jour de prise en charge. Chaque suivi génère un compte rendu PDF avec les courbes de surveillance et les photos de cicatrice.",
+  },
+  {
+    q: "Le chirurgien peut-il définir son propre protocole ?",
+    a: "Oui. À la création de son compte, le médecin renseigne ses consignes (molécules, débits, pansement, suivi…), la durée de prise en charge et le nombre de suivis souhaités. Le suivi s'adapte ainsi aux préférences de chaque praticien.",
+  },
+  {
+    q: "Que se passe-t-il quand un soignant est absent ?",
+    a: "L'application intègre un calendrier des congés et la gestion des astreintes (semaine et week-end), avec une alerte si elles ne sont pas renseignées à l'avance, pour garantir la continuité du suivi.",
   },
   {
     q: "Qui peut consulter les photos de cicatrice envoyées ?",
@@ -336,7 +344,7 @@ const FAQ = [
   },
   {
     q: "L'application est-elle conforme au RGPD ?",
-    a: "Ce prototype respecte les principes du RGPD (accès par rôle, cloisonnement des données, journalisation). La mise en production nécessitera un hébergement certifié HDS pour les données de santé.",
+    a: "L'application est conçue selon les principes du RGPD : accès par rôle, cloisonnement strict des données et journalisation des actions. Les données de santé (constantes, photos, dossiers) relèvent de l'hébergement HDS (Hébergeur de Données de Santé), certification obligatoire en France : la mise en production s'appuie sur un hébergeur certifié HDS, conformément à la réglementation.",
   },
 ];
 
@@ -442,7 +450,7 @@ function PhoneMockup() {
       {/* Badge coordinatrice flottante */}
       <div className="absolute -left-10 bottom-24 rounded-2xl bg-white px-3 py-2 shadow-lg">
         <p className="text-[10px] font-bold text-brand">Coordinatrice</p>
-        <p className="text-[9px] text-slate-500">Acquitté à 14h32</p>
+        <p className="text-[9px] text-slate-500">Traité à 14h32</p>
       </div>
     </div>
   );

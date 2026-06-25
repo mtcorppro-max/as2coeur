@@ -6,7 +6,7 @@ const ECRANS = [
   { href: "/apercu/patient/suivi", label: "Patient — suivi graphique", desc: "Courbes + ligne seuil" },
   { href: "/apercu/pro", label: "Cockpit — tableau de bord", desc: "Patients triés par criticité" },
   { href: "/apercu/pro/fiche", label: "Cockpit — fiche patient", desc: "Courbes + seuil ajustable" },
-  { href: "/apercu/pro/alertes", label: "Cockpit — centre d'alertes", desc: "Acquittement / escalade" },
+  { href: "/apercu/pro/alertes", label: "Cockpit — centre d'alertes", desc: "Traitement / escalade" },
 ];
 
 export default function ApercuIndex() {
