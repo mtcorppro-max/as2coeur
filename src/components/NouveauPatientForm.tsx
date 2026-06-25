@@ -7,7 +7,7 @@ import { LIBELLE_ROLE } from "@/lib/roles";
 import { AdresseAutocomplete } from "@/components/AdresseAutocomplete";
 import type { RolePro } from "@/lib/types";
 
-type Soignant = { id: string; nom: string; role: RolePro; niveau: number };
+type Soignant = { id: string; nom: string; role: RolePro; niveau: number; telephone: string | null };
 
 const VIDE = {
   prenom: "",
@@ -46,7 +46,7 @@ export function NouveauPatientForm() {
   useEffect(() => {
     createClient()
       .from("professionnel")
-      .select("id,nom,role,niveau")
+      .select("id,nom,role,niveau,telephone")
       .order("nom")
       .then(({ data }) => setSoignants((data ?? []) as Soignant[]));
   }, []);
@@ -54,6 +54,16 @@ export function NouveauPatientForm() {
   // Seuls les soignants de niveau 2 ont besoin d'un rattachement explicite
   // (les niveau 1 et la coordinatrice voient déjà tous les patients).
   const aRattacher = soignants.filter((s) => s.niveau === 2 && s.role !== "coordinatrice");
+  const coordinatrices = soignants.filter((s) => s.role === "coordinatrice");
+  const chirurgiens = soignants.filter((s) => s.role === "chirurgien");
+
+  // Choix d'une coordinatrice pour une alerte : on enregistre son nom + son
+  // téléphone (déjà saisi à la création de son compte).
+  const choisirAlerte = (champNom: "alerte_1_nom" | "alerte_2_nom", champTel: "tel_alerte_1" | "tel_alerte_2") =>
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const c = coordinatrices.find((s) => s.nom === e.target.value);
+      setForm((f) => ({ ...f, [champNom]: e.target.value, [champTel]: c?.telephone ?? "" }));
+    };
   const toggleRattachement = (id: string) =>
     setRattachements((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
@@ -184,7 +194,15 @@ export function NouveauPatientForm() {
         </div>
         <div>
           <label className="label">Chirurgien (qui a opéré)</label>
-          <input className="input" value={form.chirurgien} onChange={set("chirurgien")} placeholder="Dr…" />
+          <select className="select" value={form.chirurgien} onChange={(e) => setVal("chirurgien", e.target.value)}>
+            <option value="">— Choisir un chirurgien / médecin —</option>
+            {chirurgiens.map((s) => (
+              <option key={s.id} value={s.nom}>{s.nom}</option>
+            ))}
+            {form.chirurgien && !chirurgiens.some((s) => s.nom === form.chirurgien) && (
+              <option value={form.chirurgien}>{form.chirurgien}</option>
+            )}
+          </select>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -206,41 +224,29 @@ export function NouveauPatientForm() {
             <input className="input" value={form.infirmiere_tel} onChange={set("infirmiere_tel")} placeholder="06…" inputMode="tel" />
           </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="label">Alerte 1 — soignant</label>
-            <select className="select" value={form.alerte_1_nom} onChange={(e) => setVal("alerte_1_nom", e.target.value)}>
-              <option value="">— Choisir un compte —</option>
-              {soignants.map((s) => (
-                <option key={s.id} value={s.nom}>{s.nom} ({LIBELLE_ROLE[s.role]})</option>
-              ))}
-              {form.alerte_1_nom && !soignants.some((s) => s.nom === form.alerte_1_nom) && (
-                <option value={form.alerte_1_nom}>{form.alerte_1_nom}</option>
-              )}
-            </select>
-          </div>
-          <div>
-            <label className="label">Alerte 1 — n°</label>
-            <input className="input" value={form.tel_alerte_1} onChange={set("tel_alerte_1")} placeholder="+33…" inputMode="tel" />
-          </div>
+        <div>
+          <label className="label">Alerte 1 — infirmière coordinatrice</label>
+          <select className="select" value={form.alerte_1_nom} onChange={choisirAlerte("alerte_1_nom", "tel_alerte_1")}>
+            <option value="">— Choisir une infirmière coordinatrice —</option>
+            {coordinatrices.map((s) => (
+              <option key={s.id} value={s.nom}>{s.nom}</option>
+            ))}
+            {form.alerte_1_nom && !coordinatrices.some((s) => s.nom === form.alerte_1_nom) && (
+              <option value={form.alerte_1_nom}>{form.alerte_1_nom}</option>
+            )}
+          </select>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="label">Alerte 2 (backup) — soignant</label>
-            <select className="select" value={form.alerte_2_nom} onChange={(e) => setVal("alerte_2_nom", e.target.value)}>
-              <option value="">— Choisir un compte —</option>
-              {soignants.map((s) => (
-                <option key={s.id} value={s.nom}>{s.nom} ({LIBELLE_ROLE[s.role]})</option>
-              ))}
-              {form.alerte_2_nom && !soignants.some((s) => s.nom === form.alerte_2_nom) && (
-                <option value={form.alerte_2_nom}>{form.alerte_2_nom}</option>
-              )}
-            </select>
-          </div>
-          <div>
-            <label className="label">Alerte 2 (backup) — n°</label>
-            <input className="input" value={form.tel_alerte_2} onChange={set("tel_alerte_2")} placeholder="+33…" inputMode="tel" />
-          </div>
+        <div>
+          <label className="label">Alerte 2 (backup) — infirmière coordinatrice</label>
+          <select className="select" value={form.alerte_2_nom} onChange={choisirAlerte("alerte_2_nom", "tel_alerte_2")}>
+            <option value="">— Choisir une infirmière coordinatrice —</option>
+            {coordinatrices.map((s) => (
+              <option key={s.id} value={s.nom}>{s.nom}</option>
+            ))}
+            {form.alerte_2_nom && !coordinatrices.some((s) => s.nom === form.alerte_2_nom) && (
+              <option value={form.alerte_2_nom}>{form.alerte_2_nom}</option>
+            )}
+          </select>
         </div>
       </div>
 
