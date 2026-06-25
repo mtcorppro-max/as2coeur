@@ -38,6 +38,7 @@ export interface Professionnel {
   protocole: string | null;
   duree_prise_en_charge: number | null;
   jours_suivi: number[] | null;
+  molecules: { nom: string; posologie: string }[] | null;
   created_at: string;
 }
 

@@ -4,6 +4,13 @@ import { useState } from "react";
 
 type Prestataire = { id: string; nom: string };
 
+type Molecule = { nom: string; predefini: boolean; coche: boolean; posologie: string };
+
+const MOLECULES_INIT: Molecule[] = [
+  { nom: "Acupan", predefini: true, coche: false, posologie: "" },
+  { nom: "Primperan", predefini: true, coche: false, posologie: "" },
+];
+
 const VIDE = {
   nom: "",
   prenom: "",
@@ -29,12 +36,26 @@ const VIDE = {
 export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] }) {
   const [form, setForm] = useState({ ...VIDE });
   const [joursActifs, setJoursActifs] = useState<number[]>([]);
+  const [molecules, setMolecules] = useState<Molecule[]>(MOLECULES_INIT.map((m) => ({ ...m })));
   const [erreur, setErreur] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [cree, setCree] = useState<{ email: string; motDePasse: string } | null>(null);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const majMolecule = (i: number, champ: Partial<Molecule>) =>
+    setMolecules((arr) => arr.map((m, idx) => (idx === i ? { ...m, ...champ } : m)));
+  const ajouterMolecule = () =>
+    setMolecules((arr) => [...arr, { nom: "", predefini: false, coche: true, posologie: "" }]);
+  const supprimerMolecule = (i: number) =>
+    setMolecules((arr) => arr.filter((_, idx) => idx !== i));
+
+  const reset = () => {
+    setForm({ ...VIDE });
+    setJoursActifs([]);
+    setMolecules(MOLECULES_INIT.map((m) => ({ ...m })));
+  };
 
   const estChirurgien = form.role === "chirurgien";
 
@@ -43,10 +64,13 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
     setErreur(null);
     setBusy(true);
     try {
+      const moleculesPropres = molecules
+        .filter((m) => m.coche && m.nom.trim())
+        .map((m) => ({ nom: m.nom.trim(), posologie: m.posologie.trim() }));
       const res = await fetch("/api/soignants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, jours_suivi: joursActifs }),
+        body: JSON.stringify({ ...form, jours_suivi: joursActifs, molecules: moleculesPropres }),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.message ?? "Erreur.");
@@ -69,7 +93,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
         <p className="text-xs text-slate-400">
           À transmettre au soignant. Connexion sur l&apos;écran « Équipe médicale ».
         </p>
-        <button onClick={() => { setCree(null); setForm({ ...VIDE }); setJoursActifs([]); }} className="btn-secondary">
+        <button onClick={() => { setCree(null); reset(); }} className="btn-secondary">
           Créer un autre compte
         </button>
       </div>
@@ -233,14 +257,66 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
                 </div>
               );
             })()}
+            <div className="grid gap-3">
+              <label className="label">Molécules prescrites</label>
+              {molecules.map((m, i) => (
+                <div key={i} className="grid gap-2 rounded-xl border border-rose-100 bg-rose-50/40 p-3">
+                  <div className="flex items-center gap-2">
+                    {m.predefini ? (
+                      <label className="flex flex-1 cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={m.coche}
+                          onChange={(e) => majMolecule(i, { coche: e.target.checked })}
+                          className="h-4 w-4 accent-brand"
+                        />
+                        {m.nom}
+                      </label>
+                    ) : (
+                      <>
+                        <input
+                          className="input flex-1"
+                          value={m.nom}
+                          onChange={(e) => majMolecule(i, { nom: e.target.value })}
+                          placeholder="Nom de la molécule"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => supprimerMolecule(i)}
+                          className="shrink-0 rounded-lg px-2 py-1 text-sm text-slate-400 hover:bg-rose-100 hover:text-critique"
+                          title="Retirer cette molécule"
+                        >
+                          ✕
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {m.coche && (
+                    <input
+                      className="input"
+                      value={m.posologie}
+                      onChange={(e) => majMolecule(i, { posologie: e.target.value })}
+                      placeholder="Posologie (ex. 1 cp x3/j si douleur)"
+                    />
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={ajouterMolecule}
+                className="justify-self-start rounded-lg border border-dashed border-rose-300 px-3 py-1.5 text-sm font-medium text-brand hover:bg-rose-50"
+              >
+                + Ajouter une autre molécule
+              </button>
+            </div>
             <div>
-              <label className="label">Protocole / consignes</label>
+              <label className="label">Autres consignes</label>
               <textarea
                 className="input"
-                rows={6}
+                rows={5}
                 value={form.protocole}
                 onChange={set("protocole")}
-                placeholder={"Molécules, dosages, débits, nombre de fois par jour\nPansement\nSuivi (ex. appel J1 obligatoire)\nAutres consignes…"}
+                placeholder={"Pansement\nSuivi (ex. appel J1 obligatoire)\nDébits, surveillance, autres consignes…"}
               />
             </div>
           </div>

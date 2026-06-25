@@ -104,6 +104,7 @@ export async function POST(request: Request) {
           protocole: texteOuNull(body.protocole),
           duree_prise_en_charge: intOuNull(body.duree_prise_en_charge),
           jours_suivi: Array.isArray(body.jours_suivi) && body.jours_suivi.length > 0 ? body.jours_suivi : null,
+          molecules: Array.isArray(body.molecules) && body.molecules.length > 0 ? body.molecules : null,
         }
       : {
           prenom: texteOuNull(body.prenom),
