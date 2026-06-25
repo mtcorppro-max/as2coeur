@@ -112,22 +112,6 @@ export default function PatientAccueil() {
           <ConseilCard conseil={duJour} />
         </section>
 
-        <section>
-          <h2 className="mb-3 text-sm font-semibold text-slate-600">Accès rapide</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { href: "/patient/chat",     icon: "◇", label: "Chat" },
-              { href: "/patient/photos",   icon: "◎", label: "Photos" },
-              { href: "/patient/suivi",    icon: "∿", label: "Suivi" },
-              { href: "/patient/conseils", icon: "✦", label: "Conseils" },
-            ].map((a) => (
-              <Link key={a.href} href={a.href} className="card flex flex-col items-center gap-2 py-4 text-center transition hover:shadow-md hover:border-rose-200">
-                <span className="text-2xl">{a.icon}</span>
-                <span className="text-xs font-medium text-slate-600">{a.label}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
       </aside>
     </div>
   );
