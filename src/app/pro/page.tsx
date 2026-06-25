@@ -1,29 +1,53 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
-import { useData } from "@/lib/hooks/useData";
+import { useData, invalidate } from "@/lib/hooks/useData";
 import { AstreinteAlerte } from "@/components/AstreinteAlerte";
-import { RappelsSuivi } from "@/components/RappelsSuivi";
 import type { Patient } from "@/lib/types";
 
 type AlerteInfo = { active: number; acquittees: number };
+type ActionItem = { type: "J1" | "dernier"; echeance: string; retard: boolean };
 type DashData = {
   patients: Patient[];
   parPatient: Map<string, AlerteInfo>;
   totalActives: number;
   messages: Map<string, number>; // patient_id -> nb de messages patient en attente de réponse
+  actions: Map<string, ActionItem[]>; // patient_id -> suivis J1/dernier jour à réaliser
 };
+
+// "YYYY-MM-DD" (heure locale) du jour
+function todayIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+// Ajoute n jours à une date "YYYY-MM-DD" → "YYYY-MM-DD"
+function addDays(iso: string, n: number): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+// timestamptz → "YYYY-MM-DD" local
+function jourLocal(ts: string): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function libelleAction(a: ActionItem): string {
+  return `Suivi ${a.type === "J1" ? "J1" : "dernier jour"}${a.retard ? " (en retard)" : " (aujourd'hui)"}`;
+}
 
 async function fetchDashboard(): Promise<DashData> {
   const supabase = createClient();
-  const [{ data: pts }, { data: als }, { data: msgs }] = await Promise.all([
-    supabase.from("patient").select("id,nom,statut,code_postal,prestataire_id,user_id").order("nom"),
+  const [{ data: pts }, { data: als }, { data: msgs }, { data: svs }, { data: rps }] = await Promise.all([
+    supabase.from("patient").select("id,nom,statut,code_postal,prestataire_id,user_id,date_operation,duree_prise_en_charge").order("nom"),
     supabase.from("alerte").select("id,patient_id,statut").in("statut", ["declenchee", "escaladee", "acquittee"]),
     supabase.from("message").select("patient_id,auteur_user_id,horodatage").order("horodatage", { ascending: true }).limit(2000),
+    supabase.from("suivi").select("patient_id,created_at"),
+    supabase.from("rappel_suivi_valide").select("patient_id,type,echeance"),
   ]);
   const parPatient = new Map<string, AlerteInfo>();
   (als ?? []).forEach((a) => {
@@ -55,28 +79,75 @@ async function fetchDashboard(): Promise<DashData> {
     if (c > 0) messages.set(p.id, c);
   });
 
+  // Actions : suivis J1 / dernier jour dont l'échéance est arrivée et qui ne
+  // sont ni faits (suivi ce jour-là) ni validés manuellement.
+  const today = todayIso();
+  const suivisJours = new Set((svs ?? []).map((s) => `${s.patient_id}|${jourLocal(s.created_at)}`));
+  const valides = new Set((rps ?? []).map((r) => `${r.patient_id}|${r.type}|${r.echeance}`));
+  const actions = new Map<string, ActionItem[]>();
+  patientsRaw.forEach((p) => {
+    if (!p.date_operation || p.statut === "terminee") return;
+    const items: ActionItem[] = [];
+    const ajoute = (type: ActionItem["type"], echeance: string) => {
+      if (!echeance || echeance > today) return;
+      if (suivisJours.has(`${p.id}|${echeance}`) || valides.has(`${p.id}|${type}|${echeance}`)) return;
+      items.push({ type, echeance, retard: echeance < today });
+    };
+    ajoute("J1", addDays(p.date_operation, 1));
+    if (p.duree_prise_en_charge) ajoute("dernier", addDays(p.date_operation, p.duree_prise_en_charge));
+    if (items.length) actions.set(p.id, items);
+  });
+
   const score = (p: Patient) =>
     (parPatient.get(p.id)?.active ?? 0) * 100 +
+    (actions.get(p.id)?.length ?? 0) * 20 +
     (messages.get(p.id) ?? 0) * 10 +
     (parPatient.get(p.id)?.acquittees ?? 0);
   const patients = [...patientsRaw].sort((a, b) => score(b) - score(a));
   const totalActives = [...parPatient.values()].reduce((s, e) => s + e.active, 0);
-  return { patients, parPatient, totalActives, messages };
+  return { patients, parPatient, totalActives, messages, actions };
 }
 
 export default function Dashboard() {
-  useProSession();
+  const pro = useProSession();
   const router = useRouter();
   const data = useData<DashData>("pro:dashboard", fetchDashboard);
+  const [validesLocal, setValidesLocal] = useState<Set<string>>(new Set());
 
-  const { patients, parPatient, totalActives, messages } = useMemo(() => (
-    data ?? { patients: [], parPatient: new Map(), totalActives: 0, messages: new Map() }
+  const { patients, parPatient, totalActives, messages, actions } = useMemo<DashData>(() => (
+    data ?? {
+      patients: [],
+      parPatient: new Map<string, AlerteInfo>(),
+      totalActives: 0,
+      messages: new Map<string, number>(),
+      actions: new Map<string, ActionItem[]>(),
+    }
   ), [data]);
+
+  // Actions encore en attente (en retirant celles validées localement à l'instant).
+  function actionsDe(patientId: string): ActionItem[] {
+    return (actions.get(patientId) ?? []).filter(
+      (it) => !validesLocal.has(`${patientId}|${it.type}|${it.echeance}`)
+    );
+  }
+
+  async function validerActions(patientId: string, items: ActionItem[]) {
+    if (items.length === 0) return;
+    setValidesLocal((prev) => {
+      const n = new Set(prev);
+      items.forEach((it) => n.add(`${patientId}|${it.type}|${it.echeance}`));
+      return n;
+    });
+    const supabase = createClient();
+    await supabase.from("rappel_suivi_valide").insert(
+      items.map((it) => ({ patient_id: patientId, type: it.type, echeance: it.echeance, validee_par: pro?.nom ?? null }))
+    );
+    invalidate("pro:dashboard");
+  }
 
   return (
     <div className="grid gap-5">
       <AstreinteAlerte />
-      <RappelsSuivi />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-800">Tableau de bord</h1>
         {!data ? (
@@ -108,6 +179,7 @@ export default function Dashboard() {
             {patients.map((p) => {
               const e = parPatient.get(p.id);
               const critique = (e?.active ?? 0) > 0;
+              const acts = actionsDe(p.id);
               return (
                 <Link
                   key={p.id}
@@ -134,7 +206,16 @@ export default function Dashboard() {
                         {messages.get(p.id)} message{(messages.get(p.id) ?? 0) > 1 ? "s" : ""}
                       </span>
                     )}
-                    {!critique && (e?.acquittees ?? 0) === 0 && (messages.get(p.id) ?? 0) === 0 && (
+                    {acts.length > 0 && (
+                      <button
+                        onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); validerActions(p.id, acts); }}
+                        className={`badge text-white ${acts.some((a) => a.retard) ? "bg-critique" : "bg-rose-800"}`}
+                        title={`${acts.map(libelleAction).join(", ")} — appuyer pour valider`}
+                      >
+                        {acts.length} action · valider
+                      </button>
+                    )}
+                    {!critique && (e?.acquittees ?? 0) === 0 && (messages.get(p.id) ?? 0) === 0 && acts.length === 0 && (
                       <span className="text-slate-300 text-sm">—</span>
                     )}
                     <span className="text-brand">→</span>
@@ -153,13 +234,14 @@ export default function Dashboard() {
                   <th className="px-4 py-3">Statut</th>
                   <th className="px-4 py-3">Alertes</th>
                   <th className="px-4 py-3">Message</th>
+                  <th className="px-4 py-3">Action</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-rose-50">
                 {patients.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
                       Aucun patient. Créez-en un depuis « Nouveau patient ».
                     </td>
                   </tr>
@@ -167,6 +249,7 @@ export default function Dashboard() {
                 {patients.map((p) => {
                   const e = parPatient.get(p.id);
                   const critique = (e?.active ?? 0) > 0;
+                  const acts = actionsDe(p.id);
                   return (
                     <tr
                       key={p.id}
@@ -188,6 +271,26 @@ export default function Dashboard() {
                         {(messages.get(p.id) ?? 0) > 0 ? (
                           <span className="badge bg-rose-800 text-white">
                             {messages.get(p.id)} message{(messages.get(p.id) ?? 0) > 1 ? "s" : ""}
+                          </span>
+                        ) : (
+                          <span className="text-slate-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {acts.length > 0 ? (
+                          <span className="inline-flex items-center gap-2">
+                            <span
+                              className={`badge text-white ${acts.some((a) => a.retard) ? "bg-critique" : "bg-rose-800"}`}
+                              title={acts.map(libelleAction).join(", ")}
+                            >
+                              {acts.length}
+                            </span>
+                            <button
+                              onClick={(ev) => { ev.stopPropagation(); validerActions(p.id, acts); }}
+                              className="text-xs font-medium text-brand hover:underline"
+                            >
+                              Valider
+                            </button>
                           </span>
                         ) : (
                           <span className="text-slate-300">—</span>
