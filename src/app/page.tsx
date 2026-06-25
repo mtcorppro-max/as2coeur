@@ -8,11 +8,7 @@ export default function Landing() {
       {/* ── Header ──────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 border-b border-rose-100 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          {/* Desktop : logo complet — Mobile : cœur uniquement */}
-          <span className="inline-flex items-center gap-2 font-bold text-lg">
-            <span className="grid h-8 w-8 place-items-center rounded-xl bg-brand text-white shrink-0">❤</span>
-            <span className="hidden md:inline text-brand">AS2<span className="text-rose-400">CŒUR</span></span>
-          </span>
+          <Logo />
           <nav className="hidden gap-1 md:flex">
             {[
               ["Fonctionnalités", "#fonctionnalites"],
