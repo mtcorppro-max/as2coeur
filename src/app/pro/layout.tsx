@@ -27,15 +27,14 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               <Onglet href="/pro" label="Tableau de bord" />
               <Onglet href="/pro/alertes" label="Alertes" />
               <Onglet href="/pro/calendrier" label="Organisation" />
-              {estCoord && <Onglet href="/pro/nouveau-soignant" label="Comptes soignants" />}
               {estCoord && (
                 <Link
-                  href="/pro/nouveau-patient"
+                  href="/pro/nouveau"
                   prefetch={true}
                   className="ml-1 inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
                 >
                   <span className="text-base leading-none">＋</span>
-                  Nouveau patient
+                  Nouveau
                 </Link>
               )}
             </nav>
@@ -58,8 +57,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         <NavItem href="/pro" icon="⊞" label="Tableau" />
         <NavItem href="/pro/alertes" icon="◎" label="Alertes" />
         <NavItem href="/pro/calendrier" icon="▦" label="Organisation" />
-        {estCoord && <NavItem href="/pro/nouveau-patient" icon="＋" label="Nouveau" />}
-        {estCoord && <NavItem href="/pro/nouveau-soignant" icon="✚" label="Soignants" />}
+        {estCoord && <NavItem href="/pro/nouveau" icon="＋" label="Nouveau" />}
       </nav>
     </div>
   );
