@@ -28,6 +28,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
             <nav className="hidden gap-1 sm:flex">
               <Onglet href="/pro" label="Tableau de bord" />
               <Onglet href="/pro/alertes" label="Alertes" />
+              {estCoord && <Onglet href="/pro/suivis" label="Suivis" />}
               {!estChir && <Onglet href="/pro/calendrier" label="Organisation" />}
               {estNiveau1 && !estChir && <Onglet href="/pro/equipe" label="Équipe soignante" />}
               {(estCoord || estChir || estNiveau1) && (
@@ -59,6 +60,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-rose-100 bg-white sm:hidden">
         <NavItem href="/pro" icon="⊞" label="Tableau" />
         <NavItem href="/pro/alertes" icon="◎" label="Alertes" />
+        {estCoord && <NavItem href="/pro/suivis" icon="🗓" label="Suivis" />}
         {!estChir && <NavItem href="/pro/calendrier" icon="▦" label="Organisation" />}
         {estNiveau1 && !estChir && <NavItem href="/pro/equipe" icon="👥" label="Équipe" />}
         {(estCoord || estChir || estNiveau1) && <NavItem href="/pro/nouveau" icon="＋" label="Nouveau" />}
