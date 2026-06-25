@@ -39,6 +39,12 @@ export interface Professionnel {
   duree_prise_en_charge: number | null;
   jours_suivi: number[] | null;
   molecules: { nom: string; posologie: string }[] | null;
+  pansement: boolean | null;
+  pansement_detail: string | null;
+  cryotherapie: boolean | null;
+  cryotherapie_duree: string | null;
+  cryotherapie_machine: string | null;
+  envoi_ordo: string[] | null;
   created_at: string;
 }
 

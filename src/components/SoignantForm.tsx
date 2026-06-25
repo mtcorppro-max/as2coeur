@@ -26,6 +26,11 @@ const VIDE = {
   secretariat_email: "",
   secretariat_tel: "",
   duree_prise_en_charge: "",
+  pansement: false,
+  pansement_detail: "",
+  cryotherapie: false,
+  cryotherapie_duree: "",
+  cryotherapie_machine: "",
   protocole: "",
 };
 
@@ -37,6 +42,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
   const [form, setForm] = useState({ ...VIDE });
   const [joursActifs, setJoursActifs] = useState<number[]>([]);
   const [molecules, setMolecules] = useState<Molecule[]>(MOLECULES_INIT.map((m) => ({ ...m })));
+  const [envoiOrdo, setEnvoiOrdo] = useState<string[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [cree, setCree] = useState<{ email: string; motDePasse: string } | null>(null);
@@ -55,7 +61,11 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
     setForm({ ...VIDE });
     setJoursActifs([]);
     setMolecules(MOLECULES_INIT.map((m) => ({ ...m })));
+    setEnvoiOrdo([]);
   };
+
+  const toggleEnvoiOrdo = (cible: string) =>
+    setEnvoiOrdo((prev) => (prev.includes(cible) ? prev.filter((c) => c !== cible) : [...prev, cible]));
 
   const estChirurgien = form.role === "chirurgien";
 
@@ -70,7 +80,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
       const res = await fetch("/api/soignants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, jours_suivi: joursActifs, molecules: moleculesPropres }),
+        body: JSON.stringify({ ...form, jours_suivi: joursActifs, molecules: moleculesPropres, envoi_ordo: envoiOrdo }),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.message ?? "Erreur.");
@@ -309,6 +319,75 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
                 + Ajouter une autre molécule
               </button>
             </div>
+
+            {/* Pansement */}
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between gap-3">
+                <label className="label mb-0">Pansement</label>
+                <OuiNon valeur={form.pansement} onChange={(v) => setForm((f) => ({ ...f, pansement: v }))} nom="pansement" />
+              </div>
+              {form.pansement && (
+                <textarea
+                  className="input"
+                  rows={3}
+                  value={form.pansement_detail}
+                  onChange={set("pansement_detail")}
+                  placeholder="Type de pansement, fréquence de réfection, produits…"
+                />
+              )}
+            </div>
+
+            {/* Cryothérapie */}
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between gap-3">
+                <label className="label mb-0">Cryothérapie</label>
+                <OuiNon valeur={form.cryotherapie} onChange={(v) => setForm((f) => ({ ...f, cryotherapie: v }))} nom="cryotherapie" />
+              </div>
+              {form.cryotherapie && (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input
+                    className="input"
+                    value={form.cryotherapie_machine}
+                    onChange={set("cryotherapie_machine")}
+                    placeholder="Quelle machine ?"
+                  />
+                  <input
+                    className="input"
+                    value={form.cryotherapie_duree}
+                    onChange={set("cryotherapie_duree")}
+                    placeholder="Durée de prêt (ex. 15 jours)"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Envoi Ordo / CR */}
+            <div className="grid gap-2">
+              <label className="label mb-0">Envoi des ordonnances / comptes rendus (Ordo/CR)</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { v: "secretariat", l: "Secrétariat" },
+                  { v: "medecin", l: "Médecin" },
+                ].map(({ v, l }) => {
+                  const actif = envoiOrdo.includes(v);
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => toggleEnvoiOrdo(v)}
+                      className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+                        actif
+                          ? "border-brand bg-brand text-white"
+                          : "border-rose-200 bg-white text-slate-600 hover:border-brand hover:text-brand"
+                      }`}
+                    >
+                      {l}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div>
               <label className="label">Autres consignes</label>
               <textarea
@@ -316,7 +395,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
                 rows={5}
                 value={form.protocole}
                 onChange={set("protocole")}
-                placeholder={"Pansement\nSuivi (ex. appel J1 obligatoire)\nDébits, surveillance, autres consignes…"}
+                placeholder={"Suivi (ex. appel J1 obligatoire)\nDébits, surveillance, autres consignes…"}
               />
             </div>
           </div>
@@ -330,5 +409,30 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
         {busy ? "Création…" : "Créer le compte soignant"}
       </button>
     </form>
+  );
+}
+
+function OuiNon({ valeur, onChange, nom }: { valeur: boolean; onChange: (v: boolean) => void; nom: string }) {
+  return (
+    <div className="flex gap-2">
+      {[
+        { v: true, l: "Oui" },
+        { v: false, l: "Non" },
+      ].map(({ v, l }) => (
+        <button
+          key={l}
+          type="button"
+          name={nom}
+          onClick={() => onChange(v)}
+          className={`rounded-lg border px-3 py-1 text-sm font-medium transition ${
+            valeur === v
+              ? "border-brand bg-brand text-white"
+              : "border-rose-200 bg-white text-slate-600 hover:border-brand hover:text-brand"
+          }`}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
   );
 }

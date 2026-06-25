@@ -105,6 +105,12 @@ export async function POST(request: Request) {
           duree_prise_en_charge: intOuNull(body.duree_prise_en_charge),
           jours_suivi: Array.isArray(body.jours_suivi) && body.jours_suivi.length > 0 ? body.jours_suivi : null,
           molecules: Array.isArray(body.molecules) && body.molecules.length > 0 ? body.molecules : null,
+          pansement: body.pansement === true,
+          pansement_detail: body.pansement === true ? texteOuNull(body.pansement_detail) : null,
+          cryotherapie: body.cryotherapie === true,
+          cryotherapie_duree: body.cryotherapie === true ? texteOuNull(body.cryotherapie_duree) : null,
+          cryotherapie_machine: body.cryotherapie === true ? texteOuNull(body.cryotherapie_machine) : null,
+          envoi_ordo: Array.isArray(body.envoi_ordo) && body.envoi_ordo.length > 0 ? body.envoi_ordo : null,
         }
       : {
           prenom: texteOuNull(body.prenom),
