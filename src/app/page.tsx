@@ -30,10 +30,10 @@ export default function Landing() {
             ))}
           </nav>
           <div className="flex flex-1 items-center justify-end gap-2 md:flex-none">
-            <Link href="/login/patient" className="btn-secondary flex-1 py-2 text-center text-sm md:flex-none">
+            <Link href="/login/patient" className="btn-secondary whitespace-nowrap py-2 text-center text-sm">
               Patient
             </Link>
-            <Link href="/login/pro" className="btn-primary flex-1 py-2 text-center text-sm md:flex-none">
+            <Link href="/login/pro" className="btn-primary whitespace-nowrap py-2 text-center text-sm">
               Équipe médicale
             </Link>
           </div>
