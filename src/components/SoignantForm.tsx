@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { genererPdfConsignes } from "@/lib/pdfConsignes";
 
 type Prestataire = { id: string; nom: string };
 
@@ -66,6 +67,33 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
   const propres = (arr: Molecule[]) =>
     arr.filter((m) => m.coche && m.nom.trim()).map((m) => ({ nom: m.nom.trim(), posologie: m.posologie.trim() }));
 
+  const telechargerPdf = () =>
+    genererPdfConsignes({
+      titre: form.titre,
+      prenom: form.prenom,
+      nom: form.nom,
+      specialite: form.specialite,
+      telephone: form.telephone,
+      cabinets: form.cabinets,
+      secretariat_nom: form.secretariat_nom,
+      secretariat_email: form.secretariat_email,
+      secretariat_tel: form.secretariat_tel,
+      duree_prise_en_charge: form.duree_prise_en_charge,
+      jours_suivi: joursActifs,
+      molecules: propres(molecules),
+      pansement: form.pansement,
+      pansement_detail: form.pansement_detail,
+      cryotherapie: form.cryotherapie,
+      cryotherapie_duree: form.cryotherapie_duree,
+      cryotherapie_machine: form.cryotherapie_machine,
+      envoi_ordo: envoiOrdo,
+      pharmacie_per_os: form.pharmacie_per_os,
+      medicaments_per_os: propres(moleculesPerOs),
+      materiel: form.materiel,
+      materiel_paramedical: form.materiel_paramedical,
+      protocole: form.protocole,
+    });
+
   const toggleEnvoiOrdo = (cible: string) =>
     setEnvoiOrdo((prev) => (prev.includes(cible) ? prev.filter((c) => c !== cible) : [...prev, cible]));
 
@@ -108,6 +136,11 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
         <p className="text-xs text-slate-400">
           À transmettre au soignant. Connexion sur l&apos;écran « Équipe médicale ».
         </p>
+        {estChirurgien && (
+          <button onClick={telechargerPdf} className="btn-primary">
+            📄 Télécharger le PDF des consignes
+          </button>
+        )}
         <button onClick={() => { setCree(null); reset(); }} className="btn-secondary">
           Créer un autre compte
         </button>
