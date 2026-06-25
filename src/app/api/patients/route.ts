@@ -108,6 +108,24 @@ export async function POST(request: Request) {
     );
   }
 
+  // 2b. Rattachement aux soignants sélectionnés (niveau 2 = accès restreint).
+  // On ne garde que les professionnels du même prestataire.
+  const ids: string[] = Array.isArray(body.rattachements)
+    ? [...new Set(body.rattachements.filter((x: unknown) => typeof x === "string"))] as string[]
+    : [];
+  if (ids.length) {
+    const { data: prosOk } = await admin
+      .from("professionnel")
+      .select("id")
+      .eq("prestataire_id", pro.prestataire_id)
+      .in("id", ids);
+    const liens = (prosOk ?? []).map((p) => ({
+      patient_id: patient.id,
+      professionnel_id: p.id,
+    }));
+    if (liens.length) await admin.from("patient_soignant").insert(liens);
+  }
+
   // 3. Seuils d'amorçage (valeurs par défaut — à ajuster par la coordinatrice)
   const seuils = TYPES_MESURE.filter(
     (t) =>

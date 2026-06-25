@@ -7,7 +7,7 @@ import { LIBELLE_ROLE } from "@/lib/roles";
 import { AdresseAutocomplete } from "@/components/AdresseAutocomplete";
 import type { RolePro } from "@/lib/types";
 
-type Soignant = { id: string; nom: string; role: RolePro };
+type Soignant = { id: string; nom: string; role: RolePro; niveau: number };
 
 const VIDE = {
   prenom: "",
@@ -41,14 +41,21 @@ export function NouveauPatientForm() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [soignants, setSoignants] = useState<Soignant[]>([]);
+  const [rattachements, setRattachements] = useState<string[]>([]);
 
   useEffect(() => {
     createClient()
       .from("professionnel")
-      .select("id,nom,role")
+      .select("id,nom,role,niveau")
       .order("nom")
       .then(({ data }) => setSoignants((data ?? []) as Soignant[]));
   }, []);
+
+  // Seuls les soignants de niveau 2 ont besoin d'un rattachement explicite
+  // (les niveau 1 et la coordinatrice voient déjà tous les patients).
+  const aRattacher = soignants.filter((s) => s.niveau === 2 && s.role !== "coordinatrice");
+  const toggleRattachement = (id: string) =>
+    setRattachements((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -63,7 +70,7 @@ export function NouveauPatientForm() {
       const res = await fetch("/api/patients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, rattachements }),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.message ?? "Erreur.");
@@ -94,6 +101,7 @@ export function NouveauPatientForm() {
             onClick={() => {
               setCode(null);
               setForm({ ...VIDE });
+              setRattachements([]);
             }}
             className="btn-secondary flex-1"
           >
@@ -235,6 +243,36 @@ export function NouveauPatientForm() {
           </div>
         </div>
       </div>
+
+      {/* ── Rattachement (soignants niveau 2) ── */}
+      {aRattacher.length > 0 && (
+        <div className="grid gap-3 border-t border-rose-100 pt-4">
+          <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Rattachement du patient</p>
+          <p className="-mt-1 text-xs text-slate-400">
+            Sélectionnez les soignants en charge de ce patient. Les comptes niveau 1
+            et la coordinatrice y ont déjà accès automatiquement.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {aRattacher.map((s) => {
+              const actif = rattachements.includes(s.id);
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => toggleRattachement(s.id)}
+                  className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+                    actif
+                      ? "border-brand bg-brand text-white"
+                      : "border-rose-200 bg-white text-slate-600 hover:border-brand hover:text-brand"
+                  }`}
+                >
+                  {s.nom} ({LIBELLE_ROLE[s.role]})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {erreur && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-critique">{erreur}</p>
