@@ -46,7 +46,9 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3 text-right">
             {pro && (
               <div className="leading-tight">
-                <p className="text-sm font-semibold text-slate-700">{pro.nom}</p>
+                <p className="text-sm font-semibold text-slate-700">
+                  {[pro.titre, pro.prenom, pro.nom].filter(Boolean).join(" ")}
+                </p>
                 <p className="text-xs text-slate-400">{LIBELLE_ROLE[pro.role as keyof typeof LIBELLE_ROLE]}</p>
               </div>
             )}

@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export type SessionPatient = { id: string; nom: string; code_postal: string | null; user_id: string };
-export type SessionPro = { id: string; nom: string; role: string; niveau: number; prestataire_id: string; user_id: string };
+export type SessionPro = { id: string; nom: string; prenom: string | null; titre: string | null; role: string; niveau: number; prestataire_id: string; user_id: string };
 
 const LS_PATIENT = "sc_patient";
-const LS_PRO = "sc_pro2"; // bump : ajout du champ niveau
+const LS_PRO = "sc_pro3"; // bump : ajout prénom / titre
 const TTL = 15 * 60 * 1000; // 15 min
 
 type Cached<T> = { v: T; ts: number };
@@ -88,7 +88,7 @@ async function fetchPro(): Promise<SessionPro | null> {
   if (!session) return null;
   const { data } = await supabase
     .from("professionnel")
-    .select("id,nom,role,niveau,prestataire_id,user_id")
+    .select("id,nom,prenom,titre,role,niveau,prestataire_id,user_id")
     .eq("user_id", session.user.id)
     .maybeSingle();
   if (!data) return null;
