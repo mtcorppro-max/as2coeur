@@ -173,9 +173,6 @@ export function NouveauPatientForm() {
             placeholder="ex. 30"
             inputMode="numeric"
           />
-          <p className="mt-1 text-xs text-slate-400">
-            Permet de planifier un suivi à J1 et au dernier jour.
-          </p>
         </div>
         <div>
           <label className="label">Chirurgien (qui a opéré)</label>
