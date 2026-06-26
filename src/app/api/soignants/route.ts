@@ -4,8 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { estEmailAdmin } from "@/lib/admin";
 import { peutOctroyer } from "@/lib/niveaux";
 
-type RolePro = "coordinatrice" | "chirurgien" | "delegue";
-const ROLES: RolePro[] = ["coordinatrice", "chirurgien", "delegue"];
+type RolePro = "coordinatrice" | "chirurgien" | "delegue" | "manager";
+const ROLES: RolePro[] = ["coordinatrice", "chirurgien", "delegue", "manager"];
 
 // Génère un mot de passe lisible (sans caractères ambigus).
 function genererMotDePasse(): string {
@@ -65,7 +65,8 @@ export async function POST(request: Request) {
 
   // Contrôle d'octroi : pas plus puissant que soi, et le niveau 1 (manager)
   // est réservé au niveau 0.
-  const niveauDemande = [0, 1, 2, 3].includes(Number(body.niveau)) ? Number(body.niveau) : 3;
+  // Un manager est toujours niveau 1.
+  const niveauDemande = role === "manager" ? 1 : ([0, 1, 2, 3].includes(Number(body.niveau)) ? Number(body.niveau) : 3);
   if (!peutOctroyer(niveauCreateur, niveauDemande)) {
     return NextResponse.json(
       { message: "Vous ne pouvez pas octroyer ce niveau (le niveau 1 manager est réservé au niveau 0)." },

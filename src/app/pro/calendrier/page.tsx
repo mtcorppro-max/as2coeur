@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { Select } from "@/components/Select";
+import { estCoordOuManager } from "@/lib/roles";
 
 type RolePro = "coordinatrice" | "chirurgien" | "delegue";
 type ProLite = { id: string; nom: string; prenom: string | null; titre: string | null; role: RolePro; agence_id: string | null };
@@ -64,7 +65,7 @@ export default function OrganisationPage() {
   const [moi, setMoi] = useState<{ niveau: number; agence_id: string | null } | null>(null);
   const [filtreAgence, setFiltreAgence] = useState("");
 
-  const interdit = pro && pro.role !== "coordinatrice" && pro.niveau !== 0;
+  const interdit = pro && !estCoordOuManager(pro.role) && pro.niveau !== 0;
   const fin = addDays(start, NB_JOURS - 1);
 
   const charger = useCallback(async () => {
@@ -90,7 +91,6 @@ export default function OrganisationPage() {
   // Niveau 0 = toutes ; niveau 1 = les agences de sa région ; niveau 2 = son agence.
   const niveauMoi = moi?.niveau ?? pro?.niveau ?? 3;
   const maRegion = moi?.agence_id ? agenceRegion.get(moi.agence_id) : undefined;
-  const regionDe = (agId: string | null) => (agId ? agenceRegion.get(agId) : undefined);
   // Une agence est-elle dans le périmètre du compte connecté ?
   const agenceDansPerimetre = (agId: string) => {
     if (niveauMoi === 0) return true;

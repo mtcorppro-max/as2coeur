@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { Select } from "@/components/Select";
+import { estCoordOuManager } from "@/lib/roles";
 
 type PatientLite = {
   id: string;
@@ -93,7 +94,7 @@ export default function SuivisPage() {
     return [...map.values()];
   }, [patients, filtreChir, today]);
 
-  if (pro && pro.role !== "coordinatrice" && pro.niveau !== 0) {
+  if (pro && !estCoordOuManager(pro.role) && pro.niveau !== 0) {
     return (
       <div className="card text-sm text-slate-500">
         Le calendrier des suivis est réservé aux infirmières coordinatrices.

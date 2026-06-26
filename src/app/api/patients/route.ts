@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Compte introuvable." }, { status: 403 });
   }
   // Coordinatrice, chirurgien, ou super-admin niveau 0 (qui peut tout faire).
-  if (pro.role !== "coordinatrice" && pro.role !== "chirurgien" && pro.niveau !== 0) {
+  if (pro.role !== "coordinatrice" && pro.role !== "manager" && pro.role !== "chirurgien" && pro.niveau !== 0) {
     return NextResponse.json(
       { message: "Vous n'avez pas les droits pour créer un patient." },
       { status: 403 }
