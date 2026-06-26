@@ -17,9 +17,20 @@ export type ProtocolePdf = {
   envoi_ordo: string[];
   pharmacie_per_os: boolean;
   medicaments_per_os: Med[];
+  surveiller_constantes?: boolean;
+  constantes?: { type: string; min: string; max: string }[];
   materiel: boolean;
   materiel_paramedical: string;
   autres: string;
+};
+
+const LABEL_CONST: Record<string, string> = {
+  temperature: "Température",
+  ta_systolique: "TA systolique",
+  ta_diastolique: "TA diastolique",
+  spo2: "SpO2",
+  bpm: "Pouls",
+  poids: "Poids",
 };
 
 export type ConsignesData = {
@@ -212,6 +223,14 @@ export async function genererPdfConsignes(
     if (p.pharmacie_per_os && p.medicaments_per_os.length) {
       sousTitre("Médicaments Per os à commander");
       listeMolecules(p.medicaments_per_os);
+    }
+
+    if (p.surveiller_constantes && p.constantes && p.constantes.length) {
+      sousTitre("Constantes à surveiller (seuils d'alerte)");
+      p.constantes.forEach((c) => {
+        const seuil = [c.min ? `min ${c.min}` : "", c.max ? `max ${c.max}` : ""].filter(Boolean).join(" / ");
+        ligne(`${LABEL_CONST[c.type] ?? c.type} :`, seuil || "à surveiller");
+      });
     }
 
     const aSoins = p.pansement || p.cryotherapie || p.envoi_ordo.length || p.materiel;

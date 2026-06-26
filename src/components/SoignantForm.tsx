@@ -6,6 +6,7 @@ import { Select } from "@/components/Select";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { optionsNiveau } from "@/lib/niveaux";
+import { MESURES, TYPES_MESURE } from "@/lib/constants";
 
 type Prestataire = { id: string; nom: string };
 
@@ -41,22 +42,27 @@ const SPECIALITES = [
   "Autre",
 ];
 
+// Constante à surveiller avec ses seuils d'alerte.
+type ConstanteSurv = { type: string; min: string; max: string };
+
 // Un protocole = une intervention chirurgicale avec sa prise en charge propre.
 type Protocole = {
   intervention: string;
   duree: string;
   jours: number[];
   molecules: Molecule[];
+  pharmacie_per_os: boolean;
+  medicaments_per_os: Molecule[];
+  surveiller_constantes: boolean;
+  constantes: ConstanteSurv[];
   pansement: boolean;
   pansement_detail: string;
   cryotherapie: boolean;
   cryotherapie_duree: string;
   cryotherapie_machine: string;
-  envoi_ordo: string[];
-  pharmacie_per_os: boolean;
-  medicaments_per_os: Molecule[];
   materiel: boolean;
   materiel_paramedical: string;
+  envoi_ordo: string[];
   autres: string;
 };
 
@@ -65,16 +71,18 @@ const protocoleVide = (): Protocole => ({
   duree: "",
   jours: [],
   molecules: MOLECULES_INIT(),
+  pharmacie_per_os: false,
+  medicaments_per_os: MOLECULES_PER_OS_INIT(),
+  surveiller_constantes: false,
+  constantes: [],
   pansement: false,
   pansement_detail: "",
   cryotherapie: false,
   cryotherapie_duree: "",
   cryotherapie_machine: "",
-  envoi_ordo: [],
-  pharmacie_per_os: false,
-  medicaments_per_os: MOLECULES_PER_OS_INIT(),
   materiel: false,
   materiel_paramedical: "",
+  envoi_ordo: [],
   autres: "",
 });
 
@@ -110,11 +118,15 @@ const protocolePropre = (p: Protocole) => ({
   cryotherapie: p.cryotherapie,
   cryotherapie_duree: p.cryotherapie ? p.cryotherapie_duree.trim() : "",
   cryotherapie_machine: p.cryotherapie ? p.cryotherapie_machine.trim() : "",
-  envoi_ordo: p.envoi_ordo,
   pharmacie_per_os: p.pharmacie_per_os,
   medicaments_per_os: p.pharmacie_per_os ? propres(p.medicaments_per_os) : [],
+  surveiller_constantes: p.surveiller_constantes,
+  constantes: p.surveiller_constantes
+    ? p.constantes.map((c) => ({ type: c.type, min: c.min.trim(), max: c.max.trim() }))
+    : [],
   materiel: p.materiel,
   materiel_paramedical: p.materiel ? p.materiel_paramedical.trim() : "",
+  envoi_ordo: p.envoi_ordo,
   autres: p.autres.trim(),
 });
 
@@ -556,6 +568,78 @@ function ProtocoleEditor({
         posologiePlaceholder="Posologie IV (ex. 1 amp. IV x3/j)"
       />
 
+      {/* Médicaments Per os (juste après les molécules IV) */}
+      <div className="grid gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <label className="label mb-0">Médicaments Per os à commander en pharmacie ?</label>
+          <OuiNon valeur={value.pharmacie_per_os} onChange={(v) => onChange({ pharmacie_per_os: v })} nom={`peros-${index}`} />
+        </div>
+        {value.pharmacie_per_os && (
+          <ListeMolecules
+            items={value.medicaments_per_os}
+            onChange={(medicaments_per_os) => onChange({ medicaments_per_os })}
+            posologiePlaceholder="Posologie Per os (ex. 1 g x3/j)"
+          />
+        )}
+      </div>
+
+      {/* Constantes à surveiller (avec seuils d'alerte) */}
+      <div className="grid gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <label className="label mb-0">Constantes à surveiller ?</label>
+          <OuiNon valeur={value.surveiller_constantes} onChange={(v) => onChange({ surveiller_constantes: v })} nom={`const-${index}`} />
+        </div>
+        {value.surveiller_constantes && (
+          <div className="grid gap-2 rounded-xl border border-rose-100 bg-rose-50/40 p-3">
+            <p className="text-xs text-slate-500">
+              Coche les constantes à surveiller, puis indique les seuils d&apos;alerte (min / max).
+              Les graphiques du compte rendu de suivi seront générés pour ces constantes.
+            </p>
+            {TYPES_MESURE.map((t) => {
+              const c = value.constantes.find((x) => x.type === t);
+              const meta = MESURES[t];
+              return (
+                <div key={t} className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={!!c}
+                      onChange={(e) =>
+                        onChange({
+                          constantes: e.target.checked
+                            ? [...value.constantes, { type: t, min: "", max: "" }]
+                            : value.constantes.filter((x) => x.type !== t),
+                        })
+                      }
+                      className="h-4 w-4 accent-brand"
+                    />
+                    {meta.label} <span className="text-slate-400">({meta.unite})</span>
+                  </label>
+                  {c && (
+                    <div className="flex gap-2">
+                      <input
+                        className="input w-24"
+                        inputMode="decimal"
+                        placeholder="min"
+                        value={c.min}
+                        onChange={(e) => onChange({ constantes: value.constantes.map((x) => (x.type === t ? { ...x, min: e.target.value } : x)) })}
+                      />
+                      <input
+                        className="input w-24"
+                        inputMode="decimal"
+                        placeholder="max"
+                        value={c.max}
+                        onChange={(e) => onChange({ constantes: value.constantes.map((x) => (x.type === t ? { ...x, max: e.target.value } : x)) })}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Pansement */}
       <div className="grid gap-2">
         <div className="flex items-center justify-between gap-3">
@@ -597,7 +681,24 @@ function ProtocoleEditor({
         )}
       </div>
 
-      {/* Envoi Ordo / CR */}
+      {/* Matériel paramédical (juste après cryothérapie) */}
+      <div className="grid gap-2">
+        <div className="flex items-center justify-between gap-3">
+          <label className="label mb-0">Matériel paramédical à commander</label>
+          <OuiNon valeur={value.materiel} onChange={(v) => onChange({ materiel: v })} nom={`materiel-${index}`} />
+        </div>
+        {value.materiel && (
+          <textarea
+            className="input"
+            rows={3}
+            value={value.materiel_paramedical}
+            onChange={(e) => onChange({ materiel_paramedical: e.target.value })}
+            placeholder="ex. Attelle de genou, bas de contention…"
+          />
+        )}
+      </div>
+
+      {/* Envoi Ordo / CR (juste avant Autres consignes) */}
       <div className="grid gap-2">
         <label className="label mb-0">Envoi des ordonnances / comptes rendus</label>
         <div className="flex flex-wrap gap-2">
@@ -622,38 +723,6 @@ function ProtocoleEditor({
             );
           })}
         </div>
-      </div>
-
-      {/* Pharmacie / Per os */}
-      <div className="grid gap-2">
-        <div className="flex items-center justify-between gap-3">
-          <label className="label mb-0">Médicaments Per os à commander en pharmacie ?</label>
-          <OuiNon valeur={value.pharmacie_per_os} onChange={(v) => onChange({ pharmacie_per_os: v })} nom={`peros-${index}`} />
-        </div>
-        {value.pharmacie_per_os && (
-          <ListeMolecules
-            items={value.medicaments_per_os}
-            onChange={(medicaments_per_os) => onChange({ medicaments_per_os })}
-            posologiePlaceholder="Posologie Per os (ex. 1 g x3/j)"
-          />
-        )}
-      </div>
-
-      {/* Matériel paramédical */}
-      <div className="grid gap-2">
-        <div className="flex items-center justify-between gap-3">
-          <label className="label mb-0">Matériel paramédical à commander</label>
-          <OuiNon valeur={value.materiel} onChange={(v) => onChange({ materiel: v })} nom={`materiel-${index}`} />
-        </div>
-        {value.materiel && (
-          <textarea
-            className="input"
-            rows={3}
-            value={value.materiel_paramedical}
-            onChange={(e) => onChange({ materiel_paramedical: e.target.value })}
-            placeholder="ex. Attelle de genou, bas de contention…"
-          />
-        )}
       </div>
 
       <div>

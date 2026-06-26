@@ -55,6 +55,7 @@ export function NouveauPatientForm() {
   const [busy, setBusy] = useState(false);
   const [soignants, setSoignants] = useState<Soignant[]>([]);
   const [joursSuivi, setJoursSuivi] = useState<number[]>([]);
+  const [seuilsProto, setSeuilsProto] = useState<{ type: string; min: string; max: string }[]>([]);
   const pro = useProSession();
   const [agenceId, setAgenceId] = useState("");
   const [agences, setAgences] = useState<{ value: string; label: string }[]>([]);
@@ -96,6 +97,7 @@ export function NouveauPatientForm() {
     if (!p) return;
     setForm((f) => ({ ...f, operation: p.intervention || f.operation, duree_prise_en_charge: p.duree || "" }));
     setJoursSuivi(p.jours ?? []);
+    setSeuilsProto(p.surveiller_constantes ? (p.constantes ?? []) : []);
   };
 
   // Le rattachement est déduit du chirurgien + des coordinatrices d'alerte choisis.
@@ -125,7 +127,7 @@ export function NouveauPatientForm() {
       const res = await fetch("/api/patients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, jours_suivi: joursSuivi, agence_id: agenceId || null, rattachements: rattachementsAuto() }),
+        body: JSON.stringify({ ...form, jours_suivi: joursSuivi, seuils: seuilsProto, agence_id: agenceId || null, rattachements: rattachementsAuto() }),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.message ?? "Erreur.");
@@ -157,6 +159,7 @@ export function NouveauPatientForm() {
               setCode(null);
               setForm({ ...VIDE });
               setJoursSuivi([]);
+              setSeuilsProto([]);
             }}
             className="btn-secondary flex-1"
           >

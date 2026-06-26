@@ -135,17 +135,23 @@ export async function POST(request: Request) {
     if (liens.length) await admin.from("patient_soignant").insert(liens);
   }
 
-  // 3. Seuils d'amorçage (valeurs par défaut — à ajuster par la coordinatrice)
-  const seuils = TYPES_MESURE.filter(
-    (t) =>
-      MESURES[t].seuilDefautMin != null || MESURES[t].seuilDefautMax != null
-  ).map((t) => ({
-    patient_id: patient.id,
-    type_mesure: t,
-    valeur_min: MESURES[t].seuilDefautMin,
-    valeur_max: MESURES[t].seuilDefautMax,
-    actif: true,
-  }));
+  // 3. Seuils : ceux définis dans le protocole (constantes à surveiller) priment,
+  //    sinon valeurs par défaut. Permet la génération auto des graphiques de suivi.
+  const num = (v: unknown) => { const n = Number(v); return v != null && v !== "" && isFinite(n) ? n : null; };
+  const protoSeuils = new Map<string, { min: number | null; max: number | null }>();
+  if (Array.isArray(body.seuils)) {
+    body.seuils.forEach((s: { type?: string; min?: string; max?: string }) => {
+      if (s?.type) protoSeuils.set(s.type, { min: num(s.min), max: num(s.max) });
+    });
+  }
+  const seuils = TYPES_MESURE
+    .map((t) => {
+      const p = protoSeuils.get(t);
+      const min = p ? p.min : MESURES[t].seuilDefautMin;
+      const max = p ? p.max : MESURES[t].seuilDefautMax;
+      return { patient_id: patient.id, type_mesure: t, valeur_min: min, valeur_max: max, actif: true };
+    })
+    .filter((s) => s.valeur_min != null || s.valeur_max != null);
   if (seuils.length) await admin.from("seuil").insert(seuils);
 
   return NextResponse.json({ code, patientId: patient.id });

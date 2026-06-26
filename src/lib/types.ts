@@ -70,6 +70,8 @@ export interface ProtocoleConsigne {
   envoi_ordo: string[];
   pharmacie_per_os: boolean;
   medicaments_per_os: { nom: string; posologie: string }[];
+  surveiller_constantes?: boolean;
+  constantes?: { type: string; min: string; max: string }[];
   materiel: boolean;
   materiel_paramedical: string;
   autres: string;
