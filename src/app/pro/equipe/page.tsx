@@ -110,6 +110,79 @@ export default function EquipePage() {
     });
   }
 
+  const carte = (s: Soignant) => {
+    const estChir = s.role === "chirurgien";
+    const nomAffiche = [s.titre, s.prenom, s.nom].filter(Boolean).join(" ");
+    const modifiable = peutModifier(s);
+    return (
+      <div
+        key={s.id}
+        onClick={() => modifiable && setEdite(s)}
+        className={`card grid gap-3 ${modifiable ? "cursor-pointer transition hover:border-rose-200 hover:shadow-md" : ""}`}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold text-slate-800">{nomAffiche}</span>
+              <span className="badge bg-rose-100 text-brand">{LIBELLE_ROLE[s.role]}</span>
+              <span className={`badge ${s.niveau <= 1 ? "bg-green-100 text-ok" : s.niveau === 2 ? "bg-sky-100 text-sky-700" : "bg-amber-100 text-attention"}`}>
+                {NIVEAU_LABEL[s.niveau] ?? `Niveau ${s.niveau}`}
+              </span>
+              {s.region_id && regionNom.get(s.region_id) && (
+                <span className="badge bg-slate-100 text-slate-600">{regionNom.get(s.region_id)}</span>
+              )}
+            </div>
+            {s.specialite && <p className="mt-0.5 text-sm text-slate-500">{s.specialite}</p>}
+          </div>
+          {peutSupprimer(s) && (
+            <button
+              onClick={(e) => { e.stopPropagation(); supprimer(s); }}
+              disabled={suppression === s.id}
+              className="rounded-lg border border-rose-200 px-3 py-1.5 text-sm font-medium text-critique hover:bg-red-50 disabled:opacity-50"
+            >
+              {suppression === s.id ? "Suppression…" : "Supprimer"}
+            </button>
+          )}
+        </div>
+
+        <div className="grid gap-1 text-sm sm:grid-cols-2">
+          {s.email && <Info label="Email" value={s.email} href={`mailto:${s.email}`} />}
+          {s.telephone && <Info label="Téléphone" value={s.telephone} href={`tel:${s.telephone}`} />}
+          {s.cabinets && <Info label="Cabinet(s)" value={s.cabinets} />}
+          {s.secretariat_nom && <Info label="Secrétariat" value={s.secretariat_nom} />}
+          {s.secretariat_tel && <Info label="Tél. secrétariat" value={s.secretariat_tel} href={`tel:${s.secretariat_tel}`} />}
+        </div>
+
+        {modifiable && <p className="text-xs text-brand">Cliquer pour modifier le niveau / l&apos;agence</p>}
+
+        {estChir && (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-rose-50 pt-3" onClick={(e) => e.stopPropagation()}>
+            <span className="text-sm text-slate-500">
+              {s.protocoles?.length
+                ? `${s.protocoles.length} protocole(s) : ${s.protocoles.map((p) => p.intervention || "Sans nom").join(", ")}`
+                : "Aucun protocole enregistré"}
+            </span>
+            <button onClick={() => pdf(s)} className="btn-secondary text-sm">📄 PDF des consignes</button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Groupement par agence (+ une section « Encadrement » pour région/plateforme).
+  const parAgence = new Map<string, Soignant[]>();
+  const encadrement: Soignant[] = [];
+  soignantsVisibles.forEach((s) => {
+    if (s.agence_id) {
+      const arr = parAgence.get(s.agence_id) ?? [];
+      arr.push(s);
+      parAgence.set(s.agence_id, arr);
+    } else encadrement.push(s);
+  });
+  const groupesAgence = [...parAgence.entries()]
+    .map(([id, items]) => ({ titre: labelAgence(id) ?? "Agence", items }))
+    .sort((a, b) => a.titre.localeCompare(b.titre));
+
   return (
     <div className="mx-auto max-w-4xl">
       <h1 className="mb-5 text-2xl font-bold text-slate-800">Équipe soignante</h1>
@@ -119,67 +192,19 @@ export default function EquipePage() {
       ) : soignantsVisibles.length === 0 ? (
         <p className="text-sm text-slate-400">Aucun soignant dans votre périmètre.</p>
       ) : (
-        <div className="grid gap-4">
-          {soignantsVisibles.map((s) => {
-            const estChir = s.role === "chirurgien";
-            const nomAffiche = [s.titre, s.prenom, s.nom].filter(Boolean).join(" ");
-            const modifiable = peutModifier(s);
-            return (
-              <div
-                key={s.id}
-                onClick={() => modifiable && setEdite(s)}
-                className={`card grid gap-3 ${modifiable ? "cursor-pointer transition hover:border-rose-200 hover:shadow-md" : ""}`}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-slate-800">{nomAffiche}</span>
-                      <span className="badge bg-rose-100 text-brand">{LIBELLE_ROLE[s.role]}</span>
-                      <span className={`badge ${s.niveau <= 1 ? "bg-green-100 text-ok" : s.niveau === 2 ? "bg-sky-100 text-sky-700" : "bg-amber-100 text-attention"}`}>
-                        {NIVEAU_LABEL[s.niveau] ?? `Niveau ${s.niveau}`}
-                      </span>
-                      {(labelAgence(s.agence_id) || (s.region_id && regionNom.get(s.region_id))) && (
-                        <span className="badge bg-slate-100 text-slate-600">
-                          {labelAgence(s.agence_id) ?? regionNom.get(s.region_id!)}
-                        </span>
-                      )}
-                    </div>
-                    {s.specialite && <p className="mt-0.5 text-sm text-slate-500">{s.specialite}</p>}
-                  </div>
-                  {peutSupprimer(s) && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); supprimer(s); }}
-                      disabled={suppression === s.id}
-                      className="rounded-lg border border-rose-200 px-3 py-1.5 text-sm font-medium text-critique hover:bg-red-50 disabled:opacity-50"
-                    >
-                      {suppression === s.id ? "Suppression…" : "Supprimer"}
-                    </button>
-                  )}
-                </div>
-
-                <div className="grid gap-1 text-sm sm:grid-cols-2">
-                  {s.email && <Info label="Email" value={s.email} href={`mailto:${s.email}`} />}
-                  {s.telephone && <Info label="Téléphone" value={s.telephone} href={`tel:${s.telephone}`} />}
-                  {s.cabinets && <Info label="Cabinet(s)" value={s.cabinets} />}
-                  {s.secretariat_nom && <Info label="Secrétariat" value={s.secretariat_nom} />}
-                  {s.secretariat_tel && <Info label="Tél. secrétariat" value={s.secretariat_tel} href={`tel:${s.secretariat_tel}`} />}
-                </div>
-
-                {modifiable && <p className="text-xs text-brand">Cliquer pour modifier le niveau / l&apos;agence</p>}
-
-                {estChir && (
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-rose-50 pt-3" onClick={(e) => e.stopPropagation()}>
-                    <span className="text-sm text-slate-500">
-                      {s.protocoles?.length
-                        ? `${s.protocoles.length} protocole(s) : ${s.protocoles.map((p) => p.intervention || "Sans nom").join(", ")}`
-                        : "Aucun protocole enregistré"}
-                    </span>
-                    <button onClick={() => pdf(s)} className="btn-secondary text-sm">📄 PDF des consignes</button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        <div className="grid gap-7">
+          {encadrement.length > 0 && (
+            <section className="grid gap-3">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Encadrement (région / plateforme)</h2>
+              {encadrement.map(carte)}
+            </section>
+          )}
+          {groupesAgence.map((g) => (
+            <section key={g.titre} className="grid gap-3">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">{g.titre}</h2>
+              {g.items.map(carte)}
+            </section>
+          ))}
         </div>
       )}
 
