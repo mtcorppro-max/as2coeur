@@ -31,6 +31,7 @@ export interface Professionnel {
   niveau: number;
   agence_id: string | null;
   region_id: string | null;
+  zone_exercice: string | null;
   // Consignes médecin / chirurgien (cf. migration 0015)
   specialite: string | null;
   cabinets: string | null;

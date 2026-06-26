@@ -119,13 +119,17 @@ export async function POST(request: Request) {
       : {
           prenom: texteOuNull(body.prenom),
           telephone: texteOuNull(body.telephone),
+          zone_exercice: role === "infirmiere_liberale" ? texteOuNull(body.zone_exercice) : null,
         };
 
-  // Rattachement : niveau 1 -> région ; niveau 2/3 -> agence ; niveau 0 -> aucun.
+  // Rattachement : infirmière libérale -> aucun (zone d'exercice) ;
+  // niveau 1 -> région ; niveau 2/3 -> agence ; niveau 0 -> aucun.
   let agenceId: string | null = null;
   let regionId: string | null = null;
 
-  if (niveauDemande === 1) {
+  if (role === "infirmiere_liberale") {
+    // Pas de rattachement géographique : elle intervient sur une zone.
+  } else if (niveauDemande === 1) {
     regionId = texteOuNull(body.region_id);
     if (!regionId) {
       await admin.auth.admin.deleteUser(created.user.id);

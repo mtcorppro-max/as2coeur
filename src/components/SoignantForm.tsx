@@ -93,6 +93,7 @@ const VIDE = {
   secretariat_nom: "",
   secretariat_email: "",
   secretariat_tel: "",
+  zone_exercice: "",
 };
 
 const propres = (arr: Molecule[]) =>
@@ -194,7 +195,12 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
       setErreur("Choisissez une région de rattachement (ou créez-en une).");
       return;
     }
-    if ((form.niveau === "2" || form.niveau === "3") && !agenceId) {
+    const estInfLib = form.role === "infirmiere_liberale";
+    if (estInfLib && !form.zone_exercice.trim()) {
+      setErreur("Indiquez la zone d'exercice de l'infirmière libérale.");
+      return;
+    }
+    if (!estInfLib && (form.niveau === "2" || form.niveau === "3") && !agenceId) {
       setErreur("Choisissez une agence de rattachement (ou créez-en une).");
       return;
     }
@@ -205,7 +211,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          agence_id: (form.niveau === "2" || form.niveau === "3") ? agenceId : null,
+          agence_id: !estInfLib && (form.niveau === "2" || form.niveau === "3") ? agenceId : null,
           region_id: form.niveau === "1" ? regionId : null,
           protocoles: estChirurgien ? protocoles.map(protocolePropre) : [],
         }),
@@ -293,7 +299,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
             />
           </div>
         )}
-        {(form.niveau === "2" || form.niveau === "3") && (
+        {(form.niveau === "2" || form.niveau === "3") && form.role !== "infirmiere_liberale" && (
           <div>
             <label className="label">Agence de rattachement *</label>
             <Select
@@ -302,6 +308,18 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
               placeholder={agences.length ? "— Choisir une agence —" : "Aucune agence (créez-en une)"}
               options={agences}
             />
+          </div>
+        )}
+        {form.role === "infirmiere_liberale" && (
+          <div>
+            <label className="label">Zone(s) d&apos;exercice *</label>
+            <input
+              className="input"
+              value={form.zone_exercice}
+              onChange={set("zone_exercice")}
+              placeholder="ex. Montpellier / Hérault"
+            />
+            <p className="mt-1 text-xs text-slate-400">Lieu géographique où elle intervient (pas d&apos;agence).</p>
           </div>
         )}
         {estChirurgien && (

@@ -13,7 +13,7 @@ type Soignant = {
   nom: string;
   prenom: string | null;
   titre: string | null;
-  role: "coordinatrice" | "chirurgien" | "delegue" | "manager";
+  role: "coordinatrice" | "chirurgien" | "delegue" | "manager" | "infirmiere_liberale";
   niveau: number;
   agence_id: string | null;
   region_id: string | null;
@@ -69,6 +69,7 @@ export default function EquipePage() {
 
   // Cloisonnement : qui le compte connecté a-t-il le droit de voir ?
   const visible = (s: Soignant) => {
+    if (s.role === "infirmiere_liberale") return false; // listées à part (par zone)
     if (niveauMoi === 0) return true;                 // plateforme : tout
     if (s.id === moi?.id) return true;                // soi-même
     if (s.niveau === 0) return true;                  // les super-admins plateforme

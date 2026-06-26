@@ -57,6 +57,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               {estCoord && <Onglet href="/pro/suivis" label="Suivis" />}
               {estCoord && <Onglet href="/pro/calendrier" label="Organisation" badge={nbDemandes} />}
               {peutGerer && <Onglet href="/pro/equipe" label="Équipe soignante" />}
+              {peutGerer && <Onglet href="/pro/infirmieres" label="Infirmières libérales" />}
               {(estCoord || estChir || peutGerer) && (
                 <Link
                   href="/pro/nouveau"
@@ -92,6 +93,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         {estCoord && <NavItem href="/pro/suivis" icon="🗓" label="Suivis" />}
         {estCoord && <NavItem href="/pro/calendrier" icon="▦" label="Organisation" badge={nbDemandes} />}
         {peutGerer && <NavItem href="/pro/equipe" icon="👥" label="Équipe" />}
+        {peutGerer && <NavItem href="/pro/infirmieres" icon="🏠" label="Inf. lib." />}
         {(estCoord || estChir || peutGerer) && <NavItem href="/pro/nouveau" icon="＋" label="Nouveau" />}
       </nav>
     </div>
