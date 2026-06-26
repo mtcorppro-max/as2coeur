@@ -21,6 +21,7 @@ type Soignant = {
   email: string | null;
   telephone: string | null;
   specialite: string | null;
+  rpps: string | null;
   cabinets: string | null;
   secretariat_nom: string | null;
   secretariat_email: string | null;
@@ -29,7 +30,7 @@ type Soignant = {
 };
 
 const COLS =
-  "id,nom,prenom,titre,role,niveau,agence_id,region_id,email,telephone,specialite,cabinets,secretariat_nom,secretariat_email,secretariat_tel,protocoles";
+  "id,nom,prenom,titre,role,niveau,agence_id,region_id,email,telephone,specialite,rpps,cabinets,secretariat_nom,secretariat_email,secretariat_tel,protocoles";
 
 // Soignant externe (sans compte) — cf. migrations 0040 / 0041 / 0042.
 type Externe = {
@@ -39,6 +40,7 @@ type Externe = {
   prenom: string | null;
   nom: string;
   specialite: string | null;
+  rpps: string | null;
   telephone: string | null;
   email: string | null;
   zone_exercice: string | null;
@@ -48,7 +50,7 @@ type Externe = {
   protocoles: ProtocolePdf[] | null;
 };
 const COLS_EXT =
-  "id,type,titre,prenom,nom,specialite,telephone,email,zone_exercice,cabinets,secretariat_nom,secretariat_tel,protocoles";
+  "id,type,titre,prenom,nom,specialite,rpps,telephone,email,zone_exercice,cabinets,secretariat_nom,secretariat_tel,protocoles";
 
 const ROLES_INTERNES = ["coordinatrice", "manager", "delegue"] as const;
 
@@ -144,7 +146,7 @@ export default function EquipePage() {
 
   function pdf(s: Soignant) {
     genererPdfConsignes({
-      titre: s.titre ?? "", prenom: s.prenom ?? "", nom: s.nom, specialite: s.specialite ?? "",
+      titre: s.titre ?? "", prenom: s.prenom ?? "", nom: s.nom, specialite: s.specialite ?? "", rpps: s.rpps ?? "",
       telephone: s.telephone ?? "", cabinets: s.cabinets ?? "",
       secretariat_nom: s.secretariat_nom ?? "", secretariat_email: s.secretariat_email ?? "", secretariat_tel: s.secretariat_tel ?? "",
       protocoles: s.protocoles ?? [],
@@ -163,7 +165,7 @@ export default function EquipePage() {
   }
   function pdfExterne(e: Externe) {
     genererPdfConsignes({
-      titre: e.titre ?? "", prenom: e.prenom ?? "", nom: e.nom, specialite: e.specialite ?? "",
+      titre: e.titre ?? "", prenom: e.prenom ?? "", nom: e.nom, specialite: e.specialite ?? "", rpps: e.rpps ?? "",
       telephone: e.telephone ?? "", cabinets: e.cabinets ?? "",
       secretariat_nom: e.secretariat_nom ?? "", secretariat_email: "", secretariat_tel: e.secretariat_tel ?? "",
       protocoles: e.protocoles ?? [],

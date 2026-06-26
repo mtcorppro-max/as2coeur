@@ -109,6 +109,7 @@ export async function POST(request: Request) {
           titre: texteOuNull(body.titre),
           prenom: texteOuNull(body.prenom),
           specialite: texteOuNull(body.specialite),
+          rpps: texteOuNull(body.rpps),
           cabinets: texteOuNull(body.cabinets),
           telephone: texteOuNull(body.telephone),
           secretariat_nom: texteOuNull(body.secretariat_nom),

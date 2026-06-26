@@ -42,6 +42,7 @@ export type ConsignesData = {
   prenom: string;
   nom: string;
   specialite: string;
+  rpps?: string;
   telephone: string;
   cabinets: string;
   secretariat_nom: string;
@@ -148,6 +149,7 @@ export async function genererPdfConsignes(
 
   // Toutes les coordonnées regroupées sous le nom (médecin + secrétaire), centrées.
   const infos: string[] = [];
+  if (d.rpps) infos.push(`RPPS : ${d.rpps}`);
   if (d.telephone) infos.push(`Téléphone : ${d.telephone}`);
   if (d.cabinets) infos.push(`Lieu d'exercice : ${d.cabinets}`);
   if (d.secretariat_nom) infos.push(`Secrétaire : ${d.secretariat_nom}`);

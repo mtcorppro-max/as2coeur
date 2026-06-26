@@ -46,6 +46,7 @@ const VIDE = {
   prestataire_id: "",
   telephone: "",
   specialite: "",
+  rpps: "",
   cabinets: "",
   secretariat_nom: "",
   secretariat_email: "",
@@ -115,6 +116,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
       prenom: form.prenom,
       nom: form.nom,
       specialite: form.specialite,
+      rpps: form.rpps,
       telephone: form.telephone,
       cabinets: form.cabinets,
       secretariat_nom: form.secretariat_nom,
@@ -320,9 +322,15 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
       {estChirurgien && (
         <>
           <div className="grid gap-4 border-t border-rose-100 pt-4">
-            <div>
-              <label className="label">Téléphone (personnel)</label>
-              <input className="input" value={form.telephone} onChange={set("telephone")} placeholder="06…" inputMode="tel" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="label">Téléphone (personnel)</label>
+                <input className="input" value={form.telephone} onChange={set("telephone")} placeholder="06…" inputMode="tel" />
+              </div>
+              <div>
+                <label className="label">Numéro RPPS <span className="text-slate-400">(facultatif)</span></label>
+                <input className="input" value={form.rpps} onChange={set("rpps")} placeholder="11 chiffres" inputMode="numeric" />
+              </div>
             </div>
             <div>
               <label className="label">Adresse du lieu d&apos;exercice</label>

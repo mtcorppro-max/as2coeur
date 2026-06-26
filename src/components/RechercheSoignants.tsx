@@ -12,7 +12,7 @@ import { LIBELLE_ROLE } from "@/lib/roles";
 type ResPatient = { kind: "patient"; key: string; id: string; nom: string; sous: string | null; texte: string };
 type ResSoignant = {
   kind: "soignant"; key: string; id: string | null; nom: string; role: string; compte: boolean;
-  detail: string | null; telephone: string | null; email: string | null;
+  detail: string | null; rpps: string | null; telephone: string | null; email: string | null;
   cabinets: string | null; secretariat_nom: string | null; secretariat_email: string | null; secretariat_tel: string | null;
   protocoles: ProtocolePdf[] | null; texte: string;
 };
@@ -34,8 +34,8 @@ export function RechercheSoignants() {
     const supabase = createClient();
     Promise.all([
       supabase.from("patient").select("id,nom,operation,chirurgien,traitement,ville,date_operation"),
-      supabase.from("professionnel").select("id,nom,prenom,titre,role,niveau,telephone,email,specialite,cabinets,secretariat_nom,secretariat_email,secretariat_tel,protocoles").neq("niveau", 0),
-      supabase.from("soignant_externe").select("id,type,nom,prenom,titre,telephone,email,specialite,zone_exercice,cabinets,secretariat_nom,secretariat_tel,protocoles"),
+      supabase.from("professionnel").select("id,nom,prenom,titre,role,niveau,telephone,email,specialite,rpps,cabinets,secretariat_nom,secretariat_email,secretariat_tel,protocoles").neq("niveau", 0),
+      supabase.from("soignant_externe").select("id,type,nom,prenom,titre,telephone,email,specialite,rpps,zone_exercice,cabinets,secretariat_nom,secretariat_tel,protocoles"),
     ]).then(([{ data: pts }, { data: pros }, { data: exts }]) => {
       const rP: Resultat[] = (pts ?? []).map((p) => {
         const x = p as { id: string; nom: string; operation: string | null; chirurgien: string | null; traitement: string | null; ville: string | null };
@@ -43,17 +43,17 @@ export function RechercheSoignants() {
         return { kind: "patient", key: `p${x.id}`, id: x.id, nom: x.nom, sous, texte: `${x.nom} ${x.operation ?? ""} ${x.chirurgien ?? ""} ${x.traitement ?? ""} ${x.ville ?? ""}`.toLowerCase() };
       });
       const rS: Resultat[] = (pros ?? []).map((p, i) => {
-        const x = p as { id: string; role: string; specialite: string | null; telephone: string | null; email: string | null; cabinets: string | null; secretariat_nom: string | null; secretariat_email: string | null; secretariat_tel: string | null; protocoles: ProtocolePdf[] | null };
+        const x = p as { id: string; role: string; specialite: string | null; rpps: string | null; telephone: string | null; email: string | null; cabinets: string | null; secretariat_nom: string | null; secretariat_email: string | null; secretariat_tel: string | null; protocoles: ProtocolePdf[] | null };
         const role = x.role === "chirurgien" ? labelMedecin(x.specialite) : LIBELLE_ROLE[x.role as keyof typeof LIBELLE_ROLE];
         const nom = nomComplet(p as never);
-        return { kind: "soignant", key: `c${i}`, id: x.id, nom, role, compte: true, detail: x.specialite, telephone: x.telephone, email: x.email, cabinets: x.cabinets, secretariat_nom: x.secretariat_nom, secretariat_email: x.secretariat_email, secretariat_tel: x.secretariat_tel, protocoles: x.protocoles, texte: `${nom} ${role} ${x.specialite ?? ""} ${interventions(x.protocoles)}`.toLowerCase() };
+        return { kind: "soignant", key: `c${i}`, id: x.id, nom, role, compte: true, detail: x.specialite, rpps: x.rpps, telephone: x.telephone, email: x.email, cabinets: x.cabinets, secretariat_nom: x.secretariat_nom, secretariat_email: x.secretariat_email, secretariat_tel: x.secretariat_tel, protocoles: x.protocoles, texte: `${nom} ${role} ${x.specialite ?? ""} ${interventions(x.protocoles)}`.toLowerCase() };
       });
       const rE: Resultat[] = (exts ?? []).map((e) => {
-        const x = e as { id: string; type: "medecin" | "infirmiere"; specialite: string | null; zone_exercice: string | null; telephone: string | null; email: string | null; cabinets: string | null; secretariat_nom: string | null; secretariat_tel: string | null; protocoles: ProtocolePdf[] | null };
+        const x = e as { id: string; type: "medecin" | "infirmiere"; specialite: string | null; rpps: string | null; zone_exercice: string | null; telephone: string | null; email: string | null; cabinets: string | null; secretariat_nom: string | null; secretariat_tel: string | null; protocoles: ProtocolePdf[] | null };
         const role = x.type === "medecin" ? labelMedecin(x.specialite) : "Infirmière libérale";
         const nom = nomComplet(e as never);
         const detail = x.type === "medecin" ? x.specialite : x.zone_exercice;
-        return { kind: "soignant", key: `e${x.id}`, id: null, nom, role, compte: false, detail, telephone: x.telephone, email: x.email, cabinets: x.cabinets, secretariat_nom: x.secretariat_nom, secretariat_email: null, secretariat_tel: x.secretariat_tel, protocoles: x.protocoles, texte: `${nom} ${role} ${detail ?? ""} ${interventions(x.protocoles)}`.toLowerCase() };
+        return { kind: "soignant", key: `e${x.id}`, id: null, nom, role, compte: false, detail, rpps: x.rpps, telephone: x.telephone, email: x.email, cabinets: x.cabinets, secretariat_nom: x.secretariat_nom, secretariat_email: null, secretariat_tel: x.secretariat_tel, protocoles: x.protocoles, texte: `${nom} ${role} ${detail ?? ""} ${interventions(x.protocoles)}`.toLowerCase() };
       });
       setItems([...rP, ...rS, ...rE]);
       setCharge(true);
@@ -77,7 +77,7 @@ export function RechercheSoignants() {
 
   const pdf = (r: ResSoignant) =>
     genererPdfConsignes({
-      titre: "", prenom: "", nom: r.nom, specialite: r.detail ?? "",
+      titre: "", prenom: "", nom: r.nom, specialite: r.detail ?? "", rpps: r.rpps ?? "",
       telephone: r.telephone ?? "", cabinets: r.cabinets ?? "",
       secretariat_nom: r.secretariat_nom ?? "", secretariat_email: r.secretariat_email ?? "", secretariat_tel: r.secretariat_tel ?? "",
       protocoles: r.protocoles ?? [],

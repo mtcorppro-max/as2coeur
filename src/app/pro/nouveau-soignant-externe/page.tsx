@@ -21,6 +21,7 @@ const VIDE = {
   prenom: "",
   nom: "",
   specialite: "",
+  rpps: "",
   telephone: "",
   email: "",
   zone_exercice: "",
@@ -59,6 +60,7 @@ export default function NouveauSoignantExterne() {
       prenom: f.prenom.trim() || null,
       nom: f.nom.trim(),
       specialite: estMedecin ? f.specialite || null : null,
+      rpps: estMedecin ? f.rpps.trim() || null : null,
       telephone: f.telephone.trim() || null,
       email: f.email.trim() || null,
       zone_exercice: estMedecin ? null : f.zone_exercice.trim() || null,
@@ -119,14 +121,20 @@ export default function NouveauSoignantExterne() {
                 ))}
               </div>
             </div>
-            <div>
-              <label className="label">Spécialité</label>
-              <Select
-                value={f.specialite}
-                onChange={(v) => setF((s) => ({ ...s, specialite: v }))}
-                placeholder="— Choisir une spécialité —"
-                options={SPECIALITES.map((x) => ({ value: x, label: x }))}
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="label">Spécialité</label>
+                <Select
+                  value={f.specialite}
+                  onChange={(v) => setF((s) => ({ ...s, specialite: v }))}
+                  placeholder="— Choisir une spécialité —"
+                  options={SPECIALITES.map((x) => ({ value: x, label: x }))}
+                />
+              </div>
+              <div>
+                <label className="label">Numéro RPPS <span className="text-slate-400">(facultatif)</span></label>
+                <input className="input" value={f.rpps} onChange={set("rpps")} placeholder="11 chiffres" inputMode="numeric" />
+              </div>
             </div>
           </>
         )}
