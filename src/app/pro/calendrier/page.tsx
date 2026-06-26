@@ -8,7 +8,7 @@ import { estCoordOuManager } from "@/lib/roles";
 
 type RolePro = "coordinatrice" | "chirurgien" | "delegue";
 type ProLite = { id: string; nom: string; prenom: string | null; titre: string | null; role: RolePro; agence_id: string | null };
-type TypeEvt = "astreinte" | "conges" | "arret_maladie" | "formation" | "autre";
+type TypeEvt = "astreinte" | "cp" | "rtt" | "arret_maladie" | "formation" | "autre";
 type Evt = {
   id: string;
   professionnel_id: string;
@@ -24,12 +24,13 @@ type Evt = {
 
 const TYPES: Record<TypeEvt, { label: string; bar: string; chip: string }> = {
   astreinte:     { label: "Astreinte",     bar: "bg-indigo-500",  chip: "bg-indigo-100 text-indigo-700" },
-  conges:        { label: "Congés",        bar: "bg-emerald-500", chip: "bg-emerald-100 text-emerald-700" },
+  cp:            { label: "CP",            bar: "bg-emerald-500", chip: "bg-emerald-100 text-emerald-700" },
+  rtt:           { label: "RTT",           bar: "bg-cyan-500",    chip: "bg-cyan-100 text-cyan-700" },
   arret_maladie: { label: "Arrêt maladie", bar: "bg-rose-500",    chip: "bg-rose-100 text-rose-700" },
   formation:     { label: "Formation",     bar: "bg-amber-500",   chip: "bg-amber-100 text-amber-700" },
   autre:         { label: "Autre",         bar: "bg-slate-400",   chip: "bg-slate-100 text-slate-600" },
 };
-const ABSENCES: TypeEvt[] = ["conges", "arret_maladie", "formation"];
+const ABSENCES: TypeEvt[] = ["cp", "rtt", "arret_maladie", "formation"];
 
 const nomComplet = (p: { titre?: string | null; prenom?: string | null; nom: string }) =>
   [p.titre, p.prenom, p.nom].filter(Boolean).join(" ");
@@ -187,7 +188,7 @@ export default function OrganisationPage() {
 
   // ── Création par clic sur une cellule ───────────────────────────────
   function creer(proId: string, ds: string) {
-    setEditing({ id: "", professionnel_id: proId, type: "conges", date_debut: ds, date_fin: ds, heure_debut: null, heure_fin: null, remplacant_id: null, note: null, statut: "valide" });
+    setEditing({ id: "", professionnel_id: proId, type: "cp", date_debut: ds, date_fin: ds, heure_debut: null, heure_fin: null, remplacant_id: null, note: null, statut: "valide" });
   }
 
   async function sauver(ev: Evt) {
