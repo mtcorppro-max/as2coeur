@@ -7,7 +7,11 @@ import { LIBELLE_ROLE } from "@/lib/roles";
 import { isoDate, semainesAVenir, astreintesIncompletes } from "@/lib/astreinte";
 import type { RolePro } from "@/lib/types";
 
-type ProLite = { id: string; nom: string; role: RolePro };
+type ProLite = { id: string; nom: string; prenom: string | null; titre: string | null; role: RolePro };
+
+// Nom complet affiché : « [Titre] Prénom Nom ».
+const nomCompletPro = (p: { titre?: string | null; prenom?: string | null; nom: string }) =>
+  [p.titre, p.prenom, p.nom].filter(Boolean).join(" ");
 type AbsenceLigne = {
   id: string;
   professionnel_id: string;
@@ -15,8 +19,8 @@ type AbsenceLigne = {
   date_debut: string;
   date_fin: string;
   motif: string | null;
-  professionnel: { nom: string; role: RolePro } | null;
-  remplacant: { nom: string; role: RolePro } | null;
+  professionnel: { nom: string; prenom: string | null; titre: string | null; role: RolePro } | null;
+  remplacant: { nom: string; prenom: string | null; titre: string | null; role: RolePro } | null;
 };
 
 // Palette : une couleur stable par soignant (selon son id).
@@ -75,9 +79,9 @@ export default function CalendrierSoignant() {
     const [{ data: abs }, { data: pros }, { data: astr }] = await Promise.all([
       supabase
         .from("absence")
-        .select("*, professionnel:professionnel_id(nom,role), remplacant:remplacant_id(nom,role)")
+        .select("*, professionnel:professionnel_id(nom,prenom,titre,role), remplacant:remplacant_id(nom,prenom,titre,role)")
         .order("date_debut", { ascending: true }),
-      supabase.from("professionnel").select("id,nom,role").order("nom"),
+      supabase.from("professionnel").select("id,nom,prenom,titre,role").order("nom"),
       supabase.from("astreinte").select("semaine_debut,type,professionnel_id"),
     ]);
     setAbsences((abs ?? []) as unknown as AbsenceLigne[]);
@@ -175,7 +179,7 @@ export default function CalendrierSoignant() {
       const start = d1 < moisDebut ? 1 : d1.getDate();
       const end = d2 > moisFin ? nbJours : d2.getDate();
       const entry = parPersonne.get(a.professionnel_id) ?? {
-        nom: a.professionnel?.nom ?? "Soignant",
+        nom: a.professionnel ? nomCompletPro(a.professionnel) : "Soignant",
         couleur: couleurPour(a.professionnel_id),
         barres: [],
       };
@@ -191,7 +195,9 @@ export default function CalendrierSoignant() {
     today.getFullYear() === annee && today.getMonth() === moisIdx ? today.getDate() : null;
   const largeurMin = 110 + nbJours * 26;
 
-  const autresPros = equipe.filter((p) => p.id !== pro?.id);
+  // Seules les infirmières coordinatrices peuvent être désignées (astreinte / remplacement).
+  const coordinatrices = equipe.filter((p) => p.role === "coordinatrice");
+  const autresPros = coordinatrices.filter((p) => p.id !== pro?.id);
   const aVenirEtEnCours = absences.filter((a) => statutPeriode(a.date_debut, a.date_fin) !== "passe");
 
   function changerMois(delta: number) {
@@ -327,8 +333,8 @@ export default function CalendrierSoignant() {
                         onChange={(e) => definirAstreinte(k, "semaine", e.target.value)}
                       >
                         <option value="">— À désigner —</option>
-                        {equipe.map((p) => (
-                          <option key={p.id} value={p.id}>{p.nom}</option>
+                        {coordinatrices.map((p) => (
+                          <option key={p.id} value={p.id}>{nomCompletPro(p)}</option>
                         ))}
                       </select>
                     </label>
@@ -340,8 +346,8 @@ export default function CalendrierSoignant() {
                         onChange={(e) => definirAstreinte(k, "weekend", e.target.value)}
                       >
                         <option value="">— À désigner —</option>
-                        {equipe.map((p) => (
-                          <option key={p.id} value={p.id}>{p.nom}</option>
+                        {coordinatrices.map((p) => (
+                          <option key={p.id} value={p.id}>{nomCompletPro(p)}</option>
                         ))}
                       </select>
                     </label>
@@ -374,7 +380,7 @@ export default function CalendrierSoignant() {
               <option value="">— Choisir un soignant —</option>
               {autresPros.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.nom} ({LIBELLE_ROLE[p.role]})
+                  {nomCompletPro(p)} ({LIBELLE_ROLE[p.role]})
                 </option>
               ))}
             </select>
@@ -406,7 +412,7 @@ export default function CalendrierSoignant() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className={`h-2.5 w-2.5 rounded-full ${couleurPour(a.professionnel_id)}`} />
-                        <span className="font-semibold text-slate-800">{a.professionnel?.nom ?? "Soignant"}</span>
+                        <span className="font-semibold text-slate-800">{a.professionnel ? nomCompletPro(a.professionnel) : "Soignant"}</span>
                         {periode === "en_cours" ? (
                           <span className="badge bg-amber-100 text-attention">En congé</span>
                         ) : (
@@ -417,7 +423,7 @@ export default function CalendrierSoignant() {
                       <p className="mt-0.5 text-xs text-slate-500">
                         Remplacé(e) par :{" "}
                         {a.remplacant ? (
-                          <span className="font-medium text-brand">{a.remplacant.nom}</span>
+                          <span className="font-medium text-brand">{nomCompletPro(a.remplacant)}</span>
                         ) : (
                           <span className="text-slate-400">non précisé</span>
                         )}
