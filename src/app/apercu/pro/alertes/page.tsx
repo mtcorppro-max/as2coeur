@@ -18,7 +18,7 @@ const alertes: AlerteEnrichie[] = [
     escalade_note: null,
     resolue_le: null,
     canal: "push",
-    patient: { id: "p1", nom: "Monsieur Démo" },
+    patient: { id: "p1", nom: "Monsieur Démo", telephone: "0612345678", chirurgien: "Docteur Bypass", operation: "Bypass gastrique", date_operation: "2026-06-17" },
     mesure: { type: "temperature", valeur: 39.2, horodatage: maintenant },
   },
   {
@@ -34,7 +34,7 @@ const alertes: AlerteEnrichie[] = [
     escalade_note: null,
     resolue_le: null,
     canal: "sms_1",
-    patient: { id: "p2", nom: "Madame Lefèvre" },
+    patient: { id: "p2", nom: "Madame Lefèvre", telephone: "0623456789", chirurgien: "Dr Martin", operation: "Prothèse de hanche", date_operation: "2026-06-20" },
     mesure: { type: "spo2", valeur: 90, horodatage: il2h },
   },
   {
@@ -50,7 +50,7 @@ const alertes: AlerteEnrichie[] = [
     escalade_note: "patient adressé aux urgences à 14h32",
     resolue_le: null,
     canal: "telephone",
-    patient: { id: "p3", nom: "Monsieur Nguyen" },
+    patient: { id: "p3", nom: "Monsieur Nguyen", telephone: "0634567890", chirurgien: "Pr Dubois", operation: "Pontage coronarien", date_operation: "2026-06-18" },
     mesure: { type: "ta_systolique", valeur: 178, horodatage: il2h },
   },
 ];

@@ -8,7 +8,14 @@ import { dateVisite } from "@/lib/visites";
 import type { Alerte, TypeMesure } from "@/lib/types";
 
 export type AlerteEnrichie = Alerte & {
-  patient: { id: string; nom: string } | null;
+  patient: {
+    id: string;
+    nom: string;
+    telephone: string | null;
+    chirurgien: string | null;
+    operation: string | null;
+    date_operation: string | null;
+  } | null;
   mesure: { type: TypeMesure; valeur: number; horodatage: string } | null;
 };
 
@@ -90,6 +97,39 @@ export function AlerteCard({
           <p className="mt-0.5 text-xs text-slate-400">
             Déclenchée le {new Date(alerte.declenchee_le).toLocaleString("fr-FR")}
           </p>
+
+          {/* Infos patient utiles pour réagir vite */}
+          <div className="mt-2 grid gap-1 border-t border-rose-50 pt-2 text-xs">
+            {alerte.patient?.telephone && (
+              <p>
+                <span className="text-slate-400">Téléphone : </span>
+                <a
+                  href={`tel:${alerte.patient.telephone}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="font-semibold text-brand hover:underline"
+                >
+                  {alerte.patient.telephone}
+                </a>
+              </p>
+            )}
+            {alerte.patient?.chirurgien && (
+              <p>
+                <span className="text-slate-400">Opéré par : </span>
+                <span className="font-medium text-slate-600">{alerte.patient.chirurgien}</span>
+              </p>
+            )}
+            {(alerte.patient?.operation || alerte.patient?.date_operation) && (
+              <p>
+                <span className="text-slate-400">Chirurgie : </span>
+                <span className="font-medium text-slate-600">
+                  {alerte.patient.operation || "—"}
+                  {alerte.patient.date_operation
+                    ? ` (le ${new Date(alerte.patient.date_operation).toLocaleDateString("fr-FR")})`
+                    : ""}
+                </span>
+              </p>
+            )}
+          </div>
         </div>
 
         {peutTraiter && (

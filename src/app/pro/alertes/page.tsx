@@ -10,7 +10,7 @@ async function fetchAlertes(): Promise<AlerteEnrichie[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("alerte")
-    .select("*, patient:patient_id(id, nom), mesure:mesure_id(type, valeur, horodatage)")
+    .select("*, patient:patient_id(id, nom, telephone, chirurgien, operation, date_operation), mesure:mesure_id(type, valeur, horodatage)")
     .in("statut", ["declenchee", "acquittee", "escaladee"])
     .order("declenchee_le", { ascending: false });
   return (data ?? []) as unknown as AlerteEnrichie[];
