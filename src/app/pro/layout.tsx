@@ -40,6 +40,33 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
     });
   }, [pro, pathname]);
 
+  // Suivis du jour + en retard attribués au compte connecté (badge Suivis).
+  const [nbSuivis, setNbSuivis] = useState(0);
+  useEffect(() => {
+    if (!pro || !estCoord) return;
+    const monNom = [pro.titre, pro.prenom, pro.nom].filter(Boolean).join(" ");
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const limiteBasse = new Date(today); limiteBasse.setDate(limiteBasse.getDate() - 7);
+    createClient()
+      .from("patient")
+      .select("statut,date_operation,jours_suivi,alerte_1_nom")
+      .eq("alerte_1_nom", monNom)
+      .then(({ data }) => {
+        let n = 0;
+        (data ?? []).forEach((p) => {
+          const x = p as { statut: string; date_operation: string | null; jours_suivi: number[] | null };
+          if (!x.date_operation || x.statut === "terminee") return;
+          const base = new Date(x.date_operation);
+          if (isNaN(base.getTime())) return;
+          (x.jours_suivi ?? []).forEach((j) => {
+            const d = new Date(base); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + j);
+            if (d.getTime() <= today.getTime() && d.getTime() >= limiteBasse.getTime()) n++;
+          });
+        });
+        setNbSuivis(n);
+      });
+  }, [pro, estCoord, pathname]);
+
   // Remonte en haut à chaque changement de page (évite la restauration de
   // scroll qui laissait la fiche patient en bas après un clic depuis le tableau).
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
@@ -53,7 +80,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
             <nav className="hidden items-center gap-0.5 sm:flex">
               <Onglet href="/pro" icon="dashboard" label="Tableau de bord" pathname={pathname} exact />
               <Onglet href="/pro/alertes" icon="bell" label="Alertes" pathname={pathname} />
-              {estCoord && <Onglet href="/pro/suivis" icon="calendar" label="Suivis" pathname={pathname} />}
+              {estCoord && <Onglet href="/pro/suivis" icon="calendar" label="Suivis" pathname={pathname} badge={nbSuivis} />}
               {estCoord && <Onglet href="/pro/calendrier" icon="clipboard" label="Organisation" pathname={pathname} badge={nbDemandes} />}
               {peutGerer && <Onglet href="/pro/equipe" icon="users" label="Équipe soignante" pathname={pathname} />}
               {peutPec && <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />}
@@ -89,7 +116,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-rose-100 bg-white sm:hidden">
         <NavItem href="/pro" icon="dashboard" label="Tableau" />
         <NavItem href="/pro/alertes" icon="bell" label="Alertes" />
-        {estCoord && <NavItem href="/pro/suivis" icon="calendar" label="Suivis" />}
+        {estCoord && <NavItem href="/pro/suivis" icon="calendar" label="Suivis" badge={nbSuivis} />}
         {estCoord && <NavItem href="/pro/calendrier" icon="clipboard" label="Organisation" badge={nbDemandes} />}
         {peutGerer && <NavItem href="/pro/equipe" icon="users" label="Équipe" />}
         {peutPec && <NavItem href="/pro/pec" icon="chart" label="PEC" />}
