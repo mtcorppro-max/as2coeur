@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     if (!prestataireId) {
       return NextResponse.json({ message: "Prestataire requis." }, { status: 400 });
     }
-  } else if (pro && pro.niveau <= 2 && pro.role !== "chirurgien") {
+  } else if (pro && (pro.niveau === 0 || (pro.niveau <= 2 && pro.role !== "chirurgien"))) {
     prestataireId = pro.prestataire_id;
   } else {
     return NextResponse.json(

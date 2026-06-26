@@ -5,9 +5,10 @@ import { useProSession } from "@/lib/hooks/useSession";
 
 export default function NouveauHub() {
   const pro = useProSession();
-  const peutPatient = pro?.role === "coordinatrice" || pro?.role === "chirurgien";
-  const peutSoignant = !!pro && pro.niveau <= 2 && pro.role !== "chirurgien";
-  const peutRegion = pro?.niveau === 0;            // créer une région
+  const estN0 = pro?.niveau === 0;                 // super-admin : tout
+  const peutPatient = estN0 || pro?.role === "coordinatrice" || pro?.role === "chirurgien";
+  const peutSoignant = estN0 || (!!pro && pro.niveau <= 2 && pro.role !== "chirurgien");
+  const peutRegion = estN0;                         // créer une région
   const peutAgence = !!pro && pro.niveau <= 1;     // créer une agence
 
   if (pro && !peutPatient && !peutSoignant && !peutAgence) {

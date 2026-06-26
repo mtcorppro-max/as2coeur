@@ -26,14 +26,24 @@ export async function POST(request: Request) {
 
   const { data: pro } = await supabase
     .from("professionnel")
-    .select("id, role, prestataire_id, agence_id")
+    .select("id, role, niveau, prestataire_id, agence_id")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!pro || (pro.role !== "coordinatrice" && pro.role !== "chirurgien")) {
+  if (!pro) {
+    return NextResponse.json({ message: "Compte introuvable." }, { status: 403 });
+  }
+  // Coordinatrice, chirurgien, ou super-admin niveau 0 (qui peut tout faire).
+  if (pro.role !== "coordinatrice" && pro.role !== "chirurgien" && pro.niveau !== 0) {
     return NextResponse.json(
-      { message: "Seuls la coordinatrice ou un chirurgien peuvent créer un patient." },
+      { message: "Vous n'avez pas les droits pour créer un patient." },
       { status: 403 }
+    );
+  }
+  if (!pro.prestataire_id) {
+    return NextResponse.json(
+      { message: "Aucun prestataire associé à votre compte — impossible de créer le patient." },
+      { status: 400 }
     );
   }
 
