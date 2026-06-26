@@ -58,11 +58,10 @@ const labelMedecin = (specialite: string | null) =>
 // Petit badge « Compte » (rose foncé) : la personne dispose d'un compte AS2CŒUR.
 function BadgeCompte() {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-white" title="Dispose d'un compte AS2CŒUR">
+    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand text-white" title="Dispose d'un compte AS2CŒUR">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} className="h-3 w-3">
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
       </svg>
-      Compte
     </span>
   );
 }
