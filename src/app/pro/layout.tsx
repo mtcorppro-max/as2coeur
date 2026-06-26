@@ -16,6 +16,8 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   const estChir = pro?.role === "chirurgien" && !estN0;
   // Gérer/créer des comptes & l'équipe : niveau 0, 1 ou 2 (hors chirurgien)
   const peutGerer = estN0 || (!!pro && pro.niveau <= 2 && pro.role !== "chirurgien");
+  // PEC : managers (niveau 1) et plateforme (niveau 0)
+  const peutPec = !!pro && pro.niveau <= 1;
 
   // Remonte en haut à chaque changement de page (évite la restauration de
   // scroll qui laissait la fiche patient en bas après un clic depuis le tableau).
@@ -30,6 +32,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
             <nav className="hidden gap-1 sm:flex">
               <Onglet href="/pro" label="Tableau de bord" />
               <Onglet href="/pro/alertes" label="Alertes" />
+              {peutPec && <Onglet href="/pro/pec" label="PEC" />}
               {estCoord && <Onglet href="/pro/suivis" label="Suivis" />}
               {estCoord && <Onglet href="/pro/calendrier" label="Organisation" />}
               {peutGerer && <Onglet href="/pro/equipe" label="Équipe soignante" />}
@@ -64,6 +67,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-rose-100 bg-white sm:hidden">
         <NavItem href="/pro" icon="⊞" label="Tableau" />
         <NavItem href="/pro/alertes" icon="◎" label="Alertes" />
+        {peutPec && <NavItem href="/pro/pec" icon="📊" label="PEC" />}
         {estCoord && <NavItem href="/pro/suivis" icon="🗓" label="Suivis" />}
         {estCoord && <NavItem href="/pro/calendrier" icon="▦" label="Organisation" />}
         {peutGerer && <NavItem href="/pro/equipe" icon="👥" label="Équipe" />}

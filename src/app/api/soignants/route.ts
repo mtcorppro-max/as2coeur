@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { estEmailAdmin } from "@/lib/admin";
+import { peutOctroyer } from "@/lib/niveaux";
 
 type RolePro = "coordinatrice" | "chirurgien" | "delegue";
 const ROLES: RolePro[] = ["coordinatrice", "chirurgien", "delegue"];
@@ -62,11 +63,12 @@ export async function POST(request: Request) {
     );
   }
 
-  // Contrôle d'octroi : on ne peut pas créer un compte plus puissant que soi.
+  // Contrôle d'octroi : pas plus puissant que soi, et le niveau 1 (manager)
+  // est réservé au niveau 0.
   const niveauDemande = [0, 1, 2, 3].includes(Number(body.niveau)) ? Number(body.niveau) : 3;
-  if (niveauDemande < niveauCreateur) {
+  if (!peutOctroyer(niveauCreateur, niveauDemande)) {
     return NextResponse.json(
-      { message: "Vous ne pouvez pas octroyer un niveau supérieur au vôtre." },
+      { message: "Vous ne pouvez pas octroyer ce niveau (le niveau 1 manager est réservé au niveau 0)." },
       { status: 403 }
     );
   }

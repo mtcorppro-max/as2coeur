@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { estEmailAdmin } from "@/lib/admin";
+import { peutOctroyer } from "@/lib/niveaux";
 
 // Suppression d'un compte soignant.
 // Réservé à un administrateur (allowlist) ou à un compte de niveau 1 du même
@@ -117,8 +118,8 @@ export async function PATCH(
     if (![0, 1, 2, 3].includes(n)) {
       return NextResponse.json({ message: "Niveau invalide." }, { status: 400 });
     }
-    if (n < niveauMoi) {
-      return NextResponse.json({ message: "Vous ne pouvez pas octroyer un niveau supérieur au vôtre." }, { status: 403 });
+    if (!peutOctroyer(niveauMoi, n)) {
+      return NextResponse.json({ message: "Octroi interdit (le niveau 1 manager est réservé au niveau 0)." }, { status: 403 });
     }
     maj.niveau = n;
   }
