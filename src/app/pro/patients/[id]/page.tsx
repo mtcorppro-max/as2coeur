@@ -10,6 +10,7 @@ import { MESURES, TYPES_MESURE } from "@/lib/constants";
 import { SeuilEditor } from "@/components/SeuilEditor";
 import { ChatBox } from "@/components/ChatBox";
 import { InfosPatient } from "@/components/InfosPatient";
+import { OrdonnancesPatient } from "@/components/OrdonnancesPatient";
 import { MarquerVisite } from "@/components/MarquerVisite";
 import { AlertesPatient } from "@/components/AlertesPatient";
 import { SuiviPatient } from "@/components/SuiviPatient";
@@ -165,6 +166,9 @@ export default function FichePatient() {
 
       {/* ── Informations patient ── */}
       <InfosPatient patient={patient} modifiable={modifiableInfos} />
+
+      {/* ── Ordonnances du patient ── */}
+      <OrdonnancesPatient patientId={patient.id} patientNom={patient.nom} patientChirurgien={patient.chirurgien} />
 
       {/* ── Dernières valeurs ── */}
       <section>

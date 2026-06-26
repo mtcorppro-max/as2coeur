@@ -1,0 +1,179 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useProSession } from "@/lib/hooks/useSession";
+import { modeleOrdo, valeurLisible } from "@/lib/ordonnances";
+import { genererPdfOrdonnance } from "@/lib/pdfOrdonnance";
+import { GenerateurOrdonnance } from "@/components/GenerateurOrdonnance";
+
+type Ordo = {
+  id: string;
+  type: string;
+  titre: string;
+  contenu: Record<string, unknown>;
+  destinataire_id: string | null;
+  statut: "a_signer" | "signee" | "refusee";
+  signature: string | null;
+  signataire_nom: string | null;
+  signee_le: string | null;
+  created_at: string;
+};
+
+export function OrdonnancesPatient({ patientId, patientNom, patientChirurgien }: { patientId: string; patientNom: string; patientChirurgien: string | null }) {
+  const pro = useProSession();
+  const [ordos, setOrdos] = useState<Ordo[]>([]);
+  const [signer, setSigner] = useState<Ordo | null>(null);
+
+  const charger = useCallback(async () => {
+    const { data } = await createClient()
+      .from("ordonnance")
+      .select("id,type,titre,contenu,destinataire_id,statut,signature,signataire_nom,signee_le,created_at")
+      .eq("patient_id", patientId)
+      .order("created_at", { ascending: false });
+    setOrdos((data ?? []) as Ordo[]);
+  }, [patientId]);
+
+  useEffect(() => { charger(); }, [charger]);
+
+  async function telecharger(o: Ordo) {
+    await genererPdfOrdonnance({
+      type: o.type, titre: o.titre, contenu: o.contenu, patientNom,
+      prescripteurNom: o.signataire_nom ?? "",
+      signature: o.signature, signataireNom: o.signataire_nom, signeeLe: o.signee_le,
+      date: new Date(o.created_at).toLocaleDateString("fr-FR"),
+    });
+  }
+
+  async function supprimer(o: Ordo) {
+    if (!confirm(`Supprimer l'ordonnance « ${o.titre} » ?`)) return;
+    const { error } = await createClient().from("ordonnance").delete().eq("id", o.id);
+    if (error) { alert("Échec : " + error.message); return; }
+    setOrdos((arr) => arr.filter((x) => x.id !== o.id));
+  }
+
+  const monId = pro?.id ?? "";
+
+  return (
+    <section className="card grid gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold text-slate-700">Ordonnances</h2>
+        <GenerateurOrdonnance patientId={patientId} patientChirurgien={patientChirurgien} onCreated={charger} />
+      </div>
+
+      {ordos.length === 0 ? (
+        <p className="text-sm text-slate-400">Aucune ordonnance pour ce patient.</p>
+      ) : (
+        <div className="grid gap-2">
+          {ordos.map((o) => {
+            const aSigner = o.statut === "a_signer" && o.destinataire_id === monId;
+            return (
+              <div key={o.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-100 px-3 py-2">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-slate-800">{o.titre}</span>
+                    {o.statut === "signee"
+                      ? <span className="badge bg-green-100 text-ok">Signée</span>
+                      : o.statut === "refusee"
+                        ? <span className="badge bg-red-100 text-critique">Refusée</span>
+                        : <span className="badge bg-amber-100 text-attention">En attente de signature</span>}
+                  </div>
+                  <p className="text-xs text-slate-400">{new Date(o.created_at).toLocaleDateString("fr-FR")}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {aSigner && <button onClick={() => setSigner(o)} className="btn-primary px-3 py-1.5 text-sm">Lire et signer</button>}
+                  <button onClick={() => telecharger(o)} className="btn-secondary px-3 py-1.5 text-sm">📄 PDF</button>
+                  <button onClick={() => supprimer(o)} className="rounded-lg border border-rose-200 px-2 py-1.5 text-sm text-critique hover:bg-red-50">✕</button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {signer && (
+        <SignatureModal
+          ordo={signer}
+          patientNom={patientNom}
+          signataire={[pro?.titre, pro?.prenom, pro?.nom].filter(Boolean).join(" ")}
+          onClose={() => setSigner(null)}
+          onSigned={() => { setSigner(null); charger(); }}
+        />
+      )}
+    </section>
+  );
+}
+
+function SignatureModal({ ordo, patientNom, signataire, onClose, onSigned }: { ordo: Ordo; patientNom: string; signataire: string; onClose: () => void; onSigned: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const dessine = useRef(false);
+  const [vide, setVide] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const modele = modeleOrdo(ordo.type);
+
+  useEffect(() => {
+    const c = canvasRef.current; if (!c) return;
+    const ctx = c.getContext("2d"); if (!ctx) return;
+    ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.strokeStyle = "#1e293b";
+  }, []);
+
+  const pos = (e: React.PointerEvent) => {
+    const c = canvasRef.current!; const r = c.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (c.width / r.width), y: (e.clientY - r.top) * (c.height / r.height) };
+  };
+  const down = (e: React.PointerEvent) => { dessine.current = true; const ctx = canvasRef.current!.getContext("2d")!; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
+  const move = (e: React.PointerEvent) => { if (!dessine.current) return; const ctx = canvasRef.current!.getContext("2d")!; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); setVide(false); };
+  const up = () => { dessine.current = false; };
+  const effacer = () => { const c = canvasRef.current!; c.getContext("2d")!.clearRect(0, 0, c.width, c.height); setVide(true); };
+
+  async function signerOrdo() {
+    if (vide) return;
+    setBusy(true);
+    const signature = canvasRef.current!.toDataURL("image/png");
+    const { error } = await createClient().from("ordonnance").update({
+      statut: "signee", signature, signataire_nom: signataire, signee_le: new Date().toISOString(),
+    }).eq("id", ordo.id);
+    setBusy(false);
+    if (error) { alert("Échec : " + error.message); return; }
+    onSigned();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/30 p-4 pt-12" onClick={onClose}>
+      <div className="card grid w-full max-w-lg gap-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-800">{ordo.titre}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-critique">✕</button>
+        </div>
+        <p className="text-xs text-slate-400">Patient : {patientNom}</p>
+
+        <div className="grid gap-2 rounded-xl border border-rose-100 bg-rose-50/40 p-3 text-sm">
+          {(modele?.champs ?? []).map((c) => {
+            const v = valeurLisible(c, ordo.contenu[c.key]);
+            if (!v.trim()) return null;
+            return <p key={c.key}><span className="font-semibold text-slate-600">{c.label} : </span><span className="text-slate-800">{v}</span></p>;
+          })}
+        </div>
+
+        <div>
+          <label className="label">Votre signature</label>
+          <canvas
+            ref={canvasRef}
+            width={500}
+            height={180}
+            onPointerDown={down}
+            onPointerMove={move}
+            onPointerUp={up}
+            onPointerLeave={up}
+            className="w-full touch-none rounded-xl border border-dashed border-rose-300 bg-white"
+          />
+          <button onClick={effacer} className="mt-1 text-xs text-slate-400 hover:text-brand">Effacer</button>
+        </div>
+
+        <button onClick={signerOrdo} disabled={busy || vide} className="btn-primary py-3 disabled:opacity-50">
+          {busy ? "Signature…" : "Signer l'ordonnance"}
+        </button>
+      </div>
+    </div>
+  );
+}
