@@ -55,7 +55,6 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               {estCoord && <Onglet href="/pro/suivis" icon="calendar" label="Suivis" pathname={pathname} />}
               {estCoord && <Onglet href="/pro/calendrier" icon="clipboard" label="Organisation" pathname={pathname} badge={nbDemandes} />}
               {peutGerer && <Onglet href="/pro/equipe" icon="users" label="Équipe soignante" pathname={pathname} />}
-              {peutGerer && <Onglet href="/pro/infirmieres" icon="home" label="Infirmières libérales" pathname={pathname} />}
               {peutPec && <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />}
             </nav>
           </div>
@@ -91,7 +90,6 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         {estCoord && <NavItem href="/pro/suivis" icon="calendar" label="Suivis" />}
         {estCoord && <NavItem href="/pro/calendrier" icon="clipboard" label="Organisation" badge={nbDemandes} />}
         {peutGerer && <NavItem href="/pro/equipe" icon="users" label="Équipe" />}
-        {peutGerer && <NavItem href="/pro/infirmieres" icon="home" label="Inf. lib." />}
         {peutPec && <NavItem href="/pro/pec" icon="chart" label="PEC" />}
         {(estCoord || estChir || peutGerer) && <NavItem href="/pro/nouveau" icon="plus" label="Nouveau" />}
       </nav>

@@ -30,9 +30,32 @@ type Soignant = {
 const COLS =
   "id,nom,prenom,titre,role,niveau,agence_id,region_id,email,telephone,specialite,cabinets,secretariat_nom,secretariat_email,secretariat_tel,protocoles";
 
+// Soignant externe (sans compte) — cf. migrations 0040 / 0041 / 0042.
+type Externe = {
+  id: string;
+  type: "medecin" | "infirmiere";
+  titre: string | null;
+  prenom: string | null;
+  nom: string;
+  specialite: string | null;
+  telephone: string | null;
+  email: string | null;
+  zone_exercice: string | null;
+  cabinets: string | null;
+  secretariat_nom: string | null;
+  secretariat_tel: string | null;
+  protocoles: ProtocolePdf[] | null;
+};
+const COLS_EXT =
+  "id,type,titre,prenom,nom,specialite,telephone,email,zone_exercice,cabinets,secretariat_nom,secretariat_tel,protocoles";
+
+const ROLES_INTERNES = ["coordinatrice", "manager", "delegue"] as const;
+
 export default function EquipePage() {
   const pro = useProSession();
+  const [vue, setVue] = useState<"internes" | "externes">("internes");
   const [soignants, setSoignants] = useState<Soignant[]>([]);
+  const [externes, setExternes] = useState<Externe[]>([]);
   const [agences, setAgences] = useState<{ value: string; label: string }[]>([]);
   const [regions, setRegions] = useState<{ value: string; label: string }[]>([]);
   const [regionNom, setRegionNom] = useState<Map<string, string>>(new Map());
@@ -43,11 +66,13 @@ export default function EquipePage() {
 
   const charger = useCallback(async () => {
     const supabase = createClient();
-    const [{ data: pros }, { data: regs }, { data: ags }] = await Promise.all([
+    const [{ data: pros }, { data: regs }, { data: ags }, { data: exts }] = await Promise.all([
       supabase.from("professionnel").select(COLS).order("role").order("nom"),
       supabase.from("region").select("id,nom"),
       supabase.from("agence").select("id,nom,region_id"),
+      supabase.from("soignant_externe").select(COLS_EXT).order("nom"),
     ]);
+    setExternes((exts ?? []) as Externe[]);
     const nomRegion = new Map((regs ?? []).map((r) => [r.id as string, r.nom as string]));
     setRegionNom(nomRegion);
     setRegions((regs ?? []).map((r) => ({ value: r.id as string, label: r.nom as string })));
@@ -69,7 +94,6 @@ export default function EquipePage() {
 
   // Cloisonnement : qui le compte connecté a-t-il le droit de voir ?
   const visible = (s: Soignant) => {
-    if (s.role === "infirmiere_liberale") return false; // listées à part (par zone)
     if (niveauMoi === 0) return true;                 // plateforme : tout
     if (s.id === moi?.id) return true;                // soi-même
     if (s.niveau === 0) return true;                  // les super-admins plateforme
@@ -110,6 +134,69 @@ export default function EquipePage() {
       protocoles: s.protocoles ?? [],
     });
   }
+
+  // ── Soignants externes (sans compte) ──
+  const peutGererExterne = niveauMoi <= 1;
+  async function supprimerExterne(e: Externe) {
+    if (!confirm(`Supprimer le soignant externe ${[e.prenom, e.nom].filter(Boolean).join(" ")} ?`)) return;
+    setSuppression(e.id);
+    const { error } = await createClient().from("soignant_externe").delete().eq("id", e.id);
+    setSuppression(null);
+    if (error) { alert("Échec de la suppression : " + error.message); return; }
+    setExternes((arr) => arr.filter((x) => x.id !== e.id));
+  }
+  function pdfExterne(e: Externe) {
+    genererPdfConsignes({
+      titre: e.titre ?? "", prenom: e.prenom ?? "", nom: e.nom, specialite: e.specialite ?? "",
+      telephone: e.telephone ?? "", cabinets: e.cabinets ?? "",
+      secretariat_nom: e.secretariat_nom ?? "", secretariat_email: "", secretariat_tel: e.secretariat_tel ?? "",
+      protocoles: e.protocoles ?? [],
+    });
+  }
+  const carteExterne = (e: Externe) => {
+    const nomAffiche = [e.titre, e.prenom, e.nom].filter(Boolean).join(" ");
+    const estMed = e.type === "medecin";
+    return (
+      <div key={e.id} className="card grid gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold text-slate-800">{nomAffiche}</span>
+              <span className="badge bg-slate-100 text-slate-600">Externe</span>
+            </div>
+            {estMed && e.specialite && <p className="mt-0.5 text-sm text-slate-500">{e.specialite}</p>}
+            {!estMed && e.zone_exercice && <p className="mt-0.5 text-sm text-slate-500">{e.zone_exercice}</p>}
+          </div>
+          {peutGererExterne && (
+            <button
+              onClick={() => supprimerExterne(e)}
+              disabled={suppression === e.id}
+              className="rounded-lg border border-rose-200 px-3 py-1.5 text-sm font-medium text-critique hover:bg-red-50 disabled:opacity-50"
+            >
+              {suppression === e.id ? "Suppression…" : "Supprimer"}
+            </button>
+          )}
+        </div>
+        <div className="grid gap-1 text-sm sm:grid-cols-2">
+          {e.email && <Info label="Email" value={e.email} href={`mailto:${e.email}`} />}
+          {e.telephone && <Info label="Téléphone" value={e.telephone} href={`tel:${e.telephone}`} />}
+          {e.cabinets && <Info label="Lieu d'exercice" value={e.cabinets} />}
+          {e.secretariat_nom && <Info label="Secrétariat" value={e.secretariat_nom} />}
+          {e.secretariat_tel && <Info label="Tél. secrétariat" value={e.secretariat_tel} href={`tel:${e.secretariat_tel}`} />}
+        </div>
+        {estMed && (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-rose-50 pt-3">
+            <span className="text-sm text-slate-500">
+              {e.protocoles?.length
+                ? `${e.protocoles.length} protocole(s) : ${e.protocoles.map((p) => p.intervention || "Sans nom").join(", ")}`
+                : "Aucun protocole enregistré"}
+            </span>
+            <button onClick={() => pdfExterne(e)} className="btn-secondary text-sm">📄 PDF des consignes</button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const carte = (s: Soignant) => {
     const estChir = s.role === "chirurgien";
@@ -170,10 +257,11 @@ export default function EquipePage() {
     );
   };
 
-  // Groupement par agence (+ une section « Encadrement » pour région/plateforme).
+  // ── INTERNES : délégué médical, manager, coordinatrice (groupés par agence) ──
+  const internes = soignantsVisibles.filter((s) => (ROLES_INTERNES as readonly string[]).includes(s.role));
   const parAgence = new Map<string, Soignant[]>();
   const encadrement: Soignant[] = [];
-  soignantsVisibles.forEach((s) => {
+  internes.forEach((s) => {
     if (s.agence_id) {
       const arr = parAgence.get(s.agence_id) ?? [];
       arr.push(s);
@@ -184,28 +272,78 @@ export default function EquipePage() {
     .map(([id, items]) => ({ titre: labelAgence(id) ?? "Agence", items }))
     .sort((a, b) => a.titre.localeCompare(b.titre));
 
+  // ── EXTERNES : médecins/chirurgiens & infirmières libérales (comptes + sans compte) ──
+  // Ressources transverses aux agences : pas de cloisonnement par agence ici.
+  const medecinsComptes = soignants.filter((s) => s.role === "chirurgien");
+  const infirmieresComptes = soignants.filter((s) => s.role === "infirmiere_liberale");
+  const externesMed = externes.filter((e) => e.type === "medecin");
+  const externesInf = externes.filter((e) => e.type === "infirmiere");
+  const aucunExterne = medecinsComptes.length + infirmieresComptes.length + externes.length === 0;
+
   return (
     <div className="mx-auto max-w-4xl">
-      <h1 className="mb-5 text-2xl font-bold text-slate-800">Équipe soignante</h1>
+      <h1 className="mb-4 text-2xl font-bold text-slate-800">Équipe soignante</h1>
+
+      {/* Sélecteur Internes / Externes */}
+      <div className="mb-6 inline-flex rounded-xl border border-rose-200 bg-white p-1">
+        {([["internes", "Interne à l'entreprise"], ["externes", "Externe à l'entreprise"]] as const).map(([v, l]) => (
+          <button
+            key={v}
+            onClick={() => setVue(v)}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${vue === v ? "bg-brand text-white" : "text-slate-600 hover:text-brand"}`}
+          >
+            {l}
+          </button>
+        ))}
+      </div>
 
       {chargement ? (
         <p className="text-sm text-slate-400">Chargement…</p>
-      ) : soignantsVisibles.length === 0 ? (
-        <p className="text-sm text-slate-400">Aucun soignant dans votre périmètre.</p>
+      ) : vue === "internes" ? (
+        internes.length === 0 ? (
+          <p className="text-sm text-slate-400">Aucun soignant interne dans votre périmètre.</p>
+        ) : (
+          <div className="grid gap-7">
+            {encadrement.length > 0 && (
+              <section className="grid gap-3">
+                <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Encadrement (région / plateforme)</h2>
+                {encadrement.map(carte)}
+              </section>
+            )}
+            {groupesAgence.map((g) => (
+              <section key={g.titre} className="grid gap-3">
+                <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">{g.titre}</h2>
+                {g.items.map(carte)}
+              </section>
+            ))}
+          </div>
+        )
+      ) : aucunExterne ? (
+        <p className="text-sm text-slate-400">Aucun soignant externe enregistré.</p>
       ) : (
         <div className="grid gap-7">
-          {encadrement.length > 0 && (
-            <section className="grid gap-3">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Encadrement (région / plateforme)</h2>
-              {encadrement.map(carte)}
-            </section>
-          )}
-          {groupesAgence.map((g) => (
-            <section key={g.titre} className="grid gap-3">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">{g.titre}</h2>
-              {g.items.map(carte)}
-            </section>
-          ))}
+          <section className="grid gap-3">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Médecins / Chirurgiens</h2>
+            {medecinsComptes.length + externesMed.length === 0 ? (
+              <p className="text-sm text-slate-400">Aucun médecin / chirurgien.</p>
+            ) : (
+              <>
+                {medecinsComptes.map(carte)}
+                {externesMed.map(carteExterne)}
+              </>
+            )}
+          </section>
+          <section className="grid gap-3">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Infirmières libérales</h2>
+            {infirmieresComptes.length + externesInf.length === 0 ? (
+              <p className="text-sm text-slate-400">Aucune infirmière libérale.</p>
+            ) : (
+              <>
+                {infirmieresComptes.map(carte)}
+                {externesInf.map(carteExterne)}
+              </>
+            )}
+          </section>
         </div>
       )}
 
