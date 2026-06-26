@@ -33,6 +33,7 @@ export default function EquipePage() {
   const pro = useProSession();
   const [soignants, setSoignants] = useState<Soignant[]>([]);
   const [agences, setAgences] = useState<{ value: string; label: string }[]>([]);
+  const [agenceRegion, setAgenceRegion] = useState<Map<string, string>>(new Map());
   const [chargement, setChargement] = useState(true);
   const [suppression, setSuppression] = useState<string | null>(null);
   const [edite, setEdite] = useState<Soignant | null>(null);
@@ -46,6 +47,7 @@ export default function EquipePage() {
     ]);
     const nomRegion = new Map((regs ?? []).map((r) => [r.id as string, r.nom as string]));
     setAgences((ags ?? []).map((a) => ({ value: a.id as string, label: `${nomRegion.get(a.region_id as string) ?? "?"} · ${a.nom}` })));
+    setAgenceRegion(new Map((ags ?? []).map((a) => [a.id as string, a.region_id as string])));
     setSoignants((pros ?? []) as Soignant[]);
     setChargement(false);
   }, []);
@@ -53,7 +55,25 @@ export default function EquipePage() {
   useEffect(() => { charger(); }, [charger]);
 
   // Niveau réel du compte connecté (lu en base, pas le cache de session).
-  const niveauMoi = soignants.find((s) => s.id === pro?.id)?.niveau ?? pro?.niveau ?? 3;
+  const moi = soignants.find((s) => s.id === pro?.id);
+  const niveauMoi = moi?.niveau ?? pro?.niveau ?? 3;
+  const maRegion = moi?.agence_id ? agenceRegion.get(moi.agence_id) : undefined;
+  const regionDe = (s: Soignant) => (s.agence_id ? agenceRegion.get(s.agence_id) : undefined);
+
+  // Cloisonnement : qui le compte connecté a-t-il le droit de voir ?
+  const visible = (s: Soignant) => {
+    if (niveauMoi === 0) return true;                 // plateforme : tout
+    if (s.id === moi?.id) return true;                // soi-même
+    if (s.niveau === 0) return true;                  // les super-admins plateforme
+    if (niveauMoi === 1) return regionDe(s) === maRegion;          // toute ma région
+    if (niveauMoi === 2) {                            // mon agence + le niveau 1 de ma région
+      if (s.agence_id && s.agence_id === moi?.agence_id) return true;
+      if (s.niveau === 1 && regionDe(s) === maRegion) return true;
+      return false;
+    }
+    return false;
+  };
+  const soignantsVisibles = soignants.filter(visible);
 
   const labelAgence = (id: string | null) => agences.find((a) => a.value === id)?.label ?? null;
   // Un niveau 0/1 peut modifier les comptes de niveau 2 ou 3 (sauf le sien).
@@ -89,11 +109,11 @@ export default function EquipePage() {
 
       {chargement ? (
         <p className="text-sm text-slate-400">Chargement…</p>
-      ) : soignants.length === 0 ? (
-        <p className="text-sm text-slate-400">Aucun soignant.</p>
+      ) : soignantsVisibles.length === 0 ? (
+        <p className="text-sm text-slate-400">Aucun soignant dans votre périmètre.</p>
       ) : (
         <div className="grid gap-4">
-          {soignants.map((s) => {
+          {soignantsVisibles.map((s) => {
             const estChir = s.role === "chirurgien";
             const nomAffiche = [s.titre, s.prenom, s.nom].filter(Boolean).join(" ");
             const modifiable = peutModifier(s);
