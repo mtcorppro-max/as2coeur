@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
@@ -22,6 +22,7 @@ type Suivi = {
   patientNom: string;
   jour: number;
   date: Date;
+  echeance: string; // YYYY-MM-DD
   chirurgien: string | null;
   responsable: string | null;
 };
@@ -35,6 +36,9 @@ function ajoute(base: Date, n: number): Date {
   const d = minuit(base);
   d.setDate(d.getDate() + n);
   return d;
+}
+function iso(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 function cle(d: Date): string {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -50,18 +54,27 @@ function libelleJour(d: Date, today: Date): string {
 export default function SuivisPage() {
   const pro = useProSession();
   const [patients, setPatients] = useState<PatientLite[]>([]);
+  const [faits, setFaits] = useState<Set<string>>(new Set()); // `${patientId}|${echeance}`
   const [pret, setPret] = useState(false);
   const [filtreChir, setFiltreChir] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
 
-  useEffect(() => {
-    createClient()
-      .from("patient")
-      .select("id,nom,statut,date_operation,jours_suivi,chirurgien,alerte_1_nom")
-      .then(({ data }) => {
-        setPatients((data ?? []) as PatientLite[]);
-        setPret(true);
-      });
+  const charger = useCallback(async () => {
+    const supabase = createClient();
+    const [{ data: pts }, { data: rps }, { data: svs }] = await Promise.all([
+      supabase.from("patient").select("id,nom,statut,date_operation,jours_suivi,chirurgien,alerte_1_nom"),
+      supabase.from("rappel_suivi_valide").select("patient_id,echeance"),
+      supabase.from("suivi").select("patient_id,created_at"),
+    ]);
+    const set = new Set<string>();
+    (rps ?? []).forEach((r) => set.add(`${r.patient_id}|${r.echeance}`));
+    (svs ?? []).forEach((s) => set.add(`${s.patient_id}|${iso(new Date(s.created_at))}`));
+    setFaits(set);
+    setPatients((pts ?? []) as PatientLite[]);
+    setPret(true);
   }, []);
+
+  useEffect(() => { charger(); }, [charger]);
 
   const today = useMemo(() => minuit(new Date()), []);
 
@@ -70,7 +83,7 @@ export default function SuivisPage() {
     [patients]
   );
 
-  // Tous les suivis programmés (futurs + aujourd'hui + retards récents).
+  // Suivis programmés (aujourd'hui + futur + retards 7j), hors suivis déjà faits.
   const groupes = useMemo(() => {
     const suivis: Suivi[] = [];
     patients.forEach((p) => {
@@ -79,17 +92,12 @@ export default function SuivisPage() {
       const base = new Date(p.date_operation);
       if (isNaN(base.getTime())) return;
       (p.jours_suivi ?? []).forEach((j) => {
-        suivis.push({
-          patientId: p.id,
-          patientNom: p.nom,
-          jour: j,
-          date: ajoute(base, j),
-          chirurgien: p.chirurgien,
-          responsable: p.alerte_1_nom,
-        });
+        const date = ajoute(base, j);
+        const echeance = iso(date);
+        if (faits.has(`${p.id}|${echeance}`)) return;
+        suivis.push({ patientId: p.id, patientNom: p.nom, jour: j, date, echeance, chirurgien: p.chirurgien, responsable: p.alerte_1_nom });
       });
     });
-    // On garde aujourd'hui + futur + retards des 7 derniers jours
     const limiteBasse = ajoute(today, -7);
     const visibles = suivis.filter((s) => s.date.getTime() >= limiteBasse.getTime());
     visibles.sort((a, b) => a.date.getTime() - b.date.getTime() || a.patientNom.localeCompare(b.patientNom));
@@ -101,7 +109,27 @@ export default function SuivisPage() {
       map.get(k)!.items.push(s);
     });
     return [...map.values()];
-  }, [patients, filtreChir, today]);
+  }, [patients, filtreChir, today, faits]);
+
+  async function valider(s: Suivi) {
+    setBusy(`${s.patientId}|${s.echeance}`);
+    await createClient().from("rappel_suivi_valide").insert({
+      patient_id: s.patientId, type: `J${s.jour}`, echeance: s.echeance, validee_par: pro?.nom ?? null,
+    });
+    setBusy(null);
+    setFaits((prev) => new Set(prev).add(`${s.patientId}|${s.echeance}`));
+  }
+
+  async function supprimer(s: Suivi) {
+    if (!confirm(`Supprimer le suivi J${s.jour} de ${s.patientNom} ? Il ne sera plus programmé.`)) return;
+    setBusy(`${s.patientId}|${s.echeance}`);
+    const p = patients.find((x) => x.id === s.patientId);
+    const nouveau = (p?.jours_suivi ?? []).filter((j) => j !== s.jour);
+    const { error } = await createClient().from("patient").update({ jours_suivi: nouveau }).eq("id", s.patientId);
+    setBusy(null);
+    if (error) { alert("Échec : " + error.message); return; }
+    setPatients((arr) => arr.map((x) => (x.id === s.patientId ? { ...x, jours_suivi: nouveau } : x)));
+  }
 
   if (pro && !estCoordOuManager(pro.role) && pro.niveau !== 0) {
     return (
@@ -130,7 +158,7 @@ export default function SuivisPage() {
       {!pret ? (
         <p className="text-sm text-slate-400">Chargement…</p>
       ) : groupes.length === 0 ? (
-        <p className="card text-sm text-slate-400">Aucun suivi programmé à venir.</p>
+        <p className="card text-sm text-slate-400">Aucun suivi à réaliser. 🌿</p>
       ) : (
         <div className="grid gap-5">
           {groupes.map((g) => {
@@ -147,25 +175,40 @@ export default function SuivisPage() {
                   <span className="text-xs text-slate-400">{g.items.length} suivi(s)</span>
                 </div>
                 <div className="grid gap-2">
-                  {g.items.map((s, i) => (
-                    <Link
-                      key={i}
-                      href={`/pro/patients/${s.patientId}`}
-                      className="card flex items-center justify-between gap-3 py-3 transition hover:border-rose-200 hover:shadow-sm"
-                    >
-                      <div>
-                        <p className="font-semibold text-slate-800">{s.patientNom}</p>
-                        {s.chirurgien && <p className="text-xs text-slate-400">{s.chirurgien}</p>}
-                        <p className="mt-0.5 text-xs">
-                          <span className="text-slate-400">À réaliser par : </span>
-                          <span className="font-medium text-slate-600">
-                            {s.responsable || "Non attribué"}
-                          </span>
-                        </p>
+                  {g.items.map((s) => {
+                    const occupe = busy === `${s.patientId}|${s.echeance}`;
+                    return (
+                      <div key={`${s.patientId}|${s.echeance}`} className="card flex flex-wrap items-center justify-between gap-3 py-3">
+                        <Link href={`/pro/patients/${s.patientId}`} className="min-w-0 flex-1 transition hover:opacity-80">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-slate-800">{s.patientNom}</p>
+                            <span className="badge bg-rose-100 text-brand">Suivi J{s.jour}</span>
+                          </div>
+                          {s.chirurgien && <p className="text-xs text-slate-400">{s.chirurgien}</p>}
+                          <p className="mt-0.5 text-xs">
+                            <span className="text-slate-400">À réaliser par : </span>
+                            <span className="font-medium text-slate-600">{s.responsable || "Non attribué"}</span>
+                          </p>
+                        </Link>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <button
+                            onClick={() => valider(s)}
+                            disabled={occupe}
+                            className="rounded-lg bg-ok px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                          >
+                            ✓ Valider
+                          </button>
+                          <button
+                            onClick={() => supprimer(s)}
+                            disabled={occupe}
+                            className="rounded-lg border border-rose-200 px-3 py-1.5 text-sm font-medium text-critique transition hover:bg-red-50 disabled:opacity-50"
+                          >
+                            Supprimer
+                          </button>
+                        </div>
                       </div>
-                      <span className="badge bg-rose-100 text-brand">Suivi J{s.jour}</span>
-                    </Link>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             );
