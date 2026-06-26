@@ -19,6 +19,7 @@ type Evt = {
   heure_fin: string | null;
   remplacant_id: string | null;
   note: string | null;
+  statut: "valide" | "en_attente";
 };
 
 const TYPES: Record<TypeEvt, { label: string; bar: string; chip: string }> = {
@@ -73,7 +74,7 @@ export default function OrganisationPage() {
     const { data: { user } } = await supabase.auth.getUser();
     const [{ data: pros }, { data: evts }, { data: ags }, { data: me }] = await Promise.all([
       supabase.from("professionnel").select("id,nom,prenom,titre,role,agence_id").eq("role", "coordinatrice").order("nom"),
-      supabase.from("evenement_planning").select("id,professionnel_id,type,date_debut,date_fin,heure_debut,heure_fin,remplacant_id,note")
+      supabase.from("evenement_planning").select("id,professionnel_id,type,date_debut,date_fin,heure_debut,heure_fin,remplacant_id,note,statut")
         .lte("date_debut", fin).gte("date_fin", start),
       supabase.from("agence").select("id,nom,region_id"),
       user ? supabase.from("professionnel").select("niveau,agence_id,region_id").eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
@@ -107,6 +108,16 @@ export default function OrganisationPage() {
   // Agence affichée : celle choisie, sinon la première du périmètre.
   const agenceCourante = filtreAgence || agencesPerimetre[0]?.value || "";
   const coordsVisibles = coords.filter((c) => c.agence_id === agenceCourante);
+
+  // Demandes en attente de validation (managers / niveau 0), sur tout le périmètre.
+  const nomPro = new Map(coords.map((c) => [c.id, nomComplet(c)]));
+  const dansPerimetre = (proId: string) => {
+    const c = coords.find((x) => x.id === proId);
+    return !!c?.agence_id && agenceDansPerimetre(c.agence_id);
+  };
+  const demandes = niveauMoi <= 1
+    ? events.filter((e) => e.statut === "en_attente" && dansPerimetre(e.professionnel_id))
+    : [];
 
   // Jours de la fenêtre (à partir de J-1)
   const jours = useMemo(() => Array.from({ length: NB_JOURS }, (_, i) => {
@@ -175,11 +186,13 @@ export default function OrganisationPage() {
 
   // ── Création par clic sur une cellule ───────────────────────────────
   function creer(proId: string, ds: string) {
-    setEditing({ id: "", professionnel_id: proId, type: "conges", date_debut: ds, date_fin: ds, heure_debut: null, heure_fin: null, remplacant_id: null, note: null });
+    setEditing({ id: "", professionnel_id: proId, type: "conges", date_debut: ds, date_fin: ds, heure_debut: null, heure_fin: null, remplacant_id: null, note: null, statut: "valide" });
   }
 
   async function sauver(ev: Evt) {
     const supabase = createClient();
+    // Un manager/niveau 0 valide directement ; une coordinatrice fait une demande.
+    const statut: Evt["statut"] = ev.id ? ev.statut : (niveauMoi <= 1 ? "valide" : "en_attente");
     const payload = {
       prestataire_id: pro!.prestataire_id,
       professionnel_id: ev.professionnel_id,
@@ -190,6 +203,7 @@ export default function OrganisationPage() {
       heure_fin: ev.type === "astreinte" ? ev.heure_fin || null : null,
       remplacant_id: ev.remplacant_id,
       note: ev.note,
+      statut,
     };
     const { error } = ev.id
       ? await supabase.from("evenement_planning").update(payload).eq("id", ev.id)
@@ -199,6 +213,14 @@ export default function OrganisationPage() {
       return;
     }
     setEditing(null);
+    if (statut === "en_attente") alert("Demande envoyée au manager pour validation.");
+    charger();
+  }
+
+  // Validation d'une demande par le manager.
+  async function valider(id: string) {
+    const { error } = await createClient().from("evenement_planning").update({ statut: "valide" }).eq("id", id);
+    if (error) { alert("Validation refusée : " + error.message); return; }
     charger();
   }
   async function supprimer(id: string) {
@@ -244,6 +266,29 @@ export default function OrganisationPage() {
         ))}
         <span className="text-xs text-slate-400">· Clic sur un jour = ajouter · Glisser la barre = déplacer · Bord droit = étendre</span>
       </div>
+
+      {/* Demandes en attente (notification manager) */}
+      {demandes.length > 0 && (
+        <div className="grid gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm font-semibold text-amber-800">
+            🔔 {demandes.length} demande(s) en attente de validation
+          </p>
+          {demandes.map((d) => (
+            <div key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm">
+              <span>
+                <span className="font-medium text-slate-700">{nomPro.get(d.professionnel_id) ?? "Soignant"}</span>
+                <span className="text-slate-400"> · </span>
+                <span className={`badge ${TYPES[d.type].chip}`}>{TYPES[d.type].label}</span>
+                <span className="text-slate-500"> du {fmtHumain(d.date_debut)} au {fmtHumain(d.date_fin)}</span>
+              </span>
+              <span className="flex gap-2">
+                <button onClick={() => valider(d.id)} className="rounded-lg bg-ok px-3 py-1 text-xs font-semibold text-white hover:opacity-90">Valider</button>
+                <button onClick={() => supprimer(d.id)} className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-medium text-critique hover:bg-red-50">Refuser</button>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Calendrier */}
       <div className="overflow-x-auto rounded-2xl border border-rose-100 bg-white">
@@ -300,16 +345,17 @@ export default function OrganisationPage() {
                           key={ev.id}
                           onPointerDown={(p) => demarrerDrag(p, ev, "move")}
                           onClick={(p) => { p.stopPropagation(); setEditing(ev); }}
-                          className={`absolute flex cursor-grab items-center rounded-md px-1.5 text-[10px] font-medium text-white ${TYPES[ev.type].bar} active:cursor-grabbing`}
+                          className={`absolute flex cursor-grab items-center rounded-md px-1.5 text-[10px] font-medium text-white ${TYPES[ev.type].bar} active:cursor-grabbing ${ev.statut === "en_attente" ? "opacity-50 ring-1 ring-amber-400 ring-offset-1" : ""}`}
                           style={{
                             left: `${(s / NB_JOURS) * 100}%`,
                             width: `${((e - s + 1) / NB_JOURS) * 100}%`,
                             top: (lane - 1) * 26 + 5,
                             height: 22,
                           }}
-                          title={`${TYPES[ev.type].label}${ev.type === "astreinte" && ev.heure_debut ? ` ${ev.heure_debut}–${ev.heure_fin ?? ""}` : ""} — ${ev.date_debut} → ${ev.date_fin}`}
+                          title={`${TYPES[ev.type].label}${ev.statut === "en_attente" ? " (en attente)" : ""}${ev.type === "astreinte" && ev.heure_debut ? ` ${ev.heure_debut}–${ev.heure_fin ?? ""}` : ""} — ${ev.date_debut} → ${ev.date_fin}`}
                         >
                           <span className="truncate">
+                            {ev.statut === "en_attente" ? "⏳ " : ""}
                             {TYPES[ev.type].label}
                             {ev.type === "astreinte" && ev.heure_debut ? ` ${ev.heure_debut}–${ev.heure_fin ?? ""}` : ""}
                           </span>
@@ -332,6 +378,7 @@ export default function OrganisationPage() {
         <EditeurEvenement
           ev={editing}
           coords={coordsVisibles}
+          niveauMoi={niveauMoi}
           onClose={() => setEditing(null)}
           onSave={sauver}
           onDelete={supprimer}
@@ -360,10 +407,11 @@ function assignerLanes(evs: Evt[]): Map<string, number> {
 }
 
 function EditeurEvenement({
-  ev, coords, onClose, onSave, onDelete,
+  ev, coords, niveauMoi, onClose, onSave, onDelete,
 }: {
   ev: Evt;
   coords: ProLite[];
+  niveauMoi: number;
   onClose: () => void;
   onSave: (e: Evt) => void;
   onDelete: (id: string) => void;
@@ -372,6 +420,8 @@ function EditeurEvenement({
   const coordCible = coords.find((c) => c.id === f.professionnel_id);
   const remplacants = coords.filter((c) => c.id !== f.professionnel_id);
   const estAbsence = ABSENCES.includes(f.type);
+  // L'arrêt maladie n'est posable que par un manager / niveau 0.
+  const typesDispo = (Object.keys(TYPES) as TypeEvt[]).filter((t) => t !== "arret_maladie" || niveauMoi <= 1);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={onClose}>
@@ -385,7 +435,7 @@ function EditeurEvenement({
           <Select
             value={f.type}
             onChange={(v) => setF({ ...f, type: v as TypeEvt })}
-            options={(Object.keys(TYPES) as TypeEvt[]).map((t) => ({ value: t, label: TYPES[t].label }))}
+            options={typesDispo.map((t) => ({ value: t, label: TYPES[t].label }))}
           />
         </div>
 
