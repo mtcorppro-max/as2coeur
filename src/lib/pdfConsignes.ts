@@ -66,6 +66,29 @@ async function chargerLogo(): Promise<string | null> {
   }
 }
 
+// Charge une image (avec ses dimensions naturelles) en data-URL.
+async function chargerImage(path: string): Promise<{ url: string; w: number; h: number } | null> {
+  try {
+    const res = await fetch(path);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const url = await new Promise<string>((resolve) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result as string);
+      fr.readAsDataURL(blob);
+    });
+    const dim = await new Promise<{ w: number; h: number }>((resolve) => {
+      const im = new Image();
+      im.onload = () => resolve({ w: im.naturalWidth, h: im.naturalHeight });
+      im.onerror = () => resolve({ w: 0, h: 0 });
+      im.src = url;
+    });
+    return { url, ...dim };
+  } catch {
+    return null;
+  }
+}
+
 // Génère et télécharge le PDF des consignes d'un médecin / chirurgien.
 export async function genererPdfConsignes(
   d: ConsignesData,
@@ -115,39 +138,71 @@ export async function genererPdfConsignes(
   y += 6;
   if (d.specialite) {
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(...GRIS);
+    doc.setFontSize(11);
+    doc.setTextColor(...ROSE);
     doc.text(d.specialite, 105, y, { align: "center" });
-    y += 6;
+    y += 7;
+  } else {
+    y += 1;
   }
-  y += 3;
+
+  // Toutes les coordonnées regroupées sous le nom (médecin + secrétaire), centrées.
+  const infos: string[] = [];
+  if (d.telephone) infos.push(`Téléphone : ${d.telephone}`);
+  if (d.cabinets) infos.push(`Lieu d'exercice : ${d.cabinets}`);
+  if (d.secretariat_nom) infos.push(`Secrétaire : ${d.secretariat_nom}`);
+  if (d.secretariat_email) infos.push(`Email secrétaire : ${d.secretariat_email}`);
+  if (d.secretariat_tel) infos.push(`Téléphone secrétaire : ${d.secretariat_tel}`);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(...NOIR);
+  infos.forEach((t) => {
+    doc.text(t, 105, y, { align: "center" });
+    y += 5.6;
+  });
+
+  y += 6;
+  doc.setDrawColor(...ROSE);
+  doc.setLineWidth(0.3);
+  doc.line(M, y, 210 - M, y);
+  y += 10;
 
   // ── Helpers ───────────────────────────────────────────────────────
   const sautSiBesoin = (besoin: number) => {
-    if (y + besoin > 285) {
+    if (y + besoin > 270) {
       doc.addPage();
       y = M;
     }
   };
 
+  // En-tête de protocole : encadré arrondi, fond rose très clair, accent rose à gauche.
   const bandeau = (titre: string) => {
-    sautSiBesoin(16);
+    sautSiBesoin(20);
+    y += 2;
+    doc.setFillColor(253, 242, 248); // rose-50
+    doc.setDrawColor(...ROSE);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(M, y, L, 10, 2.2, 2.2, "FD");
     doc.setFillColor(...ROSE);
-    doc.rect(M, y, L, 7, "F");
+    doc.rect(M, y, 1.6, 10, "F"); // accent vertical
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(255, 255, 255);
-    doc.text(titre, 105, y + 4.8, { align: "center" });
-    y += 11;
+    doc.setFontSize(11);
+    doc.setTextColor(...ROSE);
+    doc.text(titre, M + 6, y + 6.6);
+    y += 16;
   };
 
   const sousTitre = (texte: string) => {
-    sautSiBesoin(8);
+    sautSiBesoin(10);
+    y += 1;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9.5);
     doc.setTextColor(...ROSE);
     doc.text(texte.toUpperCase(), M, y);
-    y += 5;
+    doc.setDrawColor(244, 200, 220);
+    doc.setLineWidth(0.2);
+    doc.line(M, y + 1.6, M + 60, y + 1.6);
+    y += 6.5;
   };
 
   const ligne = (label: string, valeur: string) => {
@@ -196,20 +251,6 @@ export async function genererPdfConsignes(
       }
     });
   };
-
-  // ── Coordonnées ───────────────────────────────────────────────────
-  bandeau("COORDONNÉES");
-  ligne("Téléphone :", d.telephone);
-  ligne("Cabinet(s) :", d.cabinets);
-  if (!d.telephone && !d.cabinets) paragraphe("—");
-
-  // ── Secrétariat ───────────────────────────────────────────────────
-  if (d.secretariat_nom || d.secretariat_email || d.secretariat_tel) {
-    bandeau("SECRÉTARIAT");
-    ligne("Nom :", d.secretariat_nom);
-    ligne("Email :", d.secretariat_email);
-    ligne("Téléphone :", d.secretariat_tel);
-  }
 
   // ── Protocoles ────────────────────────────────────────────────────
   d.protocoles.forEach((p, i) => {
@@ -268,8 +309,20 @@ export async function genererPdfConsignes(
       paragraphe(p.autres);
     }
 
-    y += 3;
+    y += 8;
   });
+
+  // ── Logo Asdia en pied de page (centré) ───────────────────────────
+  const asdia = await chargerImage("/logoasdia.jpg");
+  if (asdia && asdia.w) {
+    const w = 26;
+    const h = (asdia.h * w) / asdia.w;
+    const pages = doc.getNumberOfPages();
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i);
+      doc.addImage(asdia.url, "JPEG", 105 - w / 2, 297 - 12 - h, w, h);
+    }
+  }
 
   // ── Sortie ────────────────────────────────────────────────────────
   if (mode === "bloburl") {
