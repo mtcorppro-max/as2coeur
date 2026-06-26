@@ -1,124 +1,184 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
-import { ChatBox } from "@/components/ChatBox";
-import type { Message } from "@/lib/types";
 
-type PatientItem = { id: string; nom: string; statut: string };
+type Pro = { id: string; nom: string; prenom: string | null; titre: string | null; role: string };
+type Message = { id: string; expediteur_id: string; destinataire_id: string; contenu: string; lu: boolean; created_at: string };
 
-export default function MessageriePro() {
+const nomComplet = (p: Pro) => [p.titre, p.prenom, p.nom].filter(Boolean).join(" ");
+
+export default function MessageriePage() {
   const pro = useProSession();
-  const searchParams = useSearchParams();
-  const patientId = searchParams.get("patient");
-
-  const [patients, setPatients] = useState<PatientItem[]>([]);
+  const monId = pro?.id ?? "";
+  const params = useSearchParams();
+  const [pros, setPros] = useState<Pro[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [ready, setReady] = useState(false);
-  const [msgReady, setMsgReady] = useState(false);
+  const [selId, setSelId] = useState<string>("");
+  const [texte, setTexte] = useState("");
+  const [busy, setBusy] = useState(false);
+  const finRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const charger = useCallback(async () => {
+    if (!monId) return;
     const supabase = createClient();
-    supabase
-      .from("patient")
-      .select("id,nom,statut")
-      .eq("statut", "active")
-      .order("nom")
-      .then(({ data }) => {
-        setPatients((data ?? []) as PatientItem[]);
-        setReady(true);
-      });
-  }, []);
+    const [{ data: ps }, { data: ms }] = await Promise.all([
+      supabase.from("professionnel").select("id,nom,prenom,titre,role,niveau").neq("id", monId).order("nom"),
+      supabase.from("message_pro").select("id,expediteur_id,destinataire_id,contenu,lu,created_at").order("created_at", { ascending: true }),
+    ]);
+    setPros(((ps ?? []) as (Pro & { niveau: number })[]).filter((p) => p.niveau !== 0));
+    setMessages((ms ?? []) as Message[]);
+  }, [monId]);
 
+  useEffect(() => { charger(); }, [charger]);
+
+  // Sélection initiale via ?to=
   useEffect(() => {
-    if (!patientId) { setMessages([]); setMsgReady(true); return; }
-    setMsgReady(false);
-    const supabase = createClient();
-    supabase
-      .from("message")
-      .select("id,patient_id,auteur_user_id,contenu,horodatage")
-      .eq("patient_id", patientId)
-      .order("horodatage", { ascending: true })
-      .limit(100)
-      .then(({ data }) => {
-        setMessages((data ?? []) as Message[]);
-        setMsgReady(true);
-      });
-  }, [patientId]);
+    const to = params.get("to");
+    if (to) setSelId(to);
+  }, [params]);
 
-  if (pro?.role === "delegue") {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <p className="text-slate-400">Accès non autorisé pour ce rôle.</p>
-      </div>
-    );
+  // Marque comme lus les messages reçus de la conversation ouverte.
+  useEffect(() => {
+    if (!selId || !monId) return;
+    const nonLus = messages.filter((m) => m.expediteur_id === selId && m.destinataire_id === monId && !m.lu).map((m) => m.id);
+    if (nonLus.length === 0) return;
+    createClient().from("message_pro").update({ lu: true }).in("id", nonLus).then(() => {
+      setMessages((arr) => arr.map((m) => (nonLus.includes(m.id) ? { ...m, lu: true } : m)));
+    });
+  }, [selId, monId, messages]);
+
+  useEffect(() => { finRef.current?.scrollIntoView({ behavior: "smooth" }); }, [selId, messages]);
+
+  const proParId = useMemo(() => new Map(pros.map((p) => [p.id, p])), [pros]);
+
+  // Conversations existantes : autre partie + dernier message + non-lus.
+  const conversations = useMemo(() => {
+    const m = new Map<string, { dernier: Message; nonLus: number }>();
+    messages.forEach((msg) => {
+      const autre = msg.expediteur_id === monId ? msg.destinataire_id : msg.expediteur_id;
+      const nonLu = msg.destinataire_id === monId && !msg.lu ? 1 : 0;
+      const e = m.get(autre);
+      if (!e) m.set(autre, { dernier: msg, nonLus: nonLu });
+      else { e.dernier = msg; e.nonLus += nonLu; }
+    });
+    return [...m.entries()]
+      .map(([id, v]) => ({ id, ...v }))
+      .sort((a, b) => b.dernier.created_at.localeCompare(a.dernier.created_at));
+  }, [messages, monId]);
+
+  const fil = useMemo(
+    () => messages.filter((m) => (m.expediteur_id === selId && m.destinataire_id === monId) || (m.expediteur_id === monId && m.destinataire_id === selId)),
+    [messages, selId, monId]
+  );
+
+  async function envoyer() {
+    const t = texte.trim();
+    if (!t || !selId || !monId) return;
+    setBusy(true);
+    const { data, error } = await createClient()
+      .from("message_pro")
+      .insert({ expediteur_id: monId, destinataire_id: selId, contenu: t })
+      .select("id,expediteur_id,destinataire_id,contenu,lu,created_at")
+      .single();
+    setBusy(false);
+    if (error) { alert("Échec de l'envoi : " + error.message); return; }
+    setMessages((arr) => [...arr, data as Message]);
+    setTexte("");
   }
 
-  const patientSelectionne = patients.find((p) => p.id === patientId) ?? null;
+  const sel = selId ? proParId.get(selId) : undefined;
+  const dejaEnConv = new Set(conversations.map((c) => c.id));
+  const autresPros = pros.filter((p) => !dejaEnConv.has(p.id));
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-      {/* ── Liste patients ── */}
-      <aside className="card h-fit">
-        <p className="mb-3 text-xs font-bold uppercase tracking-widest text-rose-400">Patients actifs</p>
-        {!ready ? (
-          <div className="grid gap-2 animate-pulse">
-            {[...Array(3)].map((_, i) => <div key={i} className="h-10 rounded-xl bg-rose-50" />)}
-          </div>
-        ) : patients.length === 0 ? (
-          <p className="text-sm text-slate-400">Aucun patient.</p>
-        ) : (
-          <ul className="flex flex-col gap-1">
-            {patients.map((p) => (
-              <li key={p.id}>
-                <Link
-                  href={`/pro/messagerie?patient=${p.id}`}
-                  className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                    p.id === patientId ? "bg-brand text-white" : "text-slate-600 hover:bg-rose-50 hover:text-brand"
-                  }`}
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-100 text-xs font-bold text-brand">
-                    {p.nom.charAt(0).toUpperCase()}
-                  </span>
-                  {p.nom}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </aside>
+    <div className="mx-auto max-w-4xl">
+      <h1 className="mb-5 text-2xl font-bold text-slate-800">Messagerie</h1>
 
-      {/* ── Zone chat ── */}
-      <div className="card">
-        {!patientSelectionne ? (
-          <div className="flex h-64 flex-col items-center justify-center gap-2 text-slate-400">
-            <span className="text-3xl">◇</span>
-            <p className="text-sm">Sélectionnez un patient pour démarrer</p>
-          </div>
-        ) : !msgReady || !pro ? (
-          <div className="animate-pulse h-40 rounded-xl bg-rose-50" />
-        ) : (
-          <>
-            <div className="mb-4 flex items-center gap-3 border-b border-rose-100 pb-4">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-sm font-bold text-brand">
-                {patientSelectionne.nom.charAt(0).toUpperCase()}
-              </span>
-              <div>
-                <p className="font-semibold text-slate-800">{patientSelectionne.nom}</p>
-                <p className="text-xs text-slate-400">Messagerie sécurisée</p>
-              </div>
+      <div className="grid gap-4 md:grid-cols-[18rem_1fr]">
+        {/* Conversations + nouveau message */}
+        <div className="grid content-start gap-2">
+          {conversations.map((c) => {
+            const p = proParId.get(c.id);
+            if (!p) return null;
+            return (
+              <button
+                key={c.id}
+                onClick={() => setSelId(c.id)}
+                className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left transition ${selId === c.id ? "border-brand bg-rose-50" : "border-rose-100 hover:bg-rose-50"}`}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-700">{nomComplet(p)}</p>
+                  <p className="truncate text-xs text-slate-400">{c.dernier.contenu}</p>
+                </div>
+                {c.nonLus > 0 && <span className="badge bg-brand text-white">{c.nonLus}</span>}
+              </button>
+            );
+          })}
+
+          <details className="mt-1" open={conversations.length === 0}>
+            <summary className="cursor-pointer px-1 text-xs font-semibold uppercase tracking-widest text-rose-400">Nouveau message</summary>
+            <div className="mt-2 grid gap-0.5">
+              {autresPros.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setSelId(p.id)}
+                  className={`rounded-lg px-2 py-1.5 text-left text-sm transition hover:bg-rose-50 ${selId === p.id ? "bg-rose-50 text-brand" : "text-slate-600"}`}
+                >
+                  {nomComplet(p)}
+                </button>
+              ))}
             </div>
-            <ChatBox
-              patientId={patientId!}
-              currentUserId={pro.user_id}
-              otherLabel={patientSelectionne.nom}
-              initialMessages={messages}
-            />
-          </>
-        )}
+          </details>
+        </div>
+
+        {/* Fil de discussion */}
+        <div className="grid grid-rows-[auto_1fr_auto] rounded-2xl border border-rose-100 bg-white" style={{ minHeight: "60vh" }}>
+          {!sel ? (
+            <div className="row-span-3 flex items-center justify-center p-8 text-center text-sm text-slate-400">
+              Sélectionnez un soignant pour démarrer une conversation.
+            </div>
+          ) : (
+            <>
+              <div className="border-b border-rose-100 px-4 py-3">
+                <p className="font-semibold text-slate-800">{nomComplet(sel)}</p>
+              </div>
+              <div className="grid content-start gap-2 overflow-auto p-4">
+                {fil.length === 0 ? (
+                  <p className="text-center text-sm text-slate-400">Aucun message. Écrivez le premier.</p>
+                ) : (
+                  fil.map((m) => {
+                    const moi = m.expediteur_id === monId;
+                    return (
+                      <div key={m.id} className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${moi ? "justify-self-end bg-brand text-white" : "justify-self-start bg-rose-50 text-slate-700"}`}>
+                        {m.contenu}
+                        <span className={`mt-0.5 block text-[10px] ${moi ? "text-white/70" : "text-slate-400"}`}>
+                          {new Date(m.created_at).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={finRef} />
+              </div>
+              <div className="flex items-end gap-2 border-t border-rose-100 p-3">
+                <textarea
+                  value={texte}
+                  onChange={(e) => setTexte(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyer(); } }}
+                  rows={1}
+                  placeholder="Votre message…"
+                  className="input flex-1 resize-none"
+                />
+                <button onClick={envoyer} disabled={busy || !texte.trim()} className="btn-primary px-4 py-2 disabled:opacity-50">
+                  Envoyer
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { LIBELLE_ROLE } from "@/lib/roles";
@@ -241,15 +242,29 @@ export default function EquipePage() {
             </div>
             {s.specialite && <p className="mt-0.5 text-sm text-slate-500">{s.specialite}</p>}
           </div>
-          {peutSupprimer(s) && (
-            <button
-              onClick={(e) => { e.stopPropagation(); supprimer(s); }}
-              disabled={suppression === s.id}
-              className="rounded-lg border border-rose-200 px-3 py-1.5 text-sm font-medium text-critique hover:bg-red-50 disabled:opacity-50"
-            >
-              {suppression === s.id ? "Suppression…" : "Supprimer"}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {s.id !== pro?.id && (
+              <Link
+                href={`/pro/messagerie?to=${s.id}`}
+                onClick={(e) => e.stopPropagation()}
+                title="Envoyer un message"
+                className="rounded-lg border border-rose-200 p-2 text-brand transition hover:bg-rose-50"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+                </svg>
+              </Link>
+            )}
+            {peutSupprimer(s) && (
+              <button
+                onClick={(e) => { e.stopPropagation(); supprimer(s); }}
+                disabled={suppression === s.id}
+                className="rounded-lg border border-rose-200 px-3 py-1.5 text-sm font-medium text-critique hover:bg-red-50 disabled:opacity-50"
+              >
+                {suppression === s.id ? "Suppression…" : "Supprimer"}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-1 text-sm sm:grid-cols-2">

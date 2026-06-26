@@ -67,6 +67,18 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       });
   }, [pro, estCoord, pathname]);
 
+  // Messages internes non lus (badge Messagerie).
+  const [nbMessages, setNbMessages] = useState(0);
+  useEffect(() => {
+    if (!pro) return;
+    createClient()
+      .from("message_pro")
+      .select("id", { count: "exact", head: true })
+      .eq("destinataire_id", pro.id)
+      .eq("lu", false)
+      .then(({ count }) => setNbMessages(count ?? 0));
+  }, [pro, pathname]);
+
   // Remonte en haut à chaque changement de page (évite la restauration de
   // scroll qui laissait la fiche patient en bas après un clic depuis le tableau).
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
@@ -82,6 +94,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               {estCoord && <Onglet href="/pro/suivis" icon="calendar" label="Suivis" pathname={pathname} badge={nbSuivis} />}
               {estCoord && <Onglet href="/pro/calendrier" icon="clipboard" label="Organisation" pathname={pathname} badge={nbDemandes} />}
               {peutGerer && <Onglet href="/pro/equipe" icon="users" label="Équipe soignante" pathname={pathname} />}
+              <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
               {peutPec && <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />}
             </nav>
           </div>
@@ -117,6 +130,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         {estCoord && <NavItem href="/pro/suivis" icon="calendar" label="Suivis" badge={nbSuivis} />}
         {estCoord && <NavItem href="/pro/calendrier" icon="clipboard" label="Organisation" badge={nbDemandes} />}
         {peutGerer && <NavItem href="/pro/equipe" icon="users" label="Équipe" />}
+        <NavItem href="/pro/messagerie" icon="message" label="Messages" badge={nbMessages} />
         {peutPec && <NavItem href="/pro/pec" icon="chart" label="PEC" />}
         {(estCoord || estChir || peutGerer) && <NavItem href="/pro/nouveau" icon="plus" label="Nouveau" />}
       </nav>
@@ -179,6 +193,7 @@ function IconeNav({ name, className }: { name: string; className?: string }) {
     users: (<><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21" /><circle cx="9" cy="7" r="3.5" /><path d="M22 21v-1.5a4 4 0 0 0-3-3.85" /><path d="M16 3.6a3.5 3.5 0 0 1 0 6.8" /></>),
     home: (<><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V21h14V9.5" /><path d="M9.5 21v-6h5v6" /></>),
     plus: (<><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>),
+    message: (<><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" /></>),
   };
   return (
     <svg viewBox="0 0 24 24" className={className} {...p} aria-hidden="true">
