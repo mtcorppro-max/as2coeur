@@ -31,7 +31,6 @@ const COLS =
 
 export default function EquipePage() {
   const pro = useProSession();
-  const niveauMoi = pro?.niveau ?? 3;
   const [soignants, setSoignants] = useState<Soignant[]>([]);
   const [agences, setAgences] = useState<{ value: string; label: string }[]>([]);
   const [chargement, setChargement] = useState(true);
@@ -53,9 +52,14 @@ export default function EquipePage() {
 
   useEffect(() => { charger(); }, [charger]);
 
+  // Niveau réel du compte connecté (lu en base, pas le cache de session).
+  const niveauMoi = soignants.find((s) => s.id === pro?.id)?.niveau ?? pro?.niveau ?? 3;
+
   const labelAgence = (id: string | null) => agences.find((a) => a.value === id)?.label ?? null;
   // Un niveau 0/1 peut modifier les comptes de niveau 2 ou 3 (sauf le sien).
   const peutModifier = (s: Soignant) => niveauMoi <= 1 && s.niveau >= 2 && pro?.id !== s.id;
+  // Un niveau 0/1 peut supprimer un compte qui n'est pas plus puissant que lui.
+  const peutSupprimer = (s: Soignant) => niveauMoi <= 1 && pro?.id !== s.id && s.niveau >= niveauMoi;
 
   if (pro && (pro.niveau > 2 || pro.role === "chirurgien")) {
     return <div className="card text-sm text-slate-500">L&apos;équipe soignante n&apos;est pas accessible à ce compte.</div>;
@@ -113,7 +117,7 @@ export default function EquipePage() {
                     </div>
                     {s.specialite && <p className="mt-0.5 text-sm text-slate-500">{s.specialite}</p>}
                   </div>
-                  {pro && pro.id !== s.id && (
+                  {peutSupprimer(s) && (
                     <button
                       onClick={(e) => { e.stopPropagation(); supprimer(s); }}
                       disabled={suppression === s.id}

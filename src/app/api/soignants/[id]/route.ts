@@ -27,9 +27,10 @@ export async function DELETE(
     .maybeSingle();
 
   const admin_ = estEmailAdmin(user.email);
-  if (!admin_ && (moi?.niveau == null || moi.niveau > 2)) {
+  const niveauMoi = admin_ ? 0 : (moi?.niveau ?? 3);
+  if (!admin_ && niveauMoi > 1) {
     return NextResponse.json(
-      { message: "Vous n'avez pas les droits pour supprimer un compte." },
+      { message: "Seuls les niveaux 0 et 1 peuvent supprimer un compte." },
       { status: 403 }
     );
   }
@@ -41,7 +42,7 @@ export async function DELETE(
   const admin = createAdminClient();
   const { data: cible } = await admin
     .from("professionnel")
-    .select("id, user_id, prestataire_id")
+    .select("id, user_id, prestataire_id, niveau")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -50,6 +51,10 @@ export async function DELETE(
   }
   if (!admin_ && cible.prestataire_id !== moi?.prestataire_id) {
     return NextResponse.json({ message: "Compte hors de votre prestataire." }, { status: 403 });
+  }
+  // On ne peut pas supprimer un compte plus puissant que soi.
+  if (cible.niveau < niveauMoi) {
+    return NextResponse.json({ message: "Vous ne pouvez pas supprimer un compte de niveau supérieur." }, { status: 403 });
   }
 
   // Détacher des alertes acquittées (FK sans cascade)
