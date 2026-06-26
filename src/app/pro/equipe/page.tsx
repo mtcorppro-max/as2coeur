@@ -109,9 +109,9 @@ export default function EquipePage() {
 
   // Cloisonnement : qui le compte connecté a-t-il le droit de voir ?
   const visible = (s: Soignant) => {
-    if (niveauMoi === 0) return true;                 // plateforme : tout
-    if (s.id === moi?.id) return true;                // soi-même
-    if (s.niveau === 0) return true;                  // les super-admins plateforme
+    if (s.id === moi?.id) return true;                // soi-même (toujours)
+    if (s.niveau === 0) return false;                 // les niveau 0 sont invisibles pour tous
+    if (niveauMoi === 0) return true;                 // plateforme : voit tout le reste
     if (niveauMoi === 1) return regionDe(s) === maRegion;          // toute ma région
     if (niveauMoi === 2) {                            // mon agence + le niveau 1 de ma région
       if (s.agence_id && s.agence_id === moi?.agence_id) return true;
@@ -230,11 +230,11 @@ export default function EquipePage() {
               <span className="badge bg-rose-100 text-brand">{estChir ? labelMedecin(s.specialite) : LIBELLE_ROLE[s.role]}</span>
               {montrerCompte ? (
                 <BadgeCompte />
-              ) : (
+              ) : niveauMoi <= 1 ? (
                 <span className={`badge ${s.niveau <= 1 ? "bg-green-100 text-ok" : s.niveau === 2 ? "bg-sky-100 text-sky-700" : "bg-amber-100 text-attention"}`}>
                   {NIVEAU_LABEL[s.niveau] ?? `Niveau ${s.niveau}`}
                 </span>
-              )}
+              ) : null}
               {s.region_id && regionNom.get(s.region_id) && (
                 <span className="badge bg-slate-100 text-slate-600">{regionNom.get(s.region_id)}</span>
               )}

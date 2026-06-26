@@ -34,7 +34,7 @@ export function RechercheSoignants() {
     const supabase = createClient();
     Promise.all([
       supabase.from("patient").select("id,nom,operation,chirurgien,traitement,ville,date_operation"),
-      supabase.from("professionnel").select("nom,prenom,titre,role,telephone,email,specialite,cabinets,secretariat_nom,secretariat_email,secretariat_tel,protocoles"),
+      supabase.from("professionnel").select("nom,prenom,titre,role,niveau,telephone,email,specialite,cabinets,secretariat_nom,secretariat_email,secretariat_tel,protocoles").neq("niveau", 0),
       supabase.from("soignant_externe").select("id,type,nom,prenom,titre,telephone,email,specialite,zone_exercice,cabinets,secretariat_nom,secretariat_tel,protocoles"),
     ]).then(([{ data: pts }, { data: pros }, { data: exts }]) => {
       const rP: Resultat[] = (pts ?? []).map((p) => {
