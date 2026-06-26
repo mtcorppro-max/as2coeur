@@ -115,7 +115,8 @@ export default function OrganisationPage() {
     const c = coords.find((x) => x.id === proId);
     return !!c?.agence_id && agenceDansPerimetre(c.agence_id);
   };
-  const demandes = niveauMoi <= 1
+  // Seul le manager (niveau 1) valide les demandes.
+  const demandes = niveauMoi === 1
     ? events.filter((e) => e.statut === "en_attente" && dansPerimetre(e.professionnel_id))
     : [];
 

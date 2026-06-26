@@ -23,7 +23,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   // Demandes de planning en attente dans le périmètre (badge Organisation).
   const [nbDemandes, setNbDemandes] = useState(0);
   useEffect(() => {
-    if (!pro || pro.niveau > 1) return;
+    if (!pro || pro.niveau !== 1) return; // seul le manager valide
     const supabase = createClient();
     Promise.all([
       supabase.from("evenement_planning").select("professionnel:professionnel_id(agence_id)").eq("statut", "en_attente"),
@@ -33,7 +33,6 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       const maRegion = pro.region_id ?? (pro.agence_id ? regionAgence.get(pro.agence_id) : undefined);
       const n = (evts ?? []).filter((e) => {
         const agId = (e.professionnel as { agence_id?: string } | null)?.agence_id;
-        if (pro.niveau === 0) return true;
         return !!agId && regionAgence.get(agId) === maRegion;
       }).length;
       setNbDemandes(n);
@@ -108,7 +107,7 @@ function NavItem({ href, icon, label, badge }: { href: string; icon: string; lab
       className="relative flex flex-1 flex-col items-center gap-1 py-2 text-slate-400 hover:text-brand"
     >
       {!!badge && badge > 0 && (
-        <span className="absolute right-1/2 top-1 translate-x-3 rounded-full bg-critique px-1.5 text-[10px] font-bold leading-4 text-white">{badge}</span>
+        <span className="absolute right-1/2 top-0.5 flex h-[15px] min-w-[15px] translate-x-3 items-center justify-center rounded-full bg-brand px-1 text-[9px] font-semibold leading-none text-white ring-2 ring-white">{badge}</span>
       )}
       <IconeNav name={icon} className="h-5 w-5" />
       <span className="text-[10px] font-medium">{label}</span>
@@ -137,7 +136,7 @@ function Onglet({ href, icon, label, pathname, exact, badge }: { href: string; i
         {label}
       </span>
       {!!badge && badge > 0 && (
-        <span className="ml-1.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-critique px-1 text-[11px] font-bold text-white">{badge}</span>
+        <span className="absolute -right-0.5 -top-0.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-semibold leading-none text-white ring-2 ring-white">{badge}</span>
       )}
     </Link>
   );
