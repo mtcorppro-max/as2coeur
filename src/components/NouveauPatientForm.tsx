@@ -15,6 +15,7 @@ type Soignant = {
   titre: string | null;
   role: RolePro;
   niveau: number;
+  agence_id: string | null;
   telephone: string | null;
   specialite: string | null;
   protocoles: ProtocoleConsigne[] | null;
@@ -97,7 +98,7 @@ export function NouveauPatientForm() {
   useEffect(() => {
     createClient()
       .from("professionnel")
-      .select("id,nom,prenom,titre,role,niveau,telephone,specialite,protocoles")
+      .select("id,nom,prenom,titre,role,niveau,agence_id,telephone,specialite,protocoles")
       .order("nom")
       .then(({ data }) => setSoignants((data ?? []) as Soignant[]));
     createClient()
@@ -117,7 +118,10 @@ export function NouveauPatientForm() {
   // Par défaut, le patient est rattaché à l'agence du créateur.
   useEffect(() => { if (pro?.agence_id) setAgenceId((v) => v || pro.agence_id!); }, [pro?.agence_id]);
 
-  const coordinatrices = soignants.filter((s) => s.role === "coordinatrice");
+  // Coordinatrices d'alerte : uniquement celles de l'agence du patient.
+  const coordinatrices = soignants.filter(
+    (s) => s.role === "coordinatrice" && (!agenceId || s.agence_id === agenceId)
+  );
   const chirurgiens = soignants.filter((s) => s.role === "chirurgien");
   const infirmieres = soignants.filter((s) => s.role === "infirmiere_liberale");
   const externesMed = externes.filter((e) => e.type === "medecin");

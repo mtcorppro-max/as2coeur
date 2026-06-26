@@ -7,7 +7,7 @@ import { AdresseAutocomplete } from "@/components/AdresseAutocomplete";
 import { Select } from "@/components/Select";
 import type { Patient, RolePro, ProtocoleConsigne } from "@/lib/types";
 
-type Soignant = { id: string; nom: string; prenom: string | null; titre: string | null; role: RolePro; telephone: string | null; specialite: string | null; protocoles: ProtocoleConsigne[] | null };
+type Soignant = { id: string; nom: string; prenom: string | null; titre: string | null; role: RolePro; agence_id: string | null; telephone: string | null; specialite: string | null; protocoles: ProtocoleConsigne[] | null };
 // Soignant externe (sans compte) — cf. migrations 0040 / 0041.
 type Externe = { id: string; type: "medecin" | "infirmiere"; titre: string | null; prenom: string | null; nom: string; telephone: string | null; specialite: string | null; protocoles: ProtocoleConsigne[] | null };
 
@@ -80,7 +80,7 @@ export function InfosPatient({
     if (!edition || soignants.length) return;
     createClient()
       .from("professionnel")
-      .select("id,nom,prenom,titre,role,telephone,specialite,protocoles")
+      .select("id,nom,prenom,titre,role,agence_id,telephone,specialite,protocoles")
       .order("nom")
       .then(({ data }) => setSoignants((data ?? []) as Soignant[]));
     createClient()
@@ -101,7 +101,10 @@ export function InfosPatient({
     setForm((f) => ({ ...f, [k]: e.target.value }));
   const setVal = (k: Champ, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
-  const coordinatrices = soignants.filter((s) => s.role === "coordinatrice");
+  // Coordinatrices d'alerte : uniquement celles de l'agence du patient.
+  const coordinatrices = soignants.filter(
+    (s) => s.role === "coordinatrice" && (!agenceId || s.agence_id === agenceId)
+  );
   const chirurgiens = soignants.filter((s) => s.role === "chirurgien");
   const infirmieres = soignants.filter((s) => s.role === "infirmiere_liberale");
   const externesMed = externes.filter((e) => e.type === "medecin");
