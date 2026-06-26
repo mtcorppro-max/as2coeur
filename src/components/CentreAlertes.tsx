@@ -16,15 +16,13 @@ async function fetchAlertes(): Promise<AlerteEnrichie[]> {
   return (data ?? []) as unknown as AlerteEnrichie[];
 }
 
-export default function CentreAlertes() {
+// Centre d'alertes — affiché en tête du tableau de bord.
+export function CentreAlertes() {
   const pro = useProSession();
   const [reloadKey, setReloadKey] = useState(0);
   const alertes = useData<AlerteEnrichie[]>("pro:alertes", fetchAlertes, [reloadKey]);
   const peutTraiter = pro?.role === "coordinatrice";
 
-  // Après une action (acquitter/escalader/résoudre) : recharge la liste
-  // sans router.refresh() (qui repasserait par le serveur et risquerait la
-  // déconnexion par conflit de refresh token).
   const recharger = () => {
     invalidate("pro:alertes");
     invalidate("pro:dashboard");
@@ -32,9 +30,9 @@ export default function CentreAlertes() {
   };
 
   return (
-    <div className="grid gap-5">
+    <section id="centre-alertes" className="grid gap-4">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Centre d&apos;alertes</h1>
+        <h2 className="text-xl font-bold text-slate-800">Centre d&apos;alertes</h2>
         <p className="mt-1 text-sm text-slate-500">
           L&apos;escalade vers l&apos;hôpital est <strong>toujours une décision humaine</strong> : prévenez par téléphone, puis tracez-le ici.
         </p>
@@ -48,7 +46,7 @@ export default function CentreAlertes() {
 
       {alertes === null ? (
         <div className="grid gap-3 animate-pulse">
-          {[...Array(3)].map((_, i) => (
+          {[...Array(2)].map((_, i) => (
             <div key={i} className="rounded-2xl border border-rose-100 bg-white p-5">
               <div className="h-5 w-40 rounded bg-rose-100" />
               <div className="mt-3 h-4 w-56 rounded bg-rose-50" />
@@ -64,6 +62,6 @@ export default function CentreAlertes() {
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { useData, invalidate } from "@/lib/hooks/useData";
 import { AstreinteAlerte } from "@/components/AstreinteAlerte";
+import { CentreAlertes } from "@/components/CentreAlertes";
 import type { Patient } from "@/lib/types";
 
 type AlerteInfo = { active: number; acquittees: number };
@@ -148,14 +149,15 @@ export default function Dashboard() {
   return (
     <div className="grid gap-5">
       <AstreinteAlerte />
-      <div className="flex items-center justify-between">
+      <CentreAlertes />
+      <div className="flex items-center justify-between border-t border-rose-100 pt-5">
         <h1 className="text-2xl font-bold text-slate-800">Tableau de bord</h1>
         {!data ? (
           <div className="h-6 w-32 animate-pulse rounded-full bg-rose-100" />
         ) : totalActives > 0 ? (
-          <Link href="/pro/alertes" className="badge bg-critique text-white animate-pulse">
+          <a href="#centre-alertes" className="badge bg-critique text-white animate-pulse">
             {totalActives} alerte(s) active(s)
-          </Link>
+          </a>
         ) : (
           <span className="badge bg-green-100 text-ok">Aucune alerte active</span>
         )}
