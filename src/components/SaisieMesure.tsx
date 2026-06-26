@@ -17,7 +17,7 @@ const CHOIX: { key: Choix; label: string; icon: string }[] = [
   { key: "poids", label: "Poids", icon: "⚖️" },
 ];
 
-export function SaisieMesure({ patientId }: { patientId: string }) {
+export function SaisieMesure({ patientId, pro, onSaved }: { patientId: string; pro?: boolean; onSaved?: () => void }) {
   const router = useRouter();
   const [choix, setChoix] = useState<Choix | null>(null);
   const [v1, setV1] = useState("");
@@ -54,6 +54,13 @@ export function SaisieMesure({ patientId }: { patientId: string }) {
     }
     setEtat("ok");
     setMessage("Mesure enregistrée ✓");
+    // Côté pro : on rafraîchit la fiche et on réinitialise (pas de redirection patient).
+    if (pro) {
+      invalidate(`pro:patient-courbes:${patientId}`);
+      onSaved?.();
+      setTimeout(reset, 900);
+      return;
+    }
     // Invalide les caches client pour que la nouvelle mesure apparaisse,
     // sans router.refresh() (qui repasse par le serveur et casse la session).
     invalidate(`patient:accueil:${patientId}`);

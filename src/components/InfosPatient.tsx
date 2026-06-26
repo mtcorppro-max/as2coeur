@@ -95,6 +95,12 @@ export function InfosPatient({
 
   const coordinatrices = soignants.filter((s) => s.role === "coordinatrice");
   const chirurgiens = soignants.filter((s) => s.role === "chirurgien");
+  const infirmieres = soignants.filter((s) => s.role === "infirmiere_liberale");
+
+  const choisirInfirmiere = (v: string) => {
+    const inf = infirmieres.find((s) => nomComplet(s) === v);
+    setForm((f) => ({ ...f, infirmiere_nom: v, infirmiere_tel: inf?.telephone ?? f.infirmiere_tel }));
+  };
 
   // Choix d'une coordinatrice pour une alerte : enregistre nom + téléphone du compte.
   const choisirAlerte = (champNom: Champ, champTel: Champ) => (v: string) => {
@@ -133,7 +139,7 @@ export function InfosPatient({
     }
 
     // Rattachement déduit du chirurgien + des coordinatrices d'alerte choisis.
-    const noms = [form.chirurgien, form.alerte_1_nom, form.alerte_2_nom].filter(Boolean);
+    const noms = [form.chirurgien, form.alerte_1_nom, form.alerte_2_nom, form.infirmiere_nom].filter(Boolean);
     const ids = [...new Set(soignants.filter((s) => noms.includes(nomComplet(s))).map((s) => s.id))];
     // On resynchronise : suppression puis réinsertion (droits coordinatrice/niveau 1).
     await supabase.from("patient_soignant").delete().eq("patient_id", patient.id);
@@ -211,10 +217,7 @@ export function InfosPatient({
             <Champ label="Pharmacie" value={form.pharmacie} onChange={set("pharmacie")} />
             <Champ label="Tél. pharmacie" value={form.pharmacie_tel} onChange={set("pharmacie_tel")} />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Champ label="Infirmière libérale" value={form.infirmiere_nom} onChange={set("infirmiere_nom")} />
-            <Champ label="Tél. infirmière" value={form.infirmiere_tel} onChange={set("infirmiere_tel")} />
-          </div>
+          <SelectSoignant label="Infirmière libérale (compte rattaché)" value={form.infirmiere_nom} soignants={infirmieres} onChange={choisirInfirmiere} />
           <SelectSoignant label="Alerte 1 — infirmière coordinatrice" value={form.alerte_1_nom} soignants={coordinatrices} onChange={choisirAlerte("alerte_1_nom", "tel_alerte_1")} />
           <SelectSoignant label="Alerte 2 — infirmière coordinatrice" value={form.alerte_2_nom} soignants={coordinatrices} onChange={choisirAlerte("alerte_2_nom", "tel_alerte_2")} />
         </div>

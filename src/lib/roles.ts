@@ -5,6 +5,7 @@ export const LIBELLE_ROLE: Record<RolePro, string> = {
   manager: "Manager",
   chirurgien: "Chirurgien",
   delegue: "Délégué médical",
+  infirmiere_liberale: "Infirmière libérale",
 };
 
 // Un manager a les mêmes droits qu'une coordinatrice (+ des fonctions en plus).

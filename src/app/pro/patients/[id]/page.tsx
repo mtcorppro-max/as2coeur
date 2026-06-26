@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -12,6 +13,7 @@ import { InfosPatient } from "@/components/InfosPatient";
 import { MarquerVisite } from "@/components/MarquerVisite";
 import { AlertesPatient } from "@/components/AlertesPatient";
 import { SuiviPatient } from "@/components/SuiviPatient";
+import { SaisieMesure } from "@/components/SaisieMesure";
 import type { Mesure, Seuil, Photo, Message, Patient } from "@/lib/types";
 
 // ── Fetchers (navigateur → Supabase, sans round-trip serveur) ───────
@@ -81,13 +83,15 @@ export default function FichePatient() {
   const id = String(params.id);
   const pro = useProSession();
 
+  const [reloadMesures, setReloadMesures] = useState(0);
   const patientData = useData(`pro:patient:${id}`, () => fetchPatient(id), [id]);
-  const courbes = useData(`pro:patient-courbes:${id}`, () => fetchCourbes(id), [id]);
+  const courbes = useData(`pro:patient-courbes:${id}`, () => fetchCourbes(id), [id, reloadMesures]);
   const messages = useData<Message[]>(`pro:patient-chat:${id}`, () => fetchMessages(id), [id]);
   const photos = useData(`pro:patient-photos:${id}`, () => fetchPhotos(id), [id]);
 
   const modifiableSeuils = pro?.role === "coordinatrice";
   const modifiableInfos = true;
+  const peutSaisirMesure = pro?.role === "coordinatrice" || pro?.role === "infirmiere_liberale";
 
   // Dernières valeurs par type
   const dernieres = new Map<string, number>();
@@ -178,6 +182,14 @@ export default function FichePatient() {
           })}
         </div>
       </section>
+
+      {/* ── Saisie de constantes (infirmière libérale / coordinatrice) ── */}
+      {peutSaisirMesure && (
+        <section className="grid gap-3">
+          <h2 className="text-sm font-semibold text-slate-600">Saisir une constante</h2>
+          <SaisieMesure patientId={patient.id} pro onSaved={() => setReloadMesures((x) => x + 1)} />
+        </section>
+      )}
 
       {/* ── Courbes + seuils ── */}
       {!courbes ? (

@@ -251,11 +251,12 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
           <label className="label">Rôle *</label>
           <Select
             value={form.role}
-            onChange={(v) => setForm((f) => ({ ...f, role: v, niveau: v === "manager" ? "1" : f.niveau }))}
+            onChange={(v) => setForm((f) => ({ ...f, role: v, niveau: v === "manager" ? "1" : v === "infirmiere_liberale" ? "3" : f.niveau }))}
             options={[
               { value: "chirurgien", label: "Chirurgien / Médecin" },
               { value: "coordinatrice", label: "Infirmière coordinatrice" },
               ...(niveauCreateur === 0 ? [{ value: "manager", label: "Manager (région)" }] : []),
+              { value: "infirmiere_liberale", label: "Infirmière libérale" },
               { value: "delegue", label: "Délégué médical" },
             ]}
           />
@@ -271,7 +272,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
             />
           </div>
         )}
-        {form.role !== "manager" && (
+        {form.role !== "manager" && form.role !== "infirmiere_liberale" && (
           <div>
             <label className="label">Niveau d&apos;accès *</label>
             <Select

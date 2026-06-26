@@ -79,6 +79,13 @@ export function NouveauPatientForm() {
 
   const coordinatrices = soignants.filter((s) => s.role === "coordinatrice");
   const chirurgiens = soignants.filter((s) => s.role === "chirurgien");
+  const infirmieres = soignants.filter((s) => s.role === "infirmiere_liberale");
+
+  // Choix de l'infirmière libérale : enregistre son nom + tél (et rattachement auto).
+  const choisirInfirmiere = (v: string) => {
+    const inf = infirmieres.find((s) => nomComplet(s) === v);
+    setForm((f) => ({ ...f, infirmiere_nom: v, infirmiere_tel: inf?.telephone ?? f.infirmiere_tel }));
+  };
 
   // Protocoles du chirurgien sélectionné (pour appliquer une intervention).
   const protocolesChir = chirurgiens.find((s) => nomComplet(s) === form.chirurgien)?.protocoles ?? [];
@@ -93,7 +100,7 @@ export function NouveauPatientForm() {
 
   // Le rattachement est déduit du chirurgien + des coordinatrices d'alerte choisis.
   const rattachementsAuto = () => {
-    const noms = [form.chirurgien, form.alerte_1_nom, form.alerte_2_nom].filter(Boolean);
+    const noms = [form.chirurgien, form.alerte_1_nom, form.alerte_2_nom, form.infirmiere_nom].filter(Boolean);
     const ids = soignants.filter((s) => noms.includes(nomComplet(s))).map((s) => s.id);
     return [...new Set(ids)];
   };
@@ -287,15 +294,20 @@ export function NouveauPatientForm() {
             <input className="input" value={form.pharmacie_tel} onChange={set("pharmacie_tel")} placeholder="0…" inputMode="tel" />
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="label">Infirmière libérale</label>
-            <input className="input" value={form.infirmiere_nom} onChange={set("infirmiere_nom")} placeholder="Nom" />
-          </div>
-          <div>
-            <label className="label">Tél. infirmière libérale</label>
-            <input className="input" value={form.infirmiere_tel} onChange={set("infirmiere_tel")} placeholder="06…" inputMode="tel" />
-          </div>
+        <div>
+          <label className="label">Infirmière libérale (compte rattaché)</label>
+          <Select
+            value={form.infirmiere_nom}
+            onChange={choisirInfirmiere}
+            placeholder={infirmieres.length ? "— Choisir une infirmière libérale —" : "Aucun compte infirmière libérale"}
+            options={[
+              ...infirmieres.map((s) => ({ value: nomComplet(s), label: nomComplet(s) })),
+              ...(form.infirmiere_nom && !infirmieres.some((s) => nomComplet(s) === form.infirmiere_nom)
+                ? [{ value: form.infirmiere_nom, label: form.infirmiere_nom }]
+                : []),
+            ]}
+          />
+          <p className="mt-1 text-xs text-slate-400">Elle pourra voir ce patient et saisir ses constantes.</p>
         </div>
         <div>
           <label className="label">Alerte 1 — infirmière coordinatrice</label>
