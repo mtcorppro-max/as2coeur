@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { genererPdfConsignes } from "@/lib/pdfConsignes";
+import { Select } from "@/components/Select";
 
 type Prestataire = { id: string; nom: string };
 
@@ -205,28 +206,36 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
       <div className="grid gap-4">
         <div>
           <label className="label">Rôle *</label>
-          <select className="select" value={form.role} onChange={set("role")}>
-            <option value="chirurgien">Chirurgien / Médecin</option>
-            <option value="coordinatrice">Infirmière coordinatrice</option>
-            <option value="delegue">Délégué médical</option>
-          </select>
+          <Select
+            value={form.role}
+            onChange={(v) => setForm((f) => ({ ...f, role: v }))}
+            options={[
+              { value: "chirurgien", label: "Chirurgien / Médecin" },
+              { value: "coordinatrice", label: "Infirmière coordinatrice" },
+              { value: "delegue", label: "Délégué médical" },
+            ]}
+          />
         </div>
         <div>
           <label className="label">Niveau d&apos;accès *</label>
-          <select className="select" value={form.niveau} onChange={set("niveau")}>
-            <option value="1">Niveau 1 — accès à tous les patients</option>
-            <option value="2">Niveau 2 — uniquement les patients rattachés</option>
-          </select>
+          <Select
+            value={form.niveau}
+            onChange={(v) => setForm((f) => ({ ...f, niveau: v }))}
+            options={[
+              { value: "1", label: "Niveau 1 — accès à tous les patients" },
+              { value: "2", label: "Niveau 2 — uniquement les patients rattachés" },
+            ]}
+          />
         </div>
         {estChirurgien && (
           <div>
             <label className="label">Spécialité</label>
-            <select className="select" value={form.specialite} onChange={set("specialite")}>
-              <option value="">— Choisir une spécialité —</option>
-              {SPECIALITES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
+            <Select
+              value={form.specialite}
+              onChange={(v) => setForm((f) => ({ ...f, specialite: v }))}
+              placeholder="— Choisir une spécialité —"
+              options={SPECIALITES.map((s) => ({ value: s, label: s }))}
+            />
           </div>
         )}
         {estChirurgien && (
@@ -262,12 +271,12 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
         {prestataires && (
           <div>
             <label className="label">Prestataire *</label>
-            <select className="select" value={form.prestataire_id} onChange={set("prestataire_id")} required>
-              <option value="">— Choisir un prestataire —</option>
-              {prestataires.map((p) => (
-                <option key={p.id} value={p.id}>{p.nom}</option>
-              ))}
-            </select>
+            <Select
+              value={form.prestataire_id}
+              onChange={(v) => setForm((f) => ({ ...f, prestataire_id: v }))}
+              placeholder="— Choisir un prestataire —"
+              options={prestataires.map((p) => ({ value: p.id, label: p.nom }))}
+            />
           </div>
         )}
         {!estChirurgien && (

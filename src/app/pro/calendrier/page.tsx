@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
+import { Select } from "@/components/Select";
 
 type RolePro = "coordinatrice" | "chirurgien" | "delegue";
 type ProLite = { id: string; nom: string; prenom: string | null; titre: string | null; role: RolePro };
@@ -332,9 +333,11 @@ function EditeurEvenement({
 
         <div>
           <label className="label">Type</label>
-          <select className="select" value={f.type} onChange={(e) => setF({ ...f, type: e.target.value as TypeEvt })}>
-            {(Object.keys(TYPES) as TypeEvt[]).map((t) => <option key={t} value={t}>{TYPES[t].label}</option>)}
-          </select>
+          <Select
+            value={f.type}
+            onChange={(v) => setF({ ...f, type: v as TypeEvt })}
+            options={(Object.keys(TYPES) as TypeEvt[]).map((t) => ({ value: t, label: TYPES[t].label }))}
+          />
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -364,10 +367,12 @@ function EditeurEvenement({
         {estAbsence && (
           <div>
             <label className="label">Remplacé(e) par (reroutage des alertes / suivis)</label>
-            <select className="select" value={f.remplacant_id ?? ""} onChange={(e) => setF({ ...f, remplacant_id: e.target.value || null })}>
-              <option value="">— Aucun —</option>
-              {remplacants.map((c) => <option key={c.id} value={c.id}>{nomComplet(c)}</option>)}
-            </select>
+            <Select
+              value={f.remplacant_id ?? ""}
+              onChange={(v) => setF({ ...f, remplacant_id: v || null })}
+              placeholder="— Aucun —"
+              options={[{ value: "", label: "— Aucun —" }, ...remplacants.map((c) => ({ value: c.id, label: nomComplet(c) }))]}
+            />
           </div>
         )}
 

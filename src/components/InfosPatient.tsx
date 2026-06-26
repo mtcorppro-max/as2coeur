@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { LIBELLE_ROLE } from "@/lib/roles";
 import { AdresseAutocomplete } from "@/components/AdresseAutocomplete";
+import { Select } from "@/components/Select";
 import type { Patient, RolePro, ProtocoleConsigne } from "@/lib/types";
 
 type Soignant = { id: string; nom: string; prenom: string | null; titre: string | null; role: RolePro; telephone: string | null; protocoles: ProtocoleConsigne[] | null };
@@ -94,8 +95,8 @@ export function InfosPatient({
 
   // Protocoles du chirurgien choisi + application d'une intervention.
   const protocolesChir = chirurgiens.find((s) => nomComplet(s) === form.chirurgien)?.protocoles ?? [];
-  const appliquerProtocole = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const p = protocolesChir[Number(e.target.value)];
+  const appliquerProtocole = (v: string) => {
+    const p = protocolesChir[Number(v)];
     if (!p) return;
     setForm((f) => ({ ...f, operation: p.intervention || f.operation, duree_prise_en_charge: p.duree || "" }));
     setJoursSuivi(p.jours ?? []);
@@ -176,14 +177,15 @@ export function InfosPatient({
           {protocolesChir.length > 0 && (
             <div>
               <label className="label">Protocole / intervention appliqué</label>
-              <select className="select" onChange={appliquerProtocole} defaultValue="">
-                <option value="">— Choisir un protocole du chirurgien —</option>
-                {protocolesChir.map((p, i) => (
-                  <option key={i} value={i}>
-                    {p.intervention || `Protocole ${i + 1}`}{p.duree ? ` — ${p.duree} j` : ""}
-                  </option>
-                ))}
-              </select>
+              <Select
+                value=""
+                onChange={appliquerProtocole}
+                placeholder="— Choisir un protocole du chirurgien —"
+                options={protocolesChir.map((p, i) => ({
+                  value: String(i),
+                  label: `${p.intervention || `Protocole ${i + 1}`}${p.duree ? ` — ${p.duree} j` : ""}`,
+                }))}
+              />
             </div>
           )}
           {joursSuivi.length > 0 && (
@@ -375,15 +377,15 @@ function SelectSoignant({
   return (
     <div>
       <label className="label">{label}</label>
-      <select className="select" value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">— Choisir un compte —</option>
-        {soignants.map((s) => (
-          <option key={s.id} value={nomComplet(s)}>
-            {nomComplet(s)} ({LIBELLE_ROLE[s.role]})
-          </option>
-        ))}
-        {horsListe && <option value={value}>{value}</option>}
-      </select>
+      <Select
+        value={value}
+        onChange={onChange}
+        placeholder="— Choisir un compte —"
+        options={[
+          ...soignants.map((s) => ({ value: nomComplet(s), label: `${nomComplet(s)} (${LIBELLE_ROLE[s.role]})` })),
+          ...(horsListe ? [{ value, label: value }] : []),
+        ]}
+      />
     </div>
   );
 }

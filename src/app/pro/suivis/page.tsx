@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
+import { Select } from "@/components/Select";
 
 type PatientLite = {
   id: string;
@@ -105,12 +106,14 @@ export default function SuivisPage() {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-slate-800">Suivis à réaliser</h1>
         {chirurgiens.length > 0 && (
-          <select className="select w-auto" value={filtreChir} onChange={(e) => setFiltreChir(e.target.value)}>
-            <option value="">Tous les médecins</option>
-            {chirurgiens.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+          <div className="w-64">
+            <Select
+              value={filtreChir}
+              onChange={setFiltreChir}
+              placeholder="Tous les médecins"
+              options={[{ value: "", label: "Tous les médecins" }, ...chirurgiens.map((c) => ({ value: c, label: c }))]}
+            />
+          </div>
         )}
       </div>
 

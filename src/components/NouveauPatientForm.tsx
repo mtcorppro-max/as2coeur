@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { AdresseAutocomplete } from "@/components/AdresseAutocomplete";
+import { Select } from "@/components/Select";
 import type { RolePro, ProtocoleConsigne } from "@/lib/types";
 
 type Soignant = {
@@ -69,8 +70,8 @@ export function NouveauPatientForm() {
   const protocolesChir = chirurgiens.find((s) => nomComplet(s) === form.chirurgien)?.protocoles ?? [];
 
   // Applique un protocole : remplit opération, durée et jours de suivi.
-  const appliquerProtocole = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const p = protocolesChir[Number(e.target.value)];
+  const appliquerProtocole = (v: string) => {
+    const p = protocolesChir[Number(v)];
     if (!p) return;
     setForm((f) => ({ ...f, operation: p.intervention || f.operation, duree_prise_en_charge: p.duree || "" }));
     setJoursSuivi(p.jours ?? []);
@@ -86,9 +87,9 @@ export function NouveauPatientForm() {
   // Choix d'une coordinatrice pour une alerte : on enregistre son nom + son
   // téléphone (déjà saisi à la création de son compte).
   const choisirAlerte = (champNom: "alerte_1_nom" | "alerte_2_nom", champTel: "tel_alerte_1" | "tel_alerte_2") =>
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const c = coordinatrices.find((s) => nomComplet(s) === e.target.value);
-      setForm((f) => ({ ...f, [champNom]: e.target.value, [champTel]: c?.telephone ?? "" }));
+    (v: string) => {
+      const c = coordinatrices.find((s) => nomComplet(s) === v);
+      setForm((f) => ({ ...f, [champNom]: v, [champTel]: c?.telephone ?? "" }));
     };
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -217,27 +218,30 @@ export function NouveauPatientForm() {
         </div>
         <div>
           <label className="label">Chirurgien / Médecin</label>
-          <select className="select" value={form.chirurgien} onChange={(e) => setVal("chirurgien", e.target.value)}>
-            <option value="">— Choisir un chirurgien / médecin —</option>
-            {chirurgiens.map((s) => (
-              <option key={s.id} value={nomComplet(s)}>{nomComplet(s)}</option>
-            ))}
-            {form.chirurgien && !chirurgiens.some((s) => nomComplet(s) === form.chirurgien) && (
-              <option value={form.chirurgien}>{form.chirurgien}</option>
-            )}
-          </select>
+          <Select
+            value={form.chirurgien}
+            onChange={(v) => setVal("chirurgien", v)}
+            placeholder="— Choisir un chirurgien / médecin —"
+            options={[
+              ...chirurgiens.map((s) => ({ value: nomComplet(s), label: nomComplet(s) })),
+              ...(form.chirurgien && !chirurgiens.some((s) => nomComplet(s) === form.chirurgien)
+                ? [{ value: form.chirurgien, label: form.chirurgien }]
+                : []),
+            ]}
+          />
         </div>
         {protocolesChir.length > 0 && (
           <div>
             <label className="label">Protocole / intervention appliqué</label>
-            <select className="select" onChange={appliquerProtocole} defaultValue="">
-              <option value="">— Choisir un protocole du chirurgien —</option>
-              {protocolesChir.map((p, i) => (
-                <option key={i} value={i}>
-                  {p.intervention || `Protocole ${i + 1}`}{p.duree ? ` — ${p.duree} j` : ""}
-                </option>
-              ))}
-            </select>
+            <Select
+              value=""
+              onChange={appliquerProtocole}
+              placeholder="— Choisir un protocole du chirurgien —"
+              options={protocolesChir.map((p, i) => ({
+                value: String(i),
+                label: `${p.intervention || `Protocole ${i + 1}`}${p.duree ? ` — ${p.duree} j` : ""}`,
+              }))}
+            />
             <p className="mt-1 text-xs text-slate-400">
               Remplit automatiquement l&apos;opération, la durée et les jours de suivi.
             </p>
@@ -270,27 +274,31 @@ export function NouveauPatientForm() {
         </div>
         <div>
           <label className="label">Alerte 1 — infirmière coordinatrice</label>
-          <select className="select" value={form.alerte_1_nom} onChange={choisirAlerte("alerte_1_nom", "tel_alerte_1")}>
-            <option value="">— Choisir une infirmière coordinatrice —</option>
-            {coordinatrices.map((s) => (
-              <option key={s.id} value={nomComplet(s)}>{nomComplet(s)}</option>
-            ))}
-            {form.alerte_1_nom && !coordinatrices.some((s) => nomComplet(s) === form.alerte_1_nom) && (
-              <option value={form.alerte_1_nom}>{form.alerte_1_nom}</option>
-            )}
-          </select>
+          <Select
+            value={form.alerte_1_nom}
+            onChange={choisirAlerte("alerte_1_nom", "tel_alerte_1")}
+            placeholder="— Choisir une infirmière coordinatrice —"
+            options={[
+              ...coordinatrices.map((s) => ({ value: nomComplet(s), label: nomComplet(s) })),
+              ...(form.alerte_1_nom && !coordinatrices.some((s) => nomComplet(s) === form.alerte_1_nom)
+                ? [{ value: form.alerte_1_nom, label: form.alerte_1_nom }]
+                : []),
+            ]}
+          />
         </div>
         <div>
           <label className="label">Alerte 2 (backup) — infirmière coordinatrice</label>
-          <select className="select" value={form.alerte_2_nom} onChange={choisirAlerte("alerte_2_nom", "tel_alerte_2")}>
-            <option value="">— Choisir une infirmière coordinatrice —</option>
-            {coordinatrices.map((s) => (
-              <option key={s.id} value={nomComplet(s)}>{nomComplet(s)}</option>
-            ))}
-            {form.alerte_2_nom && !coordinatrices.some((s) => nomComplet(s) === form.alerte_2_nom) && (
-              <option value={form.alerte_2_nom}>{form.alerte_2_nom}</option>
-            )}
-          </select>
+          <Select
+            value={form.alerte_2_nom}
+            onChange={choisirAlerte("alerte_2_nom", "tel_alerte_2")}
+            placeholder="— Choisir une infirmière coordinatrice —"
+            options={[
+              ...coordinatrices.map((s) => ({ value: nomComplet(s), label: nomComplet(s) })),
+              ...(form.alerte_2_nom && !coordinatrices.some((s) => nomComplet(s) === form.alerte_2_nom)
+                ? [{ value: form.alerte_2_nom, label: form.alerte_2_nom }]
+                : []),
+            ]}
+          />
         </div>
       </div>
 

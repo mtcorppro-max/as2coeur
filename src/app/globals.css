@@ -40,6 +40,16 @@ body {
     background-position: right 0.7rem center;
     background-size: 1.05rem 1.05rem;
   }
+  /* Liste d'options : fond blanc + texte foncé (Chrome/Firefox) au lieu du
+     rendu système sombre. Safari garde le rendu natif. */
+  .select option {
+    background-color: #ffffff;
+    color: #1e293b;
+  }
+  .select option:checked {
+    background-color: #fce7f3;
+    color: #be185d;
+  }
   .label {
     @apply mb-1.5 block text-sm font-medium text-slate-600;
   }
