@@ -62,7 +62,7 @@ export default function OrganisationPage() {
   const [editing, setEditing] = useState<Evt | null>(null);
   const [agenceNom, setAgenceNom] = useState<Map<string, string>>(new Map());
   const [agenceRegion, setAgenceRegion] = useState<Map<string, string>>(new Map());
-  const [moi, setMoi] = useState<{ niveau: number; agence_id: string | null } | null>(null);
+  const [moi, setMoi] = useState<{ niveau: number; agence_id: string | null; region_id: string | null } | null>(null);
   const [filtreAgence, setFiltreAgence] = useState("");
 
   const interdit = pro && !estCoordOuManager(pro.role) && pro.niveau !== 0;
@@ -76,13 +76,13 @@ export default function OrganisationPage() {
       supabase.from("evenement_planning").select("id,professionnel_id,type,date_debut,date_fin,heure_debut,heure_fin,remplacant_id,note")
         .lte("date_debut", fin).gte("date_fin", start),
       supabase.from("agence").select("id,nom,region_id"),
-      user ? supabase.from("professionnel").select("niveau,agence_id").eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
+      user ? supabase.from("professionnel").select("niveau,agence_id,region_id").eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     ]);
     setCoords((pros ?? []) as ProLite[]);
     setEvents((evts ?? []) as Evt[]);
     setAgenceNom(new Map((ags ?? []).map((a) => [a.id as string, a.nom as string])));
     setAgenceRegion(new Map((ags ?? []).map((a) => [a.id as string, a.region_id as string])));
-    setMoi((me ?? null) as { niveau: number; agence_id: string | null } | null);
+    setMoi((me ?? null) as { niveau: number; agence_id: string | null; region_id: string | null } | null);
   }, [start, fin]);
 
   useEffect(() => { charger(); }, [charger]);
@@ -90,7 +90,8 @@ export default function OrganisationPage() {
   // Cloisonnement par agence : chaque agence voit son organisation.
   // Niveau 0 = toutes ; niveau 1 = les agences de sa région ; niveau 2 = son agence.
   const niveauMoi = moi?.niveau ?? pro?.niveau ?? 3;
-  const maRegion = moi?.agence_id ? agenceRegion.get(moi.agence_id) : undefined;
+  // Région du compte : sa région directe (manager) sinon celle de son agence.
+  const maRegion = moi?.region_id ?? (moi?.agence_id ? agenceRegion.get(moi.agence_id) : undefined);
   // Une agence est-elle dans le périmètre du compte connecté ?
   const agenceDansPerimetre = (agId: string) => {
     if (niveauMoi === 0) return true;

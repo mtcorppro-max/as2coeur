@@ -62,8 +62,10 @@ export default function EquipePage() {
   // Niveau réel du compte connecté (lu en base, pas le cache de session).
   const moi = soignants.find((s) => s.id === pro?.id);
   const niveauMoi = moi?.niveau ?? pro?.niveau ?? 3;
-  const maRegion = moi?.agence_id ? agenceRegion.get(moi.agence_id) : undefined;
-  const regionDe = (s: Soignant) => (s.agence_id ? agenceRegion.get(s.agence_id) : undefined);
+  // Région d'un compte : sa région directe (managers) sinon celle de son agence.
+  const regionDe = (s: { region_id: string | null; agence_id: string | null }) =>
+    s.region_id ?? (s.agence_id ? agenceRegion.get(s.agence_id) : undefined);
+  const maRegion = moi ? regionDe(moi) : undefined;
 
   // Cloisonnement : qui le compte connecté a-t-il le droit de voir ?
   const visible = (s: Soignant) => {
