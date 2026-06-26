@@ -16,11 +16,29 @@ type Soignant = {
   role: RolePro;
   niveau: number;
   telephone: string | null;
+  specialite: string | null;
   protocoles: ProtocoleConsigne[] | null;
 };
 
 // Nom complet affiché et stocké : « [Titre] Prénom Nom ».
 const nomComplet = (s: Soignant) => [s.titre, s.prenom, s.nom].filter(Boolean).join(" ");
+
+// Traitements à suivre proposés (Post op en tête).
+const TRAITEMENTS = [
+  "Post op",
+  "Antalgie générale",
+  "Anti-douleur ALR Aiguë",
+  "Anti-douleur ALR Chronique",
+  "Anti-douleur PCA",
+  "Antibiothérapie",
+  "Hydratation",
+  "Immunothérapie IV",
+  "Immunothérapie SC",
+  "NEAD",
+  "NPAD",
+  "Pansements",
+  "Autre traitement",
+];
 
 const VIDE = {
   prenom: "",
@@ -33,8 +51,11 @@ const VIDE = {
   adresse: "",
   operation: "",
   date_operation: "",
+  date_sortie: "",
   duree_prise_en_charge: "",
   chirurgien: "",
+  traitement: "",
+  traitement_autre: "",
   pharmacie: "",
   pharmacie_tel: "",
   infirmiere_nom: "",
@@ -63,7 +84,7 @@ export function NouveauPatientForm() {
   useEffect(() => {
     createClient()
       .from("professionnel")
-      .select("id,nom,prenom,titre,role,niveau,telephone,protocoles")
+      .select("id,nom,prenom,titre,role,niveau,telephone,specialite,protocoles")
       .order("nom")
       .then(({ data }) => setSoignants((data ?? []) as Soignant[]));
     Promise.all([
@@ -88,8 +109,10 @@ export function NouveauPatientForm() {
     setForm((f) => ({ ...f, infirmiere_nom: v, infirmiere_tel: inf?.telephone ?? f.infirmiere_tel }));
   };
 
-  // Protocoles du chirurgien sélectionné (pour appliquer une intervention).
-  const protocolesChir = chirurgiens.find((s) => nomComplet(s) === form.chirurgien)?.protocoles ?? [];
+  // Compte chirurgien/médecin sélectionné + classification (chirurgien vs médecin).
+  const selChirurgien = chirurgiens.find((s) => nomComplet(s) === form.chirurgien);
+  const estChirurgical = (selChirurgien?.specialite ?? "").toLowerCase().includes("chirurg");
+  const protocolesChir = selChirurgien?.protocoles ?? [];
 
   // Applique un protocole : remplit opération, durée et jours de suivi.
   const appliquerProtocole = (v: string) => {
@@ -116,18 +139,17 @@ export function NouveauPatientForm() {
     };
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
-  const setVal = (k: keyof typeof form, v: string) =>
-    setForm((f) => ({ ...f, [k]: v }));
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErreur(null);
     setBusy(true);
     try {
+      const traitement = form.traitement === "Autre traitement" ? form.traitement_autre.trim() : form.traitement;
       const res = await fetch("/api/patients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, jours_suivi: joursSuivi, seuils: seuilsProto, agence_id: agenceId || null, rattachements: rattachementsAuto() }),
+        body: JSON.stringify({ ...form, traitement, jours_suivi: joursSuivi, seuils: seuilsProto, agence_id: agenceId || null, rattachements: rattachementsAuto() }),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.message ?? "Erreur.");
@@ -231,31 +253,12 @@ export function NouveauPatientForm() {
             />
           </div>
         )}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="label">Opération subie</label>
-            <input className="input" value={form.operation} onChange={set("operation")} placeholder="ex. appendicectomie" />
-          </div>
-          <div>
-            <label className="label">Date de l&apos;opération</label>
-            <input type="date" className="input" value={form.date_operation} onChange={set("date_operation")} />
-          </div>
-        </div>
-        <div>
-          <label className="label">Nombre total de jours de prise en charge</label>
-          <input
-            className="input"
-            value={form.duree_prise_en_charge}
-            onChange={set("duree_prise_en_charge")}
-            placeholder="ex. 30"
-            inputMode="numeric"
-          />
-        </div>
+        {/* Rattachement au chirurgien / médecin */}
         <div>
           <label className="label">Chirurgien / Médecin</label>
           <Select
             value={form.chirurgien}
-            onChange={(v) => setVal("chirurgien", v)}
+            onChange={(v) => setForm((f) => ({ ...f, chirurgien: v, traitement: "", traitement_autre: "" }))}
             placeholder="— Choisir un chirurgien / médecin —"
             options={[
               ...chirurgiens.map((s) => ({ value: nomComplet(s), label: nomComplet(s) })),
@@ -265,9 +268,30 @@ export function NouveauPatientForm() {
             ]}
           />
         </div>
-        {protocolesChir.length > 0 && (
+
+        {/* Traitement à suivre (dès qu'un chirurgien/médecin est choisi) */}
+        {form.chirurgien && (
           <div>
-            <label className="label">Protocole / intervention appliqué</label>
+            <label className="label">Traitement à suivre</label>
+            <Select
+              value={form.traitement}
+              onChange={(v) => setForm((f) => ({ ...f, traitement: v }))}
+              placeholder="— Choisir un traitement —"
+              options={TRAITEMENTS.map((t) => ({ value: t, label: t }))}
+            />
+          </div>
+        )}
+        {form.traitement === "Autre traitement" && (
+          <div>
+            <label className="label">Préciser le traitement</label>
+            <input className="input" value={form.traitement_autre} onChange={set("traitement_autre")} placeholder="Traitement à suivre" />
+          </div>
+        )}
+
+        {/* Chirurgien + Post op → protocole à suivre */}
+        {estChirurgical && form.traitement === "Post op" && protocolesChir.length > 0 && (
+          <div>
+            <label className="label">Protocole à suivre</label>
             <Select
               value=""
               onChange={appliquerProtocole}
@@ -278,8 +302,22 @@ export function NouveauPatientForm() {
               }))}
             />
             <p className="mt-1 text-xs text-slate-400">
-              Remplit automatiquement l&apos;opération, la durée et les jours de suivi.
+              Remplit automatiquement l&apos;opération, la durée, les jours de suivi et les seuils.
             </p>
+          </div>
+        )}
+
+        {/* Chirurgien → jour de la chirurgie + jour de sortie */}
+        {estChirurgical && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">Jour de la chirurgie</label>
+              <input type="date" className="input" value={form.date_operation} onChange={set("date_operation")} />
+            </div>
+            <div>
+              <label className="label">Jour de sortie</label>
+              <input type="date" className="input" value={form.date_sortie} onChange={set("date_sortie")} />
+            </div>
           </div>
         )}
         {joursSuivi.length > 0 && (

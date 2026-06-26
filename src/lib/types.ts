@@ -112,6 +112,9 @@ export interface Patient {
   jours_suivi: number[] | null;
   // Agence de rattachement (cf. migration 0029)
   agence_id: string | null;
+  // Traitement à suivre + jour de sortie (cf. migration 0039)
+  traitement: string | null;
+  date_sortie: string | null;
   created_at: string;
 }
 
