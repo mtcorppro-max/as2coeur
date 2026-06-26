@@ -13,7 +13,8 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const estCoord = pro?.role === "coordinatrice";
   const estChir = pro?.role === "chirurgien";
-  const estNiveau1 = pro?.niveau === 1;
+  // Gérer/créer des comptes & l'équipe : niveau 0, 1 ou 2 (hors chirurgien)
+  const peutGerer = !!pro && pro.niveau <= 2 && pro.role !== "chirurgien";
 
   // Remonte en haut à chaque changement de page (évite la restauration de
   // scroll qui laissait la fiche patient en bas après un clic depuis le tableau).
@@ -30,8 +31,8 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               <Onglet href="/pro/alertes" label="Alertes" />
               {estCoord && <Onglet href="/pro/suivis" label="Suivis" />}
               {estCoord && <Onglet href="/pro/calendrier" label="Organisation" />}
-              {estNiveau1 && !estChir && <Onglet href="/pro/equipe" label="Équipe soignante" />}
-              {(estCoord || estChir || estNiveau1) && (
+              {peutGerer && <Onglet href="/pro/equipe" label="Équipe soignante" />}
+              {(estCoord || estChir || peutGerer) && (
                 <Link
                   href="/pro/nouveau"
                   prefetch={true}
@@ -64,8 +65,8 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         <NavItem href="/pro/alertes" icon="◎" label="Alertes" />
         {estCoord && <NavItem href="/pro/suivis" icon="🗓" label="Suivis" />}
         {estCoord && <NavItem href="/pro/calendrier" icon="▦" label="Organisation" />}
-        {estNiveau1 && !estChir && <NavItem href="/pro/equipe" icon="👥" label="Équipe" />}
-        {(estCoord || estChir || estNiveau1) && <NavItem href="/pro/nouveau" icon="＋" label="Nouveau" />}
+        {peutGerer && <NavItem href="/pro/equipe" icon="👥" label="Équipe" />}
+        {(estCoord || estChir || peutGerer) && <NavItem href="/pro/nouveau" icon="＋" label="Nouveau" />}
       </nav>
     </div>
   );

@@ -27,9 +27,9 @@ export async function DELETE(
     .maybeSingle();
 
   const admin_ = estEmailAdmin(user.email);
-  if (!admin_ && moi?.niveau !== 1) {
+  if (!admin_ && (moi?.niveau == null || moi.niveau > 2)) {
     return NextResponse.json(
-      { message: "Seuls un administrateur ou un compte de niveau 1 peuvent supprimer un compte." },
+      { message: "Vous n'avez pas les droits pour supprimer un compte." },
       { status: 403 }
     );
   }

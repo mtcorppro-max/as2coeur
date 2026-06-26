@@ -29,6 +29,7 @@ export interface Professionnel {
   email: string | null;
   role: RolePro;
   niveau: number;
+  agence_id: string | null;
   // Consignes médecin / chirurgien (cf. migration 0015)
   specialite: string | null;
   cabinets: string | null;
@@ -105,6 +106,8 @@ export interface Patient {
   duree_prise_en_charge: number | null;
   // Jours de suivi programmés ex. [1,3,5] (cf. migration 0026)
   jours_suivi: number[] | null;
+  // Agence de rattachement (cf. migration 0029)
+  agence_id: string | null;
   created_at: string;
 }
 

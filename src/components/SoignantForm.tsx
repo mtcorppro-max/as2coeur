@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { genererPdfConsignes } from "@/lib/pdfConsignes";
 import { Select } from "@/components/Select";
+import { useProSession } from "@/lib/hooks/useSession";
+import { optionsNiveau } from "@/lib/niveaux";
 
 type Prestataire = { id: string; nom: string };
 
@@ -82,7 +84,7 @@ const VIDE = {
   email: "",
   motDePasse: "",
   role: "chirurgien",
-  niveau: "2",
+  niveau: "3",
   prestataire_id: "",
   telephone: "",
   specialite: "",
@@ -119,6 +121,12 @@ const protocolePropre = (p: Protocole) => ({
 // est affiché et envoyé ; sinon le compte est rattaché au prestataire de la
 // coordinatrice connectée (géré côté API).
 export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] }) {
+  const pro = useProSession();
+  // Contexte admin (prestataires fournis) = super-admin niveau 0 ; sinon le
+  // niveau du créateur connecté. On ne peut octroyer qu'un niveau ≥ au sien.
+  const niveauCreateur = prestataires ? 0 : (pro?.niveau ?? 3);
+  const niveauxDispo = optionsNiveau(niveauCreateur);
+
   const [form, setForm] = useState({ ...VIDE });
   const [protocoles, setProtocoles] = useState<Protocole[]>([protocoleVide()]);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -232,10 +240,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
           <Select
             value={form.niveau}
             onChange={(v) => setForm((f) => ({ ...f, niveau: v }))}
-            options={[
-              { value: "1", label: "Niveau 1 — accès à tous les patients" },
-              { value: "2", label: "Niveau 2 — uniquement les patients rattachés" },
-            ]}
+            options={niveauxDispo}
           />
         </div>
         {estChirurgien && (

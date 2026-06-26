@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { LIBELLE_ROLE } from "@/lib/roles";
 import { genererPdfConsignes, type ProtocolePdf } from "@/lib/pdfConsignes";
+import { NIVEAU_LABEL } from "@/lib/niveaux";
 
 type Soignant = {
   id: string;
@@ -44,7 +45,7 @@ export default function EquipePage() {
       });
   }, []);
 
-  if (pro && (pro.niveau !== 1 || pro.role === "chirurgien")) {
+  if (pro && (pro.niveau > 2 || pro.role === "chirurgien")) {
     return (
       <div className="card text-sm text-slate-500">
         L&apos;équipe soignante n&apos;est pas accessible à ce compte.
@@ -102,8 +103,8 @@ export default function EquipePage() {
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-slate-800">{nomAffiche}</span>
                       <span className="badge bg-rose-100 text-brand">{LIBELLE_ROLE[s.role]}</span>
-                      <span className={`badge ${s.niveau === 1 ? "bg-green-100 text-ok" : "bg-amber-100 text-attention"}`}>
-                        Niveau {s.niveau}
+                      <span className={`badge ${s.niveau <= 1 ? "bg-green-100 text-ok" : s.niveau === 2 ? "bg-sky-100 text-sky-700" : "bg-amber-100 text-attention"}`}>
+                        {NIVEAU_LABEL[s.niveau] ?? `Niveau ${s.niveau}`}
                       </span>
                     </div>
                     {s.specialite && <p className="mt-0.5 text-sm text-slate-500">{s.specialite}</p>}

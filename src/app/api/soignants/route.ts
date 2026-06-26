@@ -36,25 +36,37 @@ export async function POST(request: Request) {
   const email = texteOuNull(body.email)?.toLowerCase() ?? null;
   const role = (body.role ?? "") as RolePro;
 
-  // Autorisation : un admin (allowlist) peut créer dans n'importe quel
-  // prestataire ; un compte de niveau 1 uniquement dans le sien.
+  // Autorisation : un admin (allowlist = super-admin niveau 0) peut créer dans
+  // n'importe quel prestataire ; sinon un compte gestionnaire (niveau 0/1/2,
+  // hors chirurgien) dans son propre prestataire.
   const { data: pro } = await supabase
     .from("professionnel")
-    .select("niveau, prestataire_id")
+    .select("niveau, role, prestataire_id")
     .eq("user_id", user.id)
     .maybeSingle();
   const admin_ = estEmailAdmin(user.email);
+  // Niveau effectif du créateur (admin allowlist = 0).
+  const niveauCreateur = admin_ ? 0 : (pro?.niveau ?? 3);
   let prestataireId: string | null = null;
   if (admin_) {
     prestataireId = texteOuNull(body.prestataire_id);
     if (!prestataireId) {
       return NextResponse.json({ message: "Prestataire requis." }, { status: 400 });
     }
-  } else if (pro?.niveau === 1) {
+  } else if (pro && pro.niveau <= 2 && pro.role !== "chirurgien") {
     prestataireId = pro.prestataire_id;
   } else {
     return NextResponse.json(
-      { message: "Seuls un administrateur ou un compte de niveau 1 peuvent créer un compte soignant." },
+      { message: "Vous n'avez pas les droits pour créer un compte soignant." },
+      { status: 403 }
+    );
+  }
+
+  // Contrôle d'octroi : on ne peut pas créer un compte plus puissant que soi.
+  const niveauDemande = [0, 1, 2, 3].includes(Number(body.niveau)) ? Number(body.niveau) : 3;
+  if (niveauDemande < niveauCreateur) {
+    return NextResponse.json(
+      { message: "Vous ne pouvez pas octroyer un niveau supérieur au vôtre." },
       { status: 403 }
     );
   }
@@ -104,15 +116,13 @@ export async function POST(request: Request) {
           telephone: texteOuNull(body.telephone),
         };
 
-  const niveau = body.niveau === 1 || body.niveau === "1" ? 1 : 2;
-
   const { error: errPro } = await admin.from("professionnel").insert({
     user_id: created.user.id,
     prestataire_id: prestataireId,
     nom,
     email,
     role,
-    niveau,
+    niveau: niveauDemande,
     ...extras,
   });
 
