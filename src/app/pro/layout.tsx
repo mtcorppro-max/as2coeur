@@ -52,7 +52,6 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
             <nav className="hidden items-center gap-0.5 sm:flex">
               <Onglet href="/pro" icon="dashboard" label="Tableau de bord" pathname={pathname} exact />
               <Onglet href="/pro/alertes" icon="bell" label="Alertes" pathname={pathname} />
-              {peutPec && <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />}
               {estCoord && <Onglet href="/pro/suivis" icon="calendar" label="Suivis" pathname={pathname} />}
               {estCoord && <Onglet href="/pro/calendrier" icon="clipboard" label="Organisation" pathname={pathname} badge={nbDemandes} />}
               {peutGerer && <Onglet href="/pro/equipe" icon="users" label="Équipe soignante" pathname={pathname} />}
@@ -67,6 +66,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                   Nouveau
                 </Link>
               )}
+              {peutPec && <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />}
             </nav>
           </div>
           <div className="flex items-center gap-3 text-right">
@@ -88,12 +88,12 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-rose-100 bg-white sm:hidden">
         <NavItem href="/pro" icon="dashboard" label="Tableau" />
         <NavItem href="/pro/alertes" icon="bell" label="Alertes" />
-        {peutPec && <NavItem href="/pro/pec" icon="chart" label="PEC" />}
         {estCoord && <NavItem href="/pro/suivis" icon="calendar" label="Suivis" />}
         {estCoord && <NavItem href="/pro/calendrier" icon="clipboard" label="Organisation" badge={nbDemandes} />}
         {peutGerer && <NavItem href="/pro/equipe" icon="users" label="Équipe" />}
         {peutGerer && <NavItem href="/pro/infirmieres" icon="home" label="Inf. lib." />}
         {(estCoord || estChir || peutGerer) && <NavItem href="/pro/nouveau" icon="plus" label="Nouveau" />}
+        {peutPec && <NavItem href="/pro/pec" icon="chart" label="PEC" />}
       </nav>
     </div>
   );
