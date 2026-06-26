@@ -8,9 +8,11 @@ import { Select } from "@/components/Select";
 import type { Patient, RolePro, ProtocoleConsigne } from "@/lib/types";
 
 type Soignant = { id: string; nom: string; prenom: string | null; titre: string | null; role: RolePro; telephone: string | null; protocoles: ProtocoleConsigne[] | null };
+// Soignant externe (sans compte) — cf. migrations 0040 / 0041.
+type Externe = { id: string; type: "medecin" | "infirmiere"; titre: string | null; prenom: string | null; nom: string; telephone: string | null; protocoles: ProtocoleConsigne[] | null };
 
 // Nom complet affiché et stocké : « [Titre] Prénom Nom ».
-const nomComplet = (s: Soignant) => [s.titre, s.prenom, s.nom].filter(Boolean).join(" ");
+const nomComplet = (s: { titre: string | null; prenom: string | null; nom: string }) => [s.titre, s.prenom, s.nom].filter(Boolean).join(" ");
 
 // Champs administratifs éditables de la fiche patient.
 const CHAMPS = [
@@ -69,6 +71,7 @@ export function InfosPatient({
   const [vue, setVue] = useState<Form>(() => depuisPatient(patient));
   const [busy, setBusy] = useState(false);
   const [soignants, setSoignants] = useState<Soignant[]>([]);
+  const [externes, setExternes] = useState<Externe[]>([]);
   const [joursSuivi, setJoursSuivi] = useState<number[]>(patient.jours_suivi ?? []);
   const [agenceId, setAgenceId] = useState(patient.agence_id ?? "");
   const [agences, setAgences] = useState<{ value: string; label: string }[]>([]);
@@ -80,6 +83,11 @@ export function InfosPatient({
       .select("id,nom,prenom,titre,role,telephone,protocoles")
       .order("nom")
       .then(({ data }) => setSoignants((data ?? []) as Soignant[]));
+    createClient()
+      .from("soignant_externe")
+      .select("id,type,titre,prenom,nom,telephone,protocoles")
+      .order("nom")
+      .then(({ data }) => setExternes((data ?? []) as Externe[]));
     Promise.all([
       createClient().from("region").select("id,nom"),
       createClient().from("agence").select("id,nom,region_id"),
@@ -96,10 +104,22 @@ export function InfosPatient({
   const coordinatrices = soignants.filter((s) => s.role === "coordinatrice");
   const chirurgiens = soignants.filter((s) => s.role === "chirurgien");
   const infirmieres = soignants.filter((s) => s.role === "infirmiere_liberale");
+  const externesMed = externes.filter((e) => e.type === "medecin");
+  const externesInf = externes.filter((e) => e.type === "infirmiere");
+
+  // Options du sélecteur chirurgien/médecin : comptes + soignants externes.
+  const optionsChirurgien = [
+    ...chirurgiens.map((s) => ({ value: nomComplet(s), label: nomComplet(s) })),
+    ...externesMed.map((e) => ({ value: nomComplet(e), label: `${nomComplet(e)} · externe` })),
+    ...(form.chirurgien && !chirurgiens.some((s) => nomComplet(s) === form.chirurgien) && !externesMed.some((e) => nomComplet(e) === form.chirurgien)
+      ? [{ value: form.chirurgien, label: form.chirurgien }]
+      : []),
+  ];
 
   const choisirInfirmiere = (v: string) => {
     const inf = infirmieres.find((s) => nomComplet(s) === v);
-    setForm((f) => ({ ...f, infirmiere_nom: v, infirmiere_tel: inf?.telephone ?? f.infirmiere_tel }));
+    const ext = externesInf.find((e) => nomComplet(e) === v);
+    setForm((f) => ({ ...f, infirmiere_nom: v, infirmiere_tel: inf?.telephone ?? ext?.telephone ?? f.infirmiere_tel }));
   };
 
   // Choix d'une coordinatrice pour une alerte : enregistre nom + téléphone du compte.
@@ -108,8 +128,11 @@ export function InfosPatient({
     setForm((f) => ({ ...f, [champNom]: v, [champTel]: c?.telephone ?? "" }));
   };
 
-  // Protocoles du chirurgien choisi + application d'une intervention.
-  const protocolesChir = chirurgiens.find((s) => nomComplet(s) === form.chirurgien)?.protocoles ?? [];
+  // Protocoles du chirurgien/médecin choisi (compte ou externe) + application.
+  const protocolesChir =
+    chirurgiens.find((s) => nomComplet(s) === form.chirurgien)?.protocoles ??
+    externesMed.find((e) => nomComplet(e) === form.chirurgien)?.protocoles ??
+    [];
   const appliquerProtocole = (v: string) => {
     const p = protocolesChir[Number(v)];
     if (!p) return;
@@ -190,26 +213,34 @@ export function InfosPatient({
               <Select value={agenceId} onChange={setAgenceId} placeholder="— Choisir une agence —" options={agences} />
             </div>
           )}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Champ label="Opération subie" value={form.operation} onChange={set("operation")} />
-            <Champ label="Date de l'opération" type="date" value={form.date_operation} onChange={set("date_operation")} />
+          <div>
+            <label className="label">Chirurgien / Médecin</label>
+            <Select
+              value={form.chirurgien}
+              onChange={(v) => setVal("chirurgien", v)}
+              placeholder="— Choisir un chirurgien / médecin —"
+              options={optionsChirurgien}
+            />
           </div>
-          <Champ label="Jours de prise en charge" value={form.duree_prise_en_charge} onChange={set("duree_prise_en_charge")} />
-          <SelectSoignant label="Chirurgien (compte existant)" value={form.chirurgien} soignants={chirurgiens} onChange={(v) => setVal("chirurgien", v)} />
           {protocolesChir.length > 0 && (
             <div>
               <label className="label">Protocole / intervention appliqué</label>
               <Select
                 value=""
                 onChange={appliquerProtocole}
-                placeholder="— Choisir un protocole du chirurgien —"
+                placeholder="— Choisir un protocole —"
                 options={protocolesChir.map((p, i) => ({
                   value: String(i),
                   label: `${p.intervention || `Protocole ${i + 1}`}${p.duree ? ` — ${p.duree} j` : ""}`,
                 }))}
               />
+              <p className="mt-1 text-xs text-slate-400">Remplit l&apos;opération, la durée et les jours de suivi.</p>
             </div>
           )}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Champ label="Date de l'opération" type="date" value={form.date_operation} onChange={set("date_operation")} />
+            <Champ label="Jours de prise en charge" value={form.duree_prise_en_charge} onChange={set("duree_prise_en_charge")} />
+          </div>
           {joursSuivi.length > 0 && (
             <p className="text-xs text-brand">Jours de suivi : {joursSuivi.map((j) => `J${j}`).join(", ")}</p>
           )}
