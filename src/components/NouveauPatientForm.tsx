@@ -77,6 +77,7 @@ export function NouveauPatientForm() {
   const [soignants, setSoignants] = useState<Soignant[]>([]);
   const [joursSuivi, setJoursSuivi] = useState<number[]>([]);
   const [seuilsProto, setSeuilsProto] = useState<{ type: string; min: string; max: string }[]>([]);
+  const [medecinLibre, setMedecinLibre] = useState(false); // médecin sans compte (saisie libre)
   const pro = useProSession();
   const [agenceId, setAgenceId] = useState("");
   const [agences, setAgences] = useState<{ value: string; label: string }[]>([]);
@@ -182,6 +183,7 @@ export function NouveauPatientForm() {
               setForm({ ...VIDE });
               setJoursSuivi([]);
               setSeuilsProto([]);
+              setMedecinLibre(false);
             }}
             className="btn-secondary flex-1"
           >
@@ -257,20 +259,34 @@ export function NouveauPatientForm() {
         <div>
           <label className="label">Chirurgien / Médecin</label>
           <Select
-            value={form.chirurgien}
-            onChange={(v) => setForm((f) => ({ ...f, chirurgien: v, traitement: "", traitement_autre: "" }))}
+            value={medecinLibre ? "__libre__" : form.chirurgien}
+            onChange={(v) => {
+              if (v === "__libre__") {
+                setMedecinLibre(true);
+                setForm((f) => ({ ...f, chirurgien: "", traitement: "", traitement_autre: "" }));
+              } else {
+                setMedecinLibre(false);
+                setForm((f) => ({ ...f, chirurgien: v, traitement: "", traitement_autre: "" }));
+              }
+            }}
             placeholder="— Choisir un chirurgien / médecin —"
             options={[
               ...chirurgiens.map((s) => ({ value: nomComplet(s), label: nomComplet(s) })),
-              ...(form.chirurgien && !chirurgiens.some((s) => nomComplet(s) === form.chirurgien)
-                ? [{ value: form.chirurgien, label: form.chirurgien }]
-                : []),
+              { value: "__libre__", label: "➕ Médecin sans compte AS2CŒUR" },
             ]}
           />
+          {medecinLibre && (
+            <input
+              className="input mt-2"
+              value={form.chirurgien}
+              onChange={set("chirurgien")}
+              placeholder="Nom du médecin (ex. Dr Martin)"
+            />
+          )}
         </div>
 
         {/* Traitement à suivre (dès qu'un chirurgien/médecin est choisi) */}
-        {form.chirurgien && (
+        {(form.chirurgien || medecinLibre) && (
           <div>
             <label className="label">Traitement à suivre</label>
             <Select
@@ -307,8 +323,8 @@ export function NouveauPatientForm() {
           </div>
         )}
 
-        {/* Chirurgien → jour de la chirurgie + jour de sortie */}
-        {estChirurgical && (
+        {/* Jour de la chirurgie + jour de sortie (chirurgien à compte, ou Post op) */}
+        {(estChirurgical || form.traitement === "Post op") && (
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="label">Jour de la chirurgie</label>
