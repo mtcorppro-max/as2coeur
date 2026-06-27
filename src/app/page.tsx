@@ -66,7 +66,7 @@ export default function Landing() {
               </h1>
               <p className="mt-5 max-w-lg text-lg leading-relaxed text-white drop-shadow-md">
                 Les patients mesurent leurs constantes, échangent et reçoivent des
-                conseils ; les équipes suivent, alertent, prescrivent et
+                conseils. Les équipes suivent, alertent, prescrivent et
                 s&apos;organisent par agence et par région. AS2CŒUR fluidifie tout
                 le parcours, des deux côtés.
               </p>
