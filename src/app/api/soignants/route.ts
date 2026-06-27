@@ -116,6 +116,7 @@ export async function POST(request: Request) {
           secretariat_email: texteOuNull(body.secretariat_email),
           secretariat_tel: texteOuNull(body.secretariat_tel),
           protocoles: Array.isArray(body.protocoles) && body.protocoles.length > 0 ? body.protocoles : null,
+          ordonnances_types: Array.isArray(body.ordonnances_types) ? body.ordonnances_types : [],
         }
       : {
           prenom: texteOuNull(body.prenom),
