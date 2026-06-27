@@ -8,6 +8,7 @@ import { useData } from "@/lib/hooks/useData";
 import { MESURES, TYPES_MESURE } from "@/lib/constants";
 import { conseilDuJour, conseilMeteo, type ConseilMeteo } from "@/lib/conseils";
 import { ConseilCard } from "@/components/ConseilCard";
+import { RappelDocuments } from "@/components/RappelDocuments";
 import { CalendrierSuivi } from "@/components/CalendrierSuivi";
 import type { Mesure } from "@/lib/types";
 
@@ -57,6 +58,7 @@ export default function PatientAccueil() {
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
       <div className="grid gap-5">
+        <RappelDocuments />
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
             Bonjour {patient.nom.split(" ")[0]} 👋
@@ -98,9 +100,6 @@ export default function PatientAccueil() {
           </div>
         </section>
 
-        <Link href="/patient/suivi" className="text-center text-sm font-medium text-brand hover:underline">
-          Voir mes graphiques de suivi →
-        </Link>
       </div>
 
       <aside className="grid gap-5">

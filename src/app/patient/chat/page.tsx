@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePatientSession } from "@/lib/hooks/useSession";
 import { ChatBox } from "@/components/ChatBox";
+import { PhotoUpload } from "@/components/PhotoUpload";
 import type { Message } from "@/lib/types";
 
 export default function PageChat() {
@@ -53,6 +54,11 @@ export default function PageChat() {
           initialMessages={messages}
         />
       )}
+
+      <section className="grid gap-2">
+        <h2 className="text-sm font-semibold text-slate-600">Envoyer une photo à l&apos;équipe</h2>
+        <PhotoUpload />
+      </section>
     </div>
   );
 }
