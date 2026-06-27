@@ -66,9 +66,9 @@ export default function Landing() {
                 à domicile.
               </h1>
               <p className="mt-5 max-w-lg text-lg leading-relaxed text-white drop-shadow-md">
-                AS2CŒUR accompagne les patients après une opération
-                digestive : mesure des constantes, alertes automatiques et
-                messagerie directe avec votre équipe soignante.
+                De la sortie d&apos;hôpital à la cicatrisation : suivi des
+                constantes, alertes automatiques, photos de cicatrice, conseils
+                personnalisés et messagerie directe avec votre équipe soignante.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/login/patient" className="rounded-xl bg-brand px-7 py-3 text-base font-semibold text-white shadow-lg hover:bg-brand-dark">
