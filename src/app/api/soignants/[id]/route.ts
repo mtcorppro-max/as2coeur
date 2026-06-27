@@ -113,6 +113,8 @@ export async function PATCH(
       if (body[k] !== undefined) maj[k] = t(body[k]);
     }
     if (body.nom !== undefined && t(body.nom)) maj.nom = t(body.nom);
+    if (Array.isArray(body.protocoles)) maj.protocoles = body.protocoles;
+    if (Array.isArray(body.ordonnances_types)) maj.ordonnances_types = body.ordonnances_types;
   }
 
   // Niveau / agence / région : réservés aux niveaux 0/1, cibles de niveau ≥ 2, hors soi-même.

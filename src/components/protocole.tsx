@@ -76,6 +76,39 @@ export const protocoleVide = (): Protocole => ({
 const propres = (arr: Molecule[]) =>
   arr.filter((m) => m.coche && m.nom.trim()).map((m) => ({ nom: m.nom.trim(), posologie: m.posologie.trim() }));
 
+// Reconstruit un protocole éditable à partir d'un protocole stocké (nettoyé).
+export function protocoleDepuis(s: Record<string, unknown>): Protocole {
+  const base = protocoleVide();
+  const mol = (arr: unknown) =>
+    Array.isArray(arr) && arr.length
+      ? (arr as { nom: string; posologie: string }[]).map((m) => ({ nom: m.nom ?? "", predefini: false, coche: true, posologie: m.posologie ?? "" }))
+      : base.molecules;
+  const str = (v: unknown, d = "") => (typeof v === "string" ? v : d);
+  return {
+    intervention: str(s.intervention),
+    duree: str(s.duree),
+    jours: Array.isArray(s.jours) ? (s.jours as number[]) : [],
+    molecules: mol(s.molecules),
+    pharmacie_per_os: !!s.pharmacie_per_os,
+    medicaments_per_os: Array.isArray(s.medicaments_per_os) && (s.medicaments_per_os as unknown[]).length ? mol(s.medicaments_per_os) : base.medicaments_per_os,
+    surveiller_constantes: !!s.surveiller_constantes,
+    constantes: Array.isArray(s.constantes) ? (s.constantes as ConstanteSurv[]) : [],
+    bilan_sanguin: !!s.bilan_sanguin,
+    bilan_voie: str(s.bilan_voie),
+    bilan_analyses: Array.isArray(s.bilan_analyses) ? (s.bilan_analyses as string[]) : [],
+    bilan_autres: str(s.bilan_autres),
+    pansement: !!s.pansement,
+    pansement_detail: str(s.pansement_detail),
+    cryotherapie: !!s.cryotherapie,
+    cryotherapie_duree: str(s.cryotherapie_duree),
+    cryotherapie_machine: str(s.cryotherapie_machine),
+    materiel: !!s.materiel,
+    materiel_paramedical: str(s.materiel_paramedical),
+    envoi_ordo: Array.isArray(s.envoi_ordo) ? (s.envoi_ordo as string[]) : [],
+    autres: str(s.autres),
+  };
+}
+
 // Nettoie un protocole pour l'envoi API / le PDF.
 export const protocolePropre = (p: Protocole) => ({
   intervention: p.intervention.trim(),
