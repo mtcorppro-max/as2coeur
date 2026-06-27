@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { Select } from "@/components/Select";
+import { DateField } from "@/components/DateField";
 import { MODELES_ORDONNANCE, type ChampOrdo } from "@/lib/ordonnances";
 
 type Medecin = { id: string; nom: string; prenom: string | null; titre: string | null };
@@ -69,6 +70,8 @@ export function GenerateurOrdonnance({ patientId, patientChirurgien, onCreated }
 
   const champ = (mid: string, c: ChampOrdo) => {
     const v = valeurs[mid]?.[c.key];
+    if (c.type === "date")
+      return <DateField value={(v as string) ?? ""} onChange={(val) => maj(mid, c.key, val)} />;
     if (c.type === "textarea")
       return <textarea className="input" rows={2} value={(v as string) ?? ""} onChange={(e) => maj(mid, c.key, e.target.value)} />;
     if (c.type === "radio")
@@ -96,7 +99,7 @@ export function GenerateurOrdonnance({ patientId, patientChirurgien, onCreated }
         </div>
       );
     }
-    return <input className="input" type={c.type === "date" ? "date" : "text"} inputMode={c.type === "number" ? "numeric" : undefined}
+    return <input className="input" type="text" inputMode={c.type === "number" ? "numeric" : undefined}
       value={(v as string) ?? ""} onChange={(e) => maj(mid, c.key, e.target.value)} />;
   };
 

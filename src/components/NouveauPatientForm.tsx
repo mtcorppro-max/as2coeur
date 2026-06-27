@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { AdresseAutocomplete } from "@/components/AdresseAutocomplete";
 import { Select } from "@/components/Select";
+import { DateField } from "@/components/DateField";
 import type { RolePro, ProtocoleConsigne } from "@/lib/types";
 
 type Soignant = {
@@ -249,7 +250,7 @@ export function NouveauPatientForm() {
         </div>
         <div>
           <label className="label">Date de naissance</label>
-          <input type="date" className="input" value={form.date_naissance} onChange={set("date_naissance")} />
+          <DateField value={form.date_naissance} onChange={(v) => setForm((f) => ({ ...f, date_naissance: v }))} placeholder="Date de naissance" />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -348,18 +349,18 @@ export function NouveauPatientForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="label">Jour de la chirurgie</label>
-              <input type="date" className="input" value={form.date_operation} onChange={set("date_operation")} />
+              <DateField value={form.date_operation} onChange={(v) => setForm((f) => ({ ...f, date_operation: v }))} />
             </div>
             <div>
               <label className="label">Jour de sortie</label>
-              <input type="date" className="input" value={form.date_sortie} onChange={set("date_sortie")} />
+              <DateField value={form.date_sortie} onChange={(v) => setForm((f) => ({ ...f, date_sortie: v }))} />
             </div>
           </div>
         ) : form.chirurgien ? (
           /* Médecin : juste la date de début de prise en charge */
           <div>
             <label className="label">Date de début de prise en charge</label>
-            <input type="date" className="input" value={form.date_operation} onChange={set("date_operation")} />
+            <DateField value={form.date_operation} onChange={(v) => setForm((f) => ({ ...f, date_operation: v }))} />
           </div>
         ) : null}
         {joursSuivi.length > 0 && (

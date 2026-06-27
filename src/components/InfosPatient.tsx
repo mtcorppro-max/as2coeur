@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { LIBELLE_ROLE } from "@/lib/roles";
 import { AdresseAutocomplete } from "@/components/AdresseAutocomplete";
 import { Select } from "@/components/Select";
+import { DateField } from "@/components/DateField";
 import type { Patient, RolePro, ProtocoleConsigne } from "@/lib/types";
 
 type Soignant = { id: string; nom: string; prenom: string | null; titre: string | null; role: RolePro; agence_id: string | null; telephone: string | null; specialite: string | null; protocoles: ProtocoleConsigne[] | null };
@@ -412,7 +413,14 @@ function Champ({
   return (
     <div>
       <label className="label">{label}</label>
-      <input type={type} className="input" value={value} onChange={onChange} />
+      {type === "date" ? (
+        <DateField
+          value={value}
+          onChange={(v) => onChange({ target: { value: v } } as React.ChangeEvent<HTMLInputElement>)}
+        />
+      ) : (
+        <input type={type} className="input" value={value} onChange={onChange} />
+      )}
     </div>
   );
 }
