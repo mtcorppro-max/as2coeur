@@ -8,11 +8,9 @@ export default function Landing() {
       {/* ── Header ──────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 border-b border-rose-100 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          {/* Mobile : cœur seul dans un carré — Desktop : logo complet */}
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand md:hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icons/coeur-blanc.png" alt="AS2CŒUR" className="h-5 w-5" />
-          </span>
+          {/* Mobile : icône PWA (cœur sur fond rose foncé) — Desktop : logo complet */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/icon-192x192.png" alt="AS2CŒUR" className="h-9 w-9 shrink-0 rounded-xl md:hidden" />
           <Logo className="hidden md:inline-flex" />
           <nav className="hidden gap-1 md:flex">
             {[
