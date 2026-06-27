@@ -9,13 +9,28 @@ import type { TypeMesure } from "@/lib/types";
 
 type Choix = "temperature" | "tension" | "spo2" | "bpm" | "poids";
 
-const CHOIX: { key: Choix; label: string; icon: string }[] = [
-  { key: "temperature", label: "Température", icon: "🌡️" },
-  { key: "tension", label: "Tension", icon: "💓" },
-  { key: "spo2", label: "Saturation O₂", icon: "🫁" },
-  { key: "bpm", label: "Pouls", icon: "💗" },
-  { key: "poids", label: "Poids", icon: "⚖️" },
+const CHOIX: { key: Choix; label: string }[] = [
+  { key: "temperature", label: "Température" },
+  { key: "tension", label: "Tension" },
+  { key: "spo2", label: "Saturation O₂" },
+  { key: "bpm", label: "Pouls" },
+  { key: "poids", label: "Poids" },
 ];
+
+// Icônes de constantes (style ligne, couleur du site).
+function IconeConstante({ type }: { type: Choix }) {
+  const p = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  const paths: Record<Choix, React.ReactNode> = {
+    temperature: (<><path d="M10 13.8V5a2 2 0 1 1 4 0v8.8a3.5 3.5 0 1 1-4 0Z" /><line x1="12" y1="9" x2="12" y2="14.5" /></>),
+    tension: (<><path d="M3.5 13a8.5 8.5 0 0 1 17 0" /><path d="M12 13l4.5-3.2" /><circle cx="12" cy="13" r="1.3" /></>),
+    spo2: (<><path d="M12 3.5v9" /><path d="M11 8.5c0 0-3 .8-3 6 0 3 .2 5.5 1.7 5.5S12 18 12 15" /><path d="M13 8.5c0 0 3 .8 3 6 0 3-.2 5.5-1.7 5.5S12 18 12 15" /></>),
+    bpm: (<><path d="M3 12h4l2-6 3.5 12 2.5-6H21" /></>),
+    poids: (<><path d="M12 4.2v15.6" /><path d="M5 7.5h14" /><path d="M5 7.5 2.4 13a3 3 0 0 0 5.2 0L5 7.5Z" /><path d="M19 7.5 16.4 13a3 3 0 0 0 5.2 0L19 7.5Z" /><path d="M8.5 20h7" /></>),
+  };
+  return (
+    <svg viewBox="0 0 24 24" className="h-8 w-8 text-brand" {...p} aria-hidden="true">{paths[type]}</svg>
+  );
+}
 
 export function SaisieMesure({ patientId, pro, onSaved }: { patientId: string; pro?: boolean; onSaved?: () => void }) {
   const router = useRouter();
@@ -79,7 +94,7 @@ export function SaisieMesure({ patientId, pro, onSaved }: { patientId: string; p
             onClick={() => setChoix(c.key)}
             className="card flex flex-col items-center gap-2 py-6 text-base font-semibold text-slate-700 hover:border-brand"
           >
-            <span className="text-3xl">{c.icon}</span>
+            <IconeConstante type={c.key} />
             {c.label}
           </button>
         ))}
