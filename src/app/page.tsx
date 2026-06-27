@@ -58,17 +58,17 @@ export default function Landing() {
             <div className="[text-shadow:_0_2px_12px_rgba(0,0,0,0.5)]">
               <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-black/30 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-300" />
-                Télésuivi post-opératoire
+                Plateforme de soins post-opératoires
               </div>
               <h1 className="text-4xl font-bold leading-tight text-white drop-shadow-lg md:text-5xl">
-                Votre rétablissement{" "}
-                <span className="text-white md:text-rose-300">suivi de près,</span>{" "}
-                à domicile.
+                Mieux suivis,{" "}
+                <span className="text-white md:text-rose-300">mieux coordonnés.</span>
               </h1>
               <p className="mt-5 max-w-lg text-lg leading-relaxed text-white drop-shadow-md">
-                De la sortie d&apos;hôpital à la cicatrisation : suivi des
-                constantes, alertes automatiques, photos de cicatrice, conseils
-                personnalisés et messagerie directe avec votre équipe soignante.
+                Les patients mesurent leurs constantes, échangent et reçoivent des
+                conseils ; les équipes suivent, alertent, prescrivent et
+                s&apos;organisent par agence et par région. AS2CŒUR fluidifie tout
+                le parcours, des deux côtés.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link href="/login/patient" className="rounded-xl bg-brand px-7 py-3 text-base font-semibold text-white shadow-lg hover:bg-brand-dark">
