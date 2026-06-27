@@ -17,6 +17,7 @@ export type PerfDomicileData = {
 // Positions (points, repère depuis le HAUT de la page A4 595x842).
 const POS = {
   initiation: { x: 25, y: 73 },
+  renouvellement: { x: 25, y: 86 },
   presta_22: { x: 270, y: 203 },         // case 2.2 (Ville)
   patient_nom: { x: 300, y: 60 },
   presc_nom: { x: 55, y: 122 },
@@ -81,9 +82,9 @@ export async function genererPdfPerfusionDomicile(d: PerfDomicileData, mode: "do
 
   const c = d.contenu;
 
-  // En-tête : date de prescription (barres effacées), Initiation
+  // En-tête : date de prescription (barres effacées) + type de demande
   blanc(BLANC.date_presc); txt(d.date || new Date().toLocaleDateString("fr-FR"), { x: BLANC.date_presc.x + 2, y: BLANC.date_presc.y });
-  coche(POS.initiation);
+  coche(/renouvellement/i.test(String(c.type_demande)) ? POS.renouvellement : POS.initiation);
 
   // Patient : nom + date de naissance
   txt(d.patientNom, POS.patient_nom);
@@ -116,7 +117,8 @@ export async function genererPdfPerfusionDomicile(d: PerfDomicileData, mode: "do
   if (c.date_debut) { blanc(BLANC.cure_debut); txt(frDate(c.date_debut), { x: BLANC.cure_debut.x + 2, y: BLANC.cure_debut.y }); }
   if (c.date_fin) { blanc(BLANC.cure_fin); txt(frDate(c.date_fin), { x: BLANC.cure_fin.x + 2, y: BLANC.cure_fin.y }); }
   if (c.date_debut && c.date_fin) {
-    const jours = Math.round((new Date(c.date_fin as string).getTime() - new Date(c.date_debut as string).getTime()) / 86_400_000);
+    // Durée inclusive : du 7 au 10 = 4 jours (différence + 1).
+    const jours = Math.round((new Date(c.date_fin as string).getTime() - new Date(c.date_debut as string).getTime()) / 86_400_000) + 1;
     if (jours > 0) txt(String(jours), POS.cure_jours);
   }
 

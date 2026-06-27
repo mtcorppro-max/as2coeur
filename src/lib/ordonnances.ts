@@ -14,6 +14,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     label: "Prescription de perfusion à domicile",
     description: "Formulaire de prescription de perfusion à domicile (ville ou hôpital).",
     champs: [
+      { key: "type_demande", label: "Type de demande", type: "radio", options: ["Initiation d'une perfusion à domicile", "Renouvellement ou modification"] },
       { key: "produit", label: "Dénomination du produit (dosage, posologie, solvant…)", type: "textarea" },
       { key: "voie", label: "Voie d'abord", type: "radio", options: ["Veineuse centrale (VC)", "Chambre implantable", "Cathéter central", "PICC-line", "Péri-nerveuse", "Veineuse périphérique", "Sous-cutanée"] },
       { key: "mode", label: "Mode d'administration", type: "radio", options: ["Gravité", "Diffuseur", "Système actif électrique", "Transfuseur"] },
