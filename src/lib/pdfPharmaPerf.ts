@@ -13,6 +13,11 @@ export async function genererPdfPharmaPerf(d: DocOrdoData, mode: "download" | "b
 
   txt(c.serum_100, { x: 148, y: 394 });
   txt(c.serum_50, { x: 143, y: 417 });
+
+  // Molécules à commander : écrites ligne par ligne dans l'espace libre (sous « Container »).
+  const molecules = typeof c.molecules === "string" ? c.molecules.split("\n").filter((l) => l.trim()) : [];
+  molecules.forEach((ligne, i) => txt(ligne.trim(), { x: 14, y: 466 + i * 16 }));
+
   txt(c.qsp_jours, { x: 44, y: 543 });
 
   await signer(d.signature, { x: 392, y: 668 });

@@ -43,6 +43,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     champs: [
       { key: "serum_100", label: "Sérum physiologique 100 mL (poches/jour)", type: "number" },
       { key: "serum_50", label: "Sérum physiologique 50 mL (poche/jour)", type: "number" },
+      { key: "molecules", label: "Molécules à commander (une par ligne)", type: "textarea" },
       { key: "qsp_jours", label: "QSP (jours)", type: "number" },
     ],
   },
