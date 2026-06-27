@@ -73,7 +73,7 @@ export function AlerteCard({
           router.push(lien);
         }
       }}
-      className={`flex cursor-pointer flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-rose-100 border-l-[5px] bg-white px-4 py-2.5 transition hover:shadow-md ${couleur}`}
+      className={`flex cursor-pointer flex-col gap-2 rounded-xl border border-rose-100 border-l-[5px] bg-white px-4 py-2.5 transition hover:shadow-md sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 ${couleur}`}
     >
       {/* Patient + alerte (mise en avant) */}
       <div className="min-w-0 flex-1">
