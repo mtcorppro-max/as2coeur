@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { modeleOrdo, valeurLisible } from "@/lib/ordonnances";
 import { genererPdfOrdonnance } from "@/lib/pdfOrdonnance";
+import { genererPdfPerfusionDomicile } from "@/lib/pdfPerfusionDomicile";
 import { GenerateurOrdonnance } from "@/components/GenerateurOrdonnance";
 
 type Ordo = {
@@ -36,13 +37,28 @@ export function OrdonnancesPatient({ patientId, patientNom, patientChirurgien }:
 
   useEffect(() => { charger(); }, [charger]);
 
-  async function telecharger(o: Ordo) {
-    await genererPdfOrdonnance({
+  async function genererPdf(o: Ordo, mode: "download" | "bloburl") {
+    if (o.type === "perfusion_domicile") {
+      return genererPdfPerfusionDomicile({
+        patientNom,
+        prescripteurNom: o.signataire_nom ?? "",
+        date: new Date(o.created_at).toLocaleDateString("fr-FR"),
+        contenu: o.contenu,
+        signature: o.signature,
+      }, mode);
+    }
+    return genererPdfOrdonnance({
       type: o.type, titre: o.titre, contenu: o.contenu, patientNom,
       prescripteurNom: o.signataire_nom ?? "",
       signature: o.signature, signataireNom: o.signataire_nom, signeeLe: o.signee_le,
       date: new Date(o.created_at).toLocaleDateString("fr-FR"),
-    });
+    }, mode);
+  }
+
+  const telecharger = (o: Ordo) => genererPdf(o, "download");
+  async function voir(o: Ordo) {
+    const url = await genererPdf(o, "bloburl");
+    if (typeof url === "string") window.open(url, "_blank");
   }
 
   async function supprimer(o: Ordo) {
@@ -82,7 +98,19 @@ export function OrdonnancesPatient({ patientId, patientNom, patientChirurgien }:
                 </div>
                 <div className="flex items-center gap-2">
                   {aSigner && <button onClick={() => setSigner(o)} className="btn-primary px-3 py-1.5 text-sm">Lire et signer</button>}
-                  <button onClick={() => telecharger(o)} className="btn-secondary px-3 py-1.5 text-sm">📄 PDF</button>
+                  <button onClick={() => voir(o)} className="btn-secondary inline-flex items-center gap-1.5 px-3 py-1.5 text-sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    Voir
+                  </button>
+                  <button onClick={() => telecharger(o)} className="btn-secondary inline-flex items-center gap-1.5 px-3 py-1.5 text-sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
+                    </svg>
+                    PDF
+                  </button>
                   <button onClick={() => supprimer(o)} className="rounded-lg border border-rose-200 px-2 py-1.5 text-sm text-critique hover:bg-red-50">✕</button>
                 </div>
               </div>
