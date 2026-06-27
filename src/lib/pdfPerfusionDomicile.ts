@@ -29,6 +29,7 @@ const POS = {
   duree_min: { x: 252, y: 383 },
   nb_perfusions: { x: 140, y: 407 },
   frequence_nb: { x: 231, y: 411 },
+  cure_jours: { x: 284, y: 437 },
   signature: { x: 405, y: 805 },
 };
 const POS_FREQ: Record<string, { x: number; y: number }> = {
@@ -99,8 +100,8 @@ export async function genererPdfPerfusionDomicile(d: PerfDomicileData, mode: "do
 
   // Produit n°1
   txt(c.produit as string, POS.produit, 9);
-  txt(c.duree_heures as string, POS.duree_h);
-  txt(c.duree_minutes as string, POS.duree_min);
+  // Durée d'une perfusion : valeur placée devant l'unité choisie
+  if (c.duree_valeur) txt(c.duree_valeur as string, c.duree_unite === "heures" ? POS.duree_h : POS.duree_min);
   txt(c.nb_perfusions as string, POS.nb_perfusions);
   txt(c.frequence_nb as string, POS.frequence_nb);
   const periode = c.frequence_periode as string;
@@ -111,9 +112,13 @@ export async function genererPdfPerfusionDomicile(d: PerfDomicileData, mode: "do
   const md = c.mode as string;
   if (md && POS_MODE[md]) coche(POS_MODE[md]);
 
-  // Dates de cure (barres effacées)
+  // Dates de cure (barres effacées) + durée de cure calculée automatiquement
   if (c.date_debut) { blanc(BLANC.cure_debut); txt(frDate(c.date_debut), { x: BLANC.cure_debut.x + 2, y: BLANC.cure_debut.y }); }
   if (c.date_fin) { blanc(BLANC.cure_fin); txt(frDate(c.date_fin), { x: BLANC.cure_fin.x + 2, y: BLANC.cure_fin.y }); }
+  if (c.date_debut && c.date_fin) {
+    const jours = Math.round((new Date(c.date_fin as string).getTime() - new Date(c.date_debut as string).getTime()) / 86_400_000);
+    if (jours > 0) txt(String(jours), POS.cure_jours);
+  }
 
   if (d.signature) {
     try {
