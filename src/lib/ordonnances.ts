@@ -38,13 +38,109 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     ],
   },
   {
-    id: "pharma_perf",
-    label: "Pharmacie (perfusion)",
+    id: "ordo_bs",
+    label: "Bilan sanguin",
     champs: [
-      { key: "serum_100", label: "Sérum physiologique 100 mL (poches/jour)", type: "number" },
-      { key: "serum_50", label: "Sérum physiologique 50 mL (poche/jour)", type: "number" },
+      { key: "voie", label: "Voie d'abord", type: "radio", options: ["VVP", "PAC", "VVC", "PICCLINE"] },
+      { key: "analyses", label: "À doser dans le sang", type: "checkboxes", options: ["NFS", "Plaquettes", "Ionogramme sanguin", "Calcémie", "Urée", "Créatinémie", "Albuminémie", "Pré-albumine", "VS", "CRP", "Transaminases SGOT SGPT", "Gamma GT", "Phosphatases alcalines", "Bilirubine total"] },
+      { key: "autres", label: "Autres dosages", type: "text" },
+      { key: "a_faire_le", label: "À faire le", type: "date" },
+      { key: "ordonnance_jours", label: "Ordonnance (jours)", type: "number" },
+    ],
+  },
+  {
+    id: "pharma_perf",
+    label: "Pharmacie",
+    champs: [
+      { key: "poches_50", label: "Poches NaCl 0,9% 50 mL (/jour)", type: "number" },
+      { key: "poches_100", label: "Poches NaCl 0,9% 100 mL (/jour)", type: "number" },
       { key: "molecules", label: "Molécules à commander (une par ligne)", type: "textarea" },
       { key: "qsp_jours", label: "QSP (jours)", type: "number" },
+    ],
+  },
+  {
+    id: "ordo_pharma_npad",
+    label: "Pharmacie — NPAD",
+    champs: [
+      { key: "poches_50", label: "Poches NaCl 0,9% 50 mL", type: "number" },
+      { key: "poches_100", label: "Poches NaCl 0,9% 100 mL", type: "number" },
+      { key: "qsp_jours", label: "QSP (jours)", type: "number" },
+      { key: "renouvelable", label: "Renouvelable (fois)", type: "number" },
+    ],
+  },
+  {
+    id: "ordo_pharma_piccline",
+    label: "Pharmacie — PICC-line",
+    champs: [
+      { key: "nacl_50", label: "NaCl 0,9% 50 mL (/jour)", type: "number" },
+      { key: "nacl_100", label: "NaCl 0,9% 100 mL (/jour)", type: "number" },
+      { key: "qsp_jours", label: "QSP (jours)", type: "number" },
+    ],
+  },
+  {
+    id: "ordo_pst",
+    label: "Pansement post-opératoire (IDEL)",
+    champs: [{ key: "protocole", label: "Protocole de pansement (une ligne par consigne)", type: "textarea" }],
+  },
+  {
+    id: "ordo_glycemie",
+    label: "Surveillance glycémique (IDEL)",
+    champs: [{ key: "ordonnance_jours", label: "Ordonnance pour (jours)", type: "number" }],
+  },
+  {
+    id: "ordo_taurolock",
+    label: "Verrou Taurolock (IDEL)",
+    champs: [
+      { key: "qsp_jours", label: "QSP (jours)", type: "number" },
+      { key: "a_renouveler", label: "À renouveler (fois)", type: "text" },
+    ],
+  },
+  {
+    id: "ordo_idel_po",
+    label: "IDEL — PO & constantes",
+    champs: [
+      { key: "ordonnance_jours", label: "Ordonnance pour (jours)", type: "number" },
+      { key: "a_renouveler", label: "À renouveler (fois)", type: "number" },
+    ],
+  },
+  {
+    id: "ordo_idel_npad",
+    label: "IDEL — NPAD",
+    champs: [
+      { key: "voie", label: "Voie d'abord", type: "radio", options: ["Cathéter central", "Picc-line", "Chambre implantable"] },
+      { key: "perfusion", label: "Perfusion de", type: "text" },
+      { key: "ordonnance_jours", label: "Ordonnances pour (jours)", type: "number" },
+    ],
+  },
+  {
+    id: "perfadom_npad",
+    label: "Perfadom — NPAD",
+    champs: [
+      { key: "options", label: "Forfaits", type: "checkboxes", options: ["Première installation", "12 premières semaines", "Après les 12 premières semaines"] },
+      { key: "jours7_avant", label: "Administrée … jours/7 (12 premières sem.)", type: "number" },
+      { key: "jours7_apres", label: "Administrée … jours/7 (après 12 sem.)", type: "number" },
+      { key: "ordonnance_jours", label: "Ordonnances pour (jours)", type: "number" },
+    ],
+  },
+  {
+    id: "idel_kyste",
+    label: "IDEL — Pansement de kyste",
+    champs: [{ key: "duree_jours", label: "Durée (jours)", type: "number" }],
+  },
+  {
+    id: "nead",
+    label: "NEAD (nutrition entérale)",
+    champs: [
+      { key: "ordonnance_jours", label: "Ordonnance pour (jours)", type: "number" },
+      { key: "a_renouveler", label: "À renouveler (fois)", type: "text" },
+    ],
+  },
+  {
+    id: "nead_idel",
+    label: "NEAD — IDEL",
+    champs: [
+      { key: "ordonnance_jours", label: "Ordonnance pour (jours)", type: "number" },
+      { key: "a_renouveler", label: "À renouveler (fois)", type: "text" },
     ],
   },
   {

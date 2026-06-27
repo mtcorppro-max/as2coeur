@@ -6,8 +6,9 @@ import { useProSession } from "@/lib/hooks/useSession";
 import { modeleOrdo, valeurLisible } from "@/lib/ordonnances";
 import { genererPdfOrdonnance } from "@/lib/pdfOrdonnance";
 import { genererPdfPerfusionDomicile } from "@/lib/pdfPerfusionDomicile";
-import { genererPdfPharmaPerf } from "@/lib/pdfPharmaPerf";
 import { genererPdfIdelPerf } from "@/lib/pdfIdelPerf";
+import { genererPdfOrdoBS } from "@/lib/pdfOrdoBS";
+import { genererPdfModele, CONFIGS } from "@/lib/ordoTemplates";
 import { GenerateurOrdonnance } from "@/components/GenerateurOrdonnance";
 
 type Pro = { nom: string; prenom: string | null; titre: string | null; rpps: string | null; cabinets: string | null };
@@ -58,19 +59,22 @@ export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, pa
         signature: o.signature,
       }, mode);
     }
-    if (o.type === "pharma_perf" || o.type === "idel_perf") {
-      const gen = o.type === "pharma_perf" ? genererPdfPharmaPerf : genererPdfIdelPerf;
-      return gen({
-        patientNom,
-        prescripteurNom: med?.nom ?? null,
-        prescripteurPrenom: med?.prenom ?? null,
-        prescripteurTitre: med?.titre ?? null,
-        prescripteurRpps: med?.rpps ?? null,
-        date: dateFr,
-        contenu: o.contenu,
-        signature: o.signature,
-      }, mode);
-    }
+    const data = {
+      patientNom,
+      prescripteurNom: med?.nom ?? null,
+      prescripteurPrenom: med?.prenom ?? null,
+      prescripteurTitre: med?.titre ?? null,
+      prescripteurRpps: med?.rpps ?? null,
+      date: dateFr,
+      contenu: o.contenu,
+      signature: o.signature,
+    };
+    const GENS: Record<string, typeof genererPdfIdelPerf> = {
+      idel_perf: genererPdfIdelPerf,
+      ordo_bs: genererPdfOrdoBS,
+    };
+    if (GENS[o.type]) return GENS[o.type](data, mode);
+    if (CONFIGS[o.type]) return genererPdfModele(o.type, data, mode);
     return genererPdfOrdonnance({
       type: o.type, titre: o.titre, contenu: o.contenu, patientNom,
       prescripteurNom: o.signataire_nom ?? "",
