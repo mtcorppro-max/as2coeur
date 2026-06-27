@@ -14,6 +14,7 @@ const NAV = [
   { href: "/patient/chat",     label: "Chat",     icon: "◇" },
   { href: "/patient/photos",   label: "Photos",   icon: "◎" },
   { href: "/patient/conseils", label: "Conseils", icon: "✦" },
+  { href: "/patient/profil",   label: "Profil",   icon: "☺" },
 ];
 
 export default function PatientLayout({ children }: { children: React.ReactNode }) {
