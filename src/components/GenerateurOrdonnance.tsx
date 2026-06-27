@@ -70,6 +70,25 @@ export function GenerateurOrdonnance({ patientId, patientChirurgien, onCreated }
 
   const champ = (mid: string, c: ChampOrdo) => {
     const v = valeurs[mid]?.[c.key];
+    if (c.type === "valeur_unite") {
+      const u = valeurs[mid]?.[c.uniteKey];
+      return (
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            className="input w-24" inputMode="numeric" placeholder="nombre"
+            value={(v as string) ?? ""} onChange={(e) => maj(mid, c.key, e.target.value)}
+          />
+          <div className="flex flex-wrap gap-1.5">
+            {c.options.map((o) => (
+              <button key={o} type="button" onClick={() => maj(mid, c.uniteKey, u === o ? "" : o)}
+                className={`rounded-lg border px-2.5 py-1 text-sm transition ${u === o ? "border-brand bg-brand text-white" : "border-rose-200 bg-white text-slate-600 hover:border-brand"}`}>
+                {o}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
     if (c.type === "date")
       return <DateField value={(v as string) ?? ""} onChange={(val) => maj(mid, c.key, val)} />;
     if (c.type === "textarea")

@@ -23,7 +23,6 @@ type Ordo = {
   created_at: string;
 };
 const unPro = (o: Ordo): Pro | null => (Array.isArray(o.destinataire) ? o.destinataire[0] : o.destinataire) ?? null;
-const nomPro = (p: Pro | null) => (p ? [p.titre, p.prenom, p.nom].filter(Boolean).join(" ") : "");
 
 export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, patientChirurgien }: { patientId: string; patientNom: string; patientNaissance: string | null; patientChirurgien: string | null }) {
   const pro = useProSession();
@@ -186,7 +185,7 @@ function SignatureModal({ ordo, patientNom, signataire, onClose, onSigned }: { o
 
         <div className="grid gap-2 rounded-xl border border-rose-100 bg-rose-50/40 p-3 text-sm">
           {(modele?.champs ?? []).map((c) => {
-            const v = valeurLisible(c, ordo.contenu[c.key]);
+            const v = valeurLisible(c, ordo.contenu);
             if (!v.trim()) return null;
             return <p key={c.key}><span className="font-semibold text-slate-600">{c.label} : </span><span className="text-slate-800">{v}</span></p>;
           })}

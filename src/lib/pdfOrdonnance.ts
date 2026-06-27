@@ -67,7 +67,7 @@ export async function genererPdfOrdonnance(d: OrdonnancePdf, mode: "download" | 
   const modele = MODELES_ORDONNANCE.find((m) => m.id === d.type);
   const champs = modele?.champs ?? [];
   champs.forEach((c) => {
-    const val = valeurLisible(c, d.contenu[c.key]);
+    const val = valeurLisible(c, d.contenu);
     if (!val || !val.trim()) return;
     if (y > 250) { doc.addPage(); y = M; }
     doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...ROSE);
