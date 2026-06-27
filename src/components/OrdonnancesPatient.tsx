@@ -6,6 +6,8 @@ import { useProSession } from "@/lib/hooks/useSession";
 import { modeleOrdo, valeurLisible } from "@/lib/ordonnances";
 import { genererPdfOrdonnance } from "@/lib/pdfOrdonnance";
 import { genererPdfPerfusionDomicile } from "@/lib/pdfPerfusionDomicile";
+import { genererPdfPharmaPerf } from "@/lib/pdfPharmaPerf";
+import { genererPdfIdelPerf } from "@/lib/pdfIdelPerf";
 import { GenerateurOrdonnance } from "@/components/GenerateurOrdonnance";
 
 type Pro = { nom: string; prenom: string | null; titre: string | null; rpps: string | null; cabinets: string | null };
@@ -41,8 +43,9 @@ export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, pa
   useEffect(() => { charger(); }, [charger]);
 
   async function genererPdf(o: Ordo, mode: "download" | "bloburl") {
+    const med = unPro(o);
+    const dateFr = new Date(o.created_at).toLocaleDateString("fr-FR");
     if (o.type === "perfusion_domicile") {
-      const med = unPro(o);
       return genererPdfPerfusionDomicile({
         patientNom,
         patientNaissance,
@@ -50,7 +53,20 @@ export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, pa
         prescripteurPrenom: med?.prenom ?? null,
         prescripteurRpps: med?.rpps ?? null,
         prescripteurStructure: med?.cabinets ?? null,
-        date: new Date(o.created_at).toLocaleDateString("fr-FR"),
+        date: dateFr,
+        contenu: o.contenu,
+        signature: o.signature,
+      }, mode);
+    }
+    if (o.type === "pharma_perf" || o.type === "idel_perf") {
+      const gen = o.type === "pharma_perf" ? genererPdfPharmaPerf : genererPdfIdelPerf;
+      return gen({
+        patientNom,
+        prescripteurNom: med?.nom ?? null,
+        prescripteurPrenom: med?.prenom ?? null,
+        prescripteurTitre: med?.titre ?? null,
+        prescripteurRpps: med?.rpps ?? null,
+        date: dateFr,
         contenu: o.contenu,
         signature: o.signature,
       }, mode);

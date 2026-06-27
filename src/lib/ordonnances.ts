@@ -37,6 +37,27 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
       { key: "date_fin2", label: "Date de fin de la cure", type: "date" },
     ],
   },
+  {
+    id: "pharma_perf",
+    label: "Pharmacie (perfusion)",
+    champs: [
+      { key: "serum_100", label: "Sérum physiologique 100 mL (poches/jour)", type: "number" },
+      { key: "serum_50", label: "Sérum physiologique 50 mL (poche/jour)", type: "number" },
+      { key: "qsp_jours", label: "QSP (jours)", type: "number" },
+    ],
+  },
+  {
+    id: "idel_perf",
+    label: "IDEL (soins de perfusion)",
+    champs: [
+      { key: "date_debut_soins", label: "Date de début des soins", type: "date" },
+      { key: "voie", label: "Par voie d'abord", type: "radio", options: ["Périphérique", "PICC-line", "Cathéter central", "Chambre Implantable", "Sous cutanée"] },
+      { key: "mode", label: "Traitement à administrer par", type: "radio", options: ["Pompe en continu ou discontinu", "Diffuseur", "Gravité", "Pousse seringue électrique"] },
+      { key: "perfusion_1", label: "1/ Perfusion de", type: "textarea" },
+      { key: "perfusion_2", label: "2/ Perfusion de", type: "textarea" },
+      { key: "duree_jours", label: "D'une durée de (jours)", type: "number" },
+    ],
+  },
 ];
 
 // Ordonnance type (modèle pré-rempli) rattachée à un protocole.
