@@ -86,17 +86,25 @@ export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, pa
     }, mode);
   }
 
-  const telecharger = (o: Ordo) => genererPdf(o, "download");
+  async function telecharger(o: Ordo) {
+    try { await genererPdf(o, "download"); }
+    catch (e) { alert("Impossible de générer le PDF.\n" + (e instanceof Error ? e.message : "")); }
+  }
   async function voir(o: Ordo) {
     // On ouvre l'onglet tout de suite (dans le geste de clic) pour éviter
     // le blocage de pop-up, puis on y charge le PDF une fois généré.
     const win = window.open("", "_blank");
-    const url = await genererPdf(o, "bloburl");
-    if (typeof url === "string") {
-      if (win) win.location.href = url;
-      else window.open(url, "_blank");
-    } else if (win) {
-      win.close();
+    try {
+      const url = await genererPdf(o, "bloburl");
+      if (typeof url === "string") {
+        if (win) win.location.href = url;
+        else window.open(url, "_blank");
+      } else if (win) {
+        win.close();
+      }
+    } catch (e) {
+      if (win) win.close();
+      alert("Impossible d'ouvrir le PDF.\n" + (e instanceof Error ? e.message : ""));
     }
   }
 
