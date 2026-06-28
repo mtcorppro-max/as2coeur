@@ -116,6 +116,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
   const supprimerProtocole = (i: number) => setProtocoles((arr) => arr.filter((_, idx) => idx !== i));
 
   const estChirurgien = form.role === "chirurgien";
+  const estPharmacie = form.role === "pharmacie";
 
   const telechargerPdf = () =>
     genererPdfConsignes({
@@ -315,16 +316,23 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
             </div>
           </>
         )}
-        <div className="grid gap-4 sm:grid-cols-2">
+        {estPharmacie ? (
           <div>
-            <label className="label">Prénom *</label>
-            <input className="input" value={form.prenom} onChange={set("prenom")} placeholder={estChirurgien ? "Jean" : "Marie"} required />
+            <label className="label">Raison sociale *</label>
+            <input className="input" value={form.nom} onChange={set("nom")} placeholder="Pharmacie du Centre" required />
           </div>
-          <div>
-            <label className="label">Nom *</label>
-            <input className="input" value={form.nom} onChange={set("nom")} placeholder={estChirurgien ? "MARTIN" : "DUPONT"} required />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">Prénom *</label>
+              <input className="input" value={form.prenom} onChange={set("prenom")} placeholder={estChirurgien ? "Jean" : "Marie"} required />
+            </div>
+            <div>
+              <label className="label">Nom *</label>
+              <input className="input" value={form.nom} onChange={set("nom")} placeholder={estChirurgien ? "MARTIN" : "DUPONT"} required />
+            </div>
           </div>
-        </div>
+        )}
         {prestataires && (
           <div>
             <label className="label">Prestataire *</label>
@@ -339,7 +347,13 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
         {!estChirurgien && (
           <div>
             <label className="label">Téléphone</label>
-            <input className="input" value={form.telephone} onChange={set("telephone")} placeholder="06…" inputMode="tel" />
+            <input className="input" value={form.telephone} onChange={set("telephone")} placeholder="0…" inputMode="tel" />
+          </div>
+        )}
+        {estPharmacie && (
+          <div>
+            <label className="label">Adresse postale</label>
+            <input className="input" value={form.cabinets} onChange={set("cabinets")} placeholder="12 rue de la Paix, 34000 Montpellier" />
           </div>
         )}
         <div className="grid gap-4 sm:grid-cols-2">

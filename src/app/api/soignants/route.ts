@@ -125,9 +125,12 @@ export async function POST(request: Request) {
           recevoir_alertes: body.recevoir_alertes === true,
         }
       : {
-          prenom: texteOuNull(body.prenom),
+          // La pharmacie n'a pas de prénom (raison sociale dans `nom`) ; on
+          // stocke son adresse postale dans `cabinets`.
+          prenom: role === "pharmacie" ? null : texteOuNull(body.prenom),
           telephone: texteOuNull(body.telephone),
           zone_exercice: role === "infirmiere_liberale" ? texteOuNull(body.zone_exercice) : null,
+          cabinets: role === "pharmacie" ? texteOuNull(body.cabinets) : null,
         };
 
   // Rattachement : infirmière libérale & pharmacie -> aucune agence ;

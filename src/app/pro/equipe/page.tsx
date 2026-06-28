@@ -15,7 +15,7 @@ type Soignant = {
   nom: string;
   prenom: string | null;
   titre: string | null;
-  role: "coordinatrice" | "chirurgien" | "delegue" | "manager" | "infirmiere_liberale";
+  role: "coordinatrice" | "chirurgien" | "delegue" | "manager" | "infirmiere_liberale" | "livreur" | "pharmacie";
   niveau: number;
   agence_id: string | null;
   region_id: string | null;
@@ -287,7 +287,7 @@ export default function EquipePage() {
         <div className="grid gap-1 text-sm sm:grid-cols-2">
           {s.email && <Info label="Email" value={s.email} href={`mailto:${s.email}`} />}
           {s.telephone && <Info label="Téléphone" value={s.telephone} href={`tel:${s.telephone}`} />}
-          {s.cabinets && <Info label="Cabinet(s)" value={s.cabinets} />}
+          {s.cabinets && <Info label={s.role === "pharmacie" ? "Adresse" : "Cabinet(s)"} value={s.cabinets} />}
           {s.secretariat_nom && <Info label="Secrétariat" value={s.secretariat_nom} />}
           {s.secretariat_tel && <Info label="Tél. secrétariat" value={s.secretariat_tel} href={`tel:${s.secretariat_tel}`} />}
         </div>
