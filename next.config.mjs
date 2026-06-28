@@ -7,9 +7,13 @@ const nextConfig = {
 
 export default withPWA({
   dest: "public",
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
+  // On évite le cache agressif des pages : après un déploiement, les
+  // navigations vont toujours chercher la version fraîche (plus de
+  // « rien ne change » / mélange ancien-nouveau code). L'app reste installable.
+  cacheOnFrontEndNav: false,
+  aggressiveFrontEndNavCaching: false,
   reloadOnOnline: true,
+  skipWaiting: true,
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
