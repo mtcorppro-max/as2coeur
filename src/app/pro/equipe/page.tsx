@@ -29,10 +29,11 @@ type Soignant = {
   secretariat_tel: string | null;
   protocoles: ProtocolePdf[] | null;
   recevoir_alertes: boolean | null;
+  agences: string[] | null;
 };
 
 const COLS =
-  "id,nom,prenom,titre,role,niveau,agence_id,region_id,email,telephone,specialite,rpps,cabinets,secretariat_nom,secretariat_email,secretariat_tel,protocoles,recevoir_alertes";
+  "id,nom,prenom,titre,role,niveau,agence_id,region_id,email,telephone,specialite,rpps,cabinets,secretariat_nom,secretariat_email,secretariat_tel,protocoles,recevoir_alertes,agences";
 
 // Soignant externe (sans compte) — cf. migrations 0040 / 0041 / 0042.
 type Externe = {
@@ -251,6 +252,10 @@ export default function EquipePage() {
               {s.region_id && regionNom.get(s.region_id) && (
                 <span className="badge bg-slate-100 text-slate-600">{regionNom.get(s.region_id)}</span>
               )}
+              {s.role === "delegue" && (s.agences ?? []).map((aid) => {
+                const lab = labelAgence(aid);
+                return lab ? <span key={aid} className="badge bg-slate-100 text-slate-600">{lab}</span> : null;
+              })}
             </div>
             {s.specialite && <p className="mt-0.5 text-sm text-slate-500">{s.specialite}</p>}
           </div>
@@ -562,15 +567,22 @@ function EditeurSoignant({
   const [protocoles, setProtocoles] = useState<Protocole[]>(() => (soignant.protocoles ?? []).map((p) => protocoleDepuis(p as unknown as Record<string, unknown>)));
   const nomAffiche = [soignant.titre, soignant.prenom, soignant.nom].filter(Boolean).join(" ");
   const estChir = soignant.role === "chirurgien";
+  const estDelegue = soignant.role === "delegue";
   const peutAcces = niveauMoi <= 1 && soignant.niveau >= 2;
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF((s) => ({ ...s, [k]: e.target.value }));
+  const [agencesDelegue, setAgencesDelegue] = useState<string[]>(soignant.agences ?? (soignant.agence_id ? [soignant.agence_id] : []));
+  const toggleAgence = (id: string) =>
+    setAgencesDelegue((arr) => (arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]));
 
   async function sauver() {
     setBusy(true); setErr(null);
     const body: Record<string, unknown> = {
       telephone: f.telephone, email: f.email,
       ...(estChir ? { rpps: f.rpps, specialite: f.specialite, cabinets: f.cabinets, secretariat_nom: f.secretariat_nom, secretariat_email: f.secretariat_email, secretariat_tel: f.secretariat_tel, protocoles: protocoles.map(protocolePropre), recevoir_alertes: recevoirAlertes } : {}),
-      ...(peutAcces ? { niveau: Number(niveau), agence_id: (niveau === "2" || niveau === "3") ? (agenceId || null) : null, region_id: niveau === "1" ? (regionId || null) : null } : {}),
+      ...(estDelegue ? { agences: agencesDelegue } : {}),
+      ...(peutAcces ? (estDelegue
+        ? { niveau: Number(niveau) }
+        : { niveau: Number(niveau), agence_id: (niveau === "2" || niveau === "3") ? (agenceId || null) : null, region_id: niveau === "1" ? (regionId || null) : null }) : {}),
     };
     const res = await fetch(`/api/soignants/${soignant.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     setBusy(false);
@@ -613,6 +625,24 @@ function EditeurSoignant({
           </>
         )}
 
+        {estDelegue && (
+          <div className="grid gap-2 border-t border-rose-100 pt-4">
+            <label className="label">Agences de rattachement <span className="font-normal text-slate-400">(plusieurs possibles)</span></label>
+            {agences.length === 0 ? (
+              <p className="text-sm text-slate-400">Aucune agence créée.</p>
+            ) : (
+              <div className="grid gap-1.5 rounded-xl border border-rose-100 p-3">
+                {agences.map((a) => (
+                  <label key={a.value} className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                    <input type="checkbox" checked={agencesDelegue.includes(a.value)} onChange={() => toggleAgence(a.value)} className="accent-brand" />
+                    {a.label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {peutAcces && (
           <div className="grid gap-4 border-t border-rose-100 pt-4">
             <div>
@@ -625,7 +655,7 @@ function EditeurSoignant({
                 <Select value={regionId} onChange={setRegionId} placeholder={regions.length ? "— Choisir une région —" : "Aucune région créée"} options={regions} />
               </div>
             )}
-            {(niveau === "2" || niveau === "3") && (
+            {(niveau === "2" || niveau === "3") && !estDelegue && (
               <div>
                 <label className="label">Agence de rattachement</label>
                 <Select value={agenceId} onChange={setAgenceId} placeholder={agences.length ? "— Choisir une agence —" : "Aucune agence créée"} options={agences} />
