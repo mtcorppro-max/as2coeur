@@ -63,6 +63,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     champs: [
       { key: "poches_50", label: "Poches NaCl 0,9% 50 mL", type: "number" },
       { key: "poches_100", label: "Poches NaCl 0,9% 100 mL", type: "number" },
+      { key: "nutrition", label: "Poches de nutrition et vitamines (une par ligne)", type: "textarea" },
       { key: "qsp_jours", label: "QSP (jours)", type: "number" },
       { key: "renouvelable", label: "Renouvelable (fois)", type: "number" },
     ],

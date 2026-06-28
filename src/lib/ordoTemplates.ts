@@ -35,6 +35,7 @@ export const CONFIGS: Record<string, Conf> = {
     champs: [
       { k: "txt", key: "poches_50", pos: { x: 200, y: 337 } },
       { k: "txt", key: "poches_100", pos: { x: 200, y: 355 } },
+      { k: "lignes", key: "nutrition", pos: { x: 54, y: 415 }, lineH: 16 },
       { k: "txt", key: "qsp_jours", pos: { x: 70, y: 505 } },
       { k: "txt", key: "renouvelable", pos: { x: 150, y: 524 } },
     ],
