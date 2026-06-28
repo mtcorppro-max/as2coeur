@@ -4,11 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { modeleOrdo, valeurLisible } from "@/lib/ordonnances";
-import { genererPdfOrdonnance } from "@/lib/pdfOrdonnance";
-import { genererPdfPerfusionDomicile } from "@/lib/pdfPerfusionDomicile";
-import { genererPdfIdelPerf } from "@/lib/pdfIdelPerf";
-import { genererPdfOrdoBS } from "@/lib/pdfOrdoBS";
-import { genererPdfModele, CONFIGS } from "@/lib/ordoTemplates";
+import { genererPdfOrdo } from "@/lib/genererPdfOrdo";
 import { GenerateurOrdonnance } from "@/components/GenerateurOrdonnance";
 import { ChampsOrdonnance } from "@/components/ChampsOrdonnance";
 import { Select } from "@/components/Select";
@@ -27,8 +23,6 @@ export type Ordo = {
   signee_le: string | null;
   created_at: string;
 };
-const unPro = (o: Ordo): Pro | null => (Array.isArray(o.destinataire) ? o.destinataire[0] : o.destinataire) ?? null;
-
 export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, patientChirurgien }: { patientId: string; patientNom: string; patientNaissance: string | null; patientChirurgien: string | null }) {
   const pro = useProSession();
   const [ordos, setOrdos] = useState<Ordo[]>([]);
@@ -47,43 +41,7 @@ export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, pa
   useEffect(() => { charger(); }, [charger]);
 
   async function genererPdf(o: Ordo, mode: "download" | "bloburl") {
-    const med = unPro(o);
-    const dateFr = new Date(o.created_at).toLocaleDateString("fr-FR");
-    if (o.type === "perfusion_domicile") {
-      return genererPdfPerfusionDomicile({
-        patientNom,
-        patientNaissance,
-        prescripteurNom: med?.nom ?? null,
-        prescripteurPrenom: med?.prenom ?? null,
-        prescripteurRpps: med?.rpps ?? null,
-        prescripteurStructure: med?.cabinets ?? null,
-        date: dateFr,
-        contenu: o.contenu,
-        signature: o.signature,
-      }, mode);
-    }
-    const data = {
-      patientNom,
-      prescripteurNom: med?.nom ?? null,
-      prescripteurPrenom: med?.prenom ?? null,
-      prescripteurTitre: med?.titre ?? null,
-      prescripteurRpps: med?.rpps ?? null,
-      date: dateFr,
-      contenu: o.contenu,
-      signature: o.signature,
-    };
-    const GENS: Record<string, typeof genererPdfIdelPerf> = {
-      idel_perf: genererPdfIdelPerf,
-      ordo_bs: genererPdfOrdoBS,
-    };
-    if (GENS[o.type]) return GENS[o.type](data, mode);
-    if (CONFIGS[o.type]) return genererPdfModele(o.type, data, mode);
-    return genererPdfOrdonnance({
-      type: o.type, titre: o.titre, contenu: o.contenu, patientNom,
-      prescripteurNom: o.signataire_nom ?? "",
-      signature: o.signature, signataireNom: o.signataire_nom, signeeLe: o.signee_le,
-      date: new Date(o.created_at).toLocaleDateString("fr-FR"),
-    }, mode);
+    return genererPdfOrdo(o, patientNom, patientNaissance, mode);
   }
 
   async function telecharger(o: Ordo) {

@@ -84,6 +84,7 @@ const VIDE = {
   traitement_autre: "",
   pharmacie: "",
   pharmacie_tel: "",
+  pharmacie_compte_nom: "",
   infirmiere_nom: "",
   infirmiere_tel: "",
   proche_nom: "",
@@ -143,6 +144,7 @@ export function NouveauPatientForm() {
   const chirurgiens = soignants.filter((s) => s.role === "chirurgien");
   const infirmieres = soignants.filter((s) => s.role === "infirmiere_liberale");
   const livreurs = soignants.filter((s) => s.role === "livreur");
+  const pharmacies = soignants.filter((s) => s.role === "pharmacie");
   const externesMed = externes.filter((e) => e.type === "medecin");
   const externesInf = externes.filter((e) => e.type === "infirmiere");
   const nomExterne = (e: Externe) => [e.titre, e.prenom, e.nom].filter(Boolean).join(" ");
@@ -211,7 +213,7 @@ export function NouveauPatientForm() {
   // Le rattachement est déduit du chirurgien, des coordinatrices d'alerte,
   // de l'infirmière et du délégué médical choisis.
   const rattachementsAuto = () => {
-    const noms = [form.chirurgien, form.alerte_1_nom, form.alerte_2_nom, form.infirmiere_nom, form.delegue_nom, form.livreur_nom].filter(Boolean);
+    const noms = [form.chirurgien, form.alerte_1_nom, form.alerte_2_nom, form.infirmiere_nom, form.delegue_nom, form.livreur_nom, form.pharmacie_compte_nom].filter(Boolean);
     const ids = soignants.filter((s) => noms.includes(nomComplet(s))).map((s) => s.id);
     return [...new Set(ids)];
   };
@@ -423,6 +425,26 @@ export function NouveauPatientForm() {
             <input className="input" value={form.pharmacie_tel} onChange={set("pharmacie_tel")} placeholder="0…" inputMode="tel" />
           </div>
         </div>
+        {pharmacies.length > 0 && (
+          <div>
+            <label className="label">Pharmacie — accès au portail (compte AS2CŒUR)</label>
+            <Select
+              value={form.pharmacie_compte_nom}
+              onChange={(v) => {
+                const ph = pharmacies.find((s) => nomComplet(s) === v);
+                setForm((f) => ({ ...f, pharmacie_compte_nom: v, pharmacie: f.pharmacie || v, pharmacie_tel: f.pharmacie_tel || (ph?.telephone ?? "") }));
+              }}
+              placeholder="— Aucun compte pharmacie —"
+              options={[
+                ...pharmacies.map((s) => ({ value: nomComplet(s), label: nomComplet(s) })),
+                ...(form.pharmacie_compte_nom && !pharmacies.some((s) => nomComplet(s) === form.pharmacie_compte_nom)
+                  ? [{ value: form.pharmacie_compte_nom, label: form.pharmacie_compte_nom }]
+                  : []),
+              ]}
+            />
+            <p className="mt-1 text-xs text-slate-400">La pharmacie rattachée verra ce patient dans son portail et recevra les ordonnances pharmacie signées.</p>
+          </div>
+        )}
         <div>
           <label className="label">Infirmière libérale</label>
           <Select

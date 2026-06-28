@@ -124,6 +124,8 @@ export interface Patient {
   delegue_nom: string | null;
   // Livreur rattaché (cf. migration 0055)
   livreur_nom: string | null;
+  // Compte pharmacie rattaché (accès portail) (cf. migration 0057)
+  pharmacie_compte_nom: string | null;
   created_at: string;
 }
 

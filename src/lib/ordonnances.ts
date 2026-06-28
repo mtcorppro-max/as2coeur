@@ -200,6 +200,12 @@ export type OrdonnanceType = { id: string; nom: string; type: string; contenu: R
 
 export const modeleOrdo = (id: string) => MODELES_ORDONNANCE.find((m) => m.id === id);
 
+// Modèles d'ordonnance destinés à la pharmacie (visibles par le compte
+// pharmacie une fois l'ordonnance signée).
+export const TYPES_ORDO_PHARMACIE = ["pharma_perf", "ordo_pharma_npad", "ordo_pharma_piccline"] as const;
+export const estOrdoPharmacie = (type: string) =>
+  (TYPES_ORDO_PHARMACIE as readonly string[]).includes(type);
+
 // Représentation lisible d'un champ (à partir du contenu complet de l'ordonnance).
 export function valeurLisible(champ: ChampOrdo, contenu: Record<string, unknown>): string {
   if (champ.type === "section") return "";

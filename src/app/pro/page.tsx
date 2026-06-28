@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -120,6 +120,11 @@ export default function Dashboard() {
   const estMedecin = pro?.role === "chirurgien";
   const voitAlertes = !estRoleService(pro?.role) && (!estMedecin || !!pro?.recevoir_alertes);
 
+  // La pharmacie n'a pas de tableau de bord : on la renvoie vers son listing.
+  useEffect(() => {
+    if (pro?.role === "pharmacie") router.replace("/pro/pharmacie");
+  }, [pro?.role, router]);
+
   const { patients, parPatient, totalActives, messages, actions } = useMemo<DashData>(() => (
     data ?? {
       patients: [],
@@ -150,6 +155,8 @@ export default function Dashboard() {
     );
     invalidate("pro:dashboard");
   }
+
+  if (pro?.role === "pharmacie") return null; // redirigée vers /pro/pharmacie
 
   return (
     <div className="grid gap-5">
