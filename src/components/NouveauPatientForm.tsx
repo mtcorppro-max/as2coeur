@@ -47,7 +47,7 @@ const ajouterJoursISO = (iso: string, n: number): string => {
 };
 
 // Traitements à suivre proposés (Post op en tête).
-const TRAITEMENTS = [
+export const TRAITEMENTS = [
   "Post op",
   "Antalgie générale",
   "Anti-douleur ALR Aiguë",

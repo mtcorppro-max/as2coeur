@@ -6,6 +6,7 @@ import { LIBELLE_ROLE } from "@/lib/roles";
 import { AdresseAutocomplete } from "@/components/AdresseAutocomplete";
 import { Select } from "@/components/Select";
 import { DateField } from "@/components/DateField";
+import { TRAITEMENTS } from "@/components/NouveauPatientForm";
 import type { Patient, RolePro, ProtocoleConsigne } from "@/lib/types";
 
 type Soignant = { id: string; nom: string; prenom: string | null; titre: string | null; role: RolePro; agence_id: string | null; telephone: string | null; specialite: string | null; protocoles: ProtocoleConsigne[] | null };
@@ -18,7 +19,7 @@ const nomComplet = (s: { titre: string | null; prenom: string | null; nom: strin
 // Champs administratifs éditables de la fiche patient.
 const CHAMPS = [
   "date_naissance", "telephone", "email", "adresse", "code_postal", "ville",
-  "operation", "date_operation", "duree_prise_en_charge", "chirurgien", "delegue_nom", "pharmacie", "pharmacie_tel", "infirmiere_nom", "infirmiere_tel",
+  "operation", "date_operation", "duree_prise_en_charge", "traitement", "chirurgien", "delegue_nom", "pharmacie", "pharmacie_tel", "infirmiere_nom", "infirmiere_tel",
   "proche_nom", "proche_tel",
   "alerte_1_nom", "tel_alerte_1", "alerte_2_nom", "tel_alerte_2",
 ] as const;
@@ -68,6 +69,7 @@ export function InfosPatient({
   const [externes, setExternes] = useState<Externe[]>([]);
   const [joursSuivi, setJoursSuivi] = useState<number[]>(patient.jours_suivi ?? []);
   const [agenceId, setAgenceId] = useState(patient.agence_id ?? "");
+  const [autreTrait, setAutreTrait] = useState(!!patient.traitement && !TRAITEMENTS.includes(patient.traitement as typeof TRAITEMENTS[number]));
   const [agences, setAgences] = useState<{ value: string; label: string }[]>([]);
 
   useEffect(() => {
@@ -235,6 +237,21 @@ export function InfosPatient({
               <p className="mt-1 text-xs text-slate-400">Remplit l&apos;opération, la durée et les jours de suivi.</p>
             </div>
           )}
+          <div>
+            <label className="label">Type de traitement</label>
+            <Select
+              value={autreTrait ? "Autre traitement" : form.traitement}
+              onChange={(v) => {
+                if (v === "Autre traitement") { setAutreTrait(true); setVal("traitement", ""); }
+                else { setAutreTrait(false); setVal("traitement", v); }
+              }}
+              placeholder="— Choisir un type de traitement —"
+              options={TRAITEMENTS.map((t) => ({ value: t, label: t }))}
+            />
+            {autreTrait && (
+              <input className="input mt-2" placeholder="Préciser le traitement" value={form.traitement} onChange={(e) => setVal("traitement", e.target.value)} />
+            )}
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Champ label={estChirurgical ? "Date de l'opération" : "Date de début de prise en charge"} type="date" value={form.date_operation} onChange={set("date_operation")} />
             <Champ label="Jours de prise en charge" value={form.duree_prise_en_charge} onChange={set("duree_prise_en_charge")} />
@@ -311,6 +328,7 @@ export function InfosPatient({
               extra={vue.date_operation ? formatDate(vue.date_operation) : undefined}
             />
             <Ligne label="Prise en charge" value={duree ? `${duree} jours` : ""} />
+            <Ligne label="Type de traitement" value={vue.traitement} />
             <Ligne label="Chirurgien" value={vue.chirurgien} />
             <Ligne
               label="Pharmacie"
