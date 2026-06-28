@@ -41,13 +41,6 @@ function formatDate(iso: string): string {
   return j && m && a ? `${j}/${m}/${a}` : iso;
 }
 
-// Ajoute n jours à une date "YYYY-MM-DD" et renvoie "JJ/MM/AAAA".
-function ajouterJours(iso: string, n: number): string {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return "";
-  d.setDate(d.getDate() + n);
-  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
-}
 
 function age(iso: string): number | null {
   if (!iso) return null;
@@ -276,8 +269,6 @@ export function InfosPatient({
   const ageAns = age(vue.date_naissance);
   const villeLigne = [vue.code_postal, vue.ville].filter(Boolean).join(" ");
   const duree = vue.duree_prise_en_charge ? Number(vue.duree_prise_en_charge) : null;
-  const j1 = vue.date_operation ? ajouterJours(vue.date_operation, 1) : "";
-  const dernierJour = vue.date_operation && duree ? ajouterJours(vue.date_operation, duree) : "";
 
   return (
     <section className="card grid gap-4">
@@ -320,8 +311,6 @@ export function InfosPatient({
               extra={vue.date_operation ? formatDate(vue.date_operation) : undefined}
             />
             <Ligne label="Prise en charge" value={duree ? `${duree} jours` : ""} />
-            {j1 && <Ligne label="Suivi J1" value={j1} />}
-            {dernierJour && <Ligne label="Suivi dernier jour" value={dernierJour} />}
             <Ligne label="Chirurgien" value={vue.chirurgien} />
             <Ligne
               label="Pharmacie"
