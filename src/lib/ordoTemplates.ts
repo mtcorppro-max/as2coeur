@@ -109,7 +109,7 @@ export const CONFIGS: Record<string, Conf> = {
     champs: [
       { k: "radio", key: "voie", map: { "Cathéter central": { x: 31, y: 361 }, "Picc-line": { x: 29, y: 390 }, "Chambre implantable": { x: 31, y: 420 } } },
       { k: "txt", key: "perfusion", pos: { x: 112, y: 465 } },
-      { k: "phrase", pos: { x: 50, y: 511 }, modele: "Avec un branchement à {heure_branchement} et un débranchement à {heure_debranchement}", suffixe: ", administration nocturne", suffixeSiCoche: { key: "nocturne", option: "Administration nocturne" } },
+      { k: "phrase", pos: { x: 50, y: 511 }, size: 12, modele: "Avec un branchement à {heure_branchement} et un débranchement à {heure_debranchement}", suffixe: ", administration nocturne", suffixeSiCoche: { key: "nocturne", option: "Administration nocturne" } },
       { k: "txt", key: "ordonnance_jours", pos: { x: 114, y: 597 } },
     ],
   },
