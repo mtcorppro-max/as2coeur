@@ -103,7 +103,7 @@ export default function FichePatient() {
   // En cours de chargement
   if (!patientData) {
     return (
-      <div className="grid gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <div className="h-8 w-48 animate-pulse rounded-xl bg-rose-100" />
         <div className="h-32 animate-pulse rounded-2xl bg-white" />
         <div className="grid gap-4 lg:grid-cols-2">
@@ -130,7 +130,7 @@ export default function FichePatient() {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       {/* ── En-tête ── */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>

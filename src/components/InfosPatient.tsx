@@ -463,7 +463,7 @@ function Ligne({
   return (
     <div className="flex justify-between gap-3 text-sm">
       <span className="shrink-0 text-slate-400">{label}</span>
-      <span className="text-right font-medium text-slate-700">
+      <span className="min-w-0 break-words text-right font-medium text-slate-700">
         {href ? (
           <a href={href} className="text-brand hover:underline">{value || extra}</a>
         ) : (

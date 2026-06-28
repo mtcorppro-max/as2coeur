@@ -90,8 +90,8 @@ export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, pa
             const aSigner = o.statut === "a_signer" && o.destinataire_id === monId;
             return (
               <div key={o.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-100 px-3 py-2">
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium text-slate-800">{o.titre}</span>
                     {o.statut === "signee"
                       ? <span className="badge bg-green-100 text-ok">Signée</span>
@@ -101,7 +101,7 @@ export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, pa
                   </div>
                   <p className="text-xs text-slate-400">{new Date(o.created_at).toLocaleDateString("fr-FR")}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   {aSigner && <button onClick={() => setSigner(o)} className="btn-primary px-3 py-1.5 text-sm">Lire et signer</button>}
                   {o.statut !== "signee" && (
                     <button onClick={() => setEditer(o)} className="btn-secondary px-3 py-1.5 text-sm">Modifier</button>
