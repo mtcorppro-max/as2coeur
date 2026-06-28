@@ -14,6 +14,7 @@ type Rect = [number, number, number, number];
 type Conf = {
   template: string;
   presc?: Pt; rpps?: Pt; patient?: Pt; date?: Pt; signature?: Pt;
+  patientGauche?: boolean; // nom patient aligné à gauche (sinon centré sur patient.x)
   rppsBarres?: Rect; // zone des |__| de l'identifiant à masquer
   blancs?: Rect[];
   textes?: { s: string; pos: Pt; size?: number }[]; // textes statiques (re)dessinés
@@ -122,11 +123,11 @@ export const CONFIGS: Record<string, Conf> = {
   },
   // PDF image (sans couche texte) : en-tête + jours + signature (positions à affiner).
   nead: {
-    template: "/NEAD.pdf", presc: { x: 60, y: 110 }, patient: { x: 310, y: 110 }, date: { x: 360, y: 240 }, signature: { x: 400, y: 665 },
+    template: "/NEAD.pdf", presc: { x: 60, y: 108 }, rpps: { x: 60, y: 128 }, patient: { x: 438, y: 112 }, date: { x: 360, y: 240 }, signature: { x: 400, y: 665 },
     champs: [{ k: "txt", key: "ordonnance_jours", pos: { x: 385, y: 613 } }, { k: "txt", key: "a_renouveler", pos: { x: 410, y: 631 } }],
   },
   nead_idel: {
-    template: "/NEAD%20IDEL.pdf", presc: { x: 60, y: 110 }, patient: { x: 310, y: 110 }, date: { x: 360, y: 240 }, signature: { x: 400, y: 665 },
+    template: "/NEAD%20IDEL.pdf", presc: { x: 135, y: 115 }, rpps: { x: 135, y: 135 }, patient: { x: 425, y: 111 }, patientGauche: true, date: { x: 360, y: 240 }, signature: { x: 400, y: 665 },
     champs: [{ k: "txt", key: "ordonnance_jours", pos: { x: 385, y: 613 } }, { k: "txt", key: "a_renouveler", pos: { x: 410, y: 631 } }],
   },
 };
@@ -141,7 +142,7 @@ export async function genererPdfModele(type: string, d: DocOrdoData, mode: "down
 
   if (conf.presc) txt(nomPrescripteur(d), conf.presc);
   if (conf.rpps && d.prescripteurRpps) txt(`N° RPPS : ${d.prescripteurRpps}`, conf.rpps, 8);
-  if (conf.patient) txtC(d.patientNom, conf.patient);
+  if (conf.patient) (conf.patientGauche ? txt : txtC)(d.patientNom, conf.patient);
   if (conf.date) txt(d.date || new Date().toLocaleDateString("fr-FR"), conf.date);
 
   const c = d.contenu;
