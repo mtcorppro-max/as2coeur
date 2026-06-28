@@ -186,11 +186,14 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               </Link>
             )}
             {pro && (
-              <Link href="/pro/profil" prefetch className="leading-tight rounded-lg px-2 py-1 text-left transition hover:bg-rose-50" title="Mon profil">
-                <p className="text-sm font-semibold text-slate-700">
-                  {[pro.titre, pro.prenom, pro.nom].filter(Boolean).join(" ")}
-                </p>
-                <p className="text-xs text-slate-400">{LIBELLE_ROLE[pro.role as keyof typeof LIBELLE_ROLE]}</p>
+              <Link href="/pro/profil" prefetch className="flex items-center gap-2 rounded-lg px-2 py-1 text-left transition hover:bg-rose-50" title="Mon profil">
+                <AvatarPro pro={pro} />
+                <span className="hidden leading-tight sm:block">
+                  <span className="block text-sm font-semibold text-slate-700">
+                    {[pro.titre, pro.prenom, pro.nom].filter(Boolean).join(" ")}
+                  </span>
+                  <span className="block text-xs text-slate-400">{LIBELLE_ROLE[pro.role as keyof typeof LIBELLE_ROLE]}</span>
+                </span>
               </Link>
             )}
             <LogoutButton />
@@ -250,6 +253,17 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         )}
       </nav>
     </div>
+  );
+}
+
+// Pastille de profil dans l'en-tête : photo si présente, sinon initiales.
+function AvatarPro({ pro }: { pro: { prenom: string | null; nom: string; photo_url: string | null } }) {
+  const initiales = `${pro.prenom?.[0] ?? ""}${pro.nom?.[0] ?? ""}`.toUpperCase() || "?";
+  return pro.photo_url ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={pro.photo_url} alt="" className="h-8 w-8 shrink-0 rounded-full border border-rose-100 object-cover" />
+  ) : (
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-100 text-xs font-bold text-brand">{initiales}</span>
   );
 }
 

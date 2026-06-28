@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export type SessionPatient = { id: string; nom: string; code_postal: string | null; user_id: string };
-export type SessionPro = { id: string; nom: string; prenom: string | null; titre: string | null; role: string; niveau: number; agence_id: string | null; region_id: string | null; prestataire_id: string; user_id: string; recevoir_alertes: boolean };
+export type SessionPro = { id: string; nom: string; prenom: string | null; titre: string | null; role: string; niveau: number; agence_id: string | null; region_id: string | null; prestataire_id: string; user_id: string; recevoir_alertes: boolean; photo_url: string | null };
 
 const LS_PATIENT = "sc_patient";
-const LS_PRO = "sc_pro6"; // bump : ajout recevoir_alertes
+const LS_PRO = "sc_pro7"; // bump : ajout photo_url
 const TTL = 15 * 60 * 1000; // 15 min
 
 type Cached<T> = { v: T; ts: number };
@@ -92,10 +92,19 @@ async function fetchPro(): Promise<SessionPro | null> {
   const COLS = "id,nom,prenom,titre,role,niveau,agence_id,region_id,prestataire_id,user_id";
   let { data, error } = await supabase
     .from("professionnel")
-    .select(`${COLS},recevoir_alertes`)
+    .select(`${COLS},recevoir_alertes,photo_url`)
     .eq("user_id", session.user.id)
     .maybeSingle();
   if (error) {
+    // Fallback si la colonne photo_url (0061) n'est pas encore appliquée.
+    ({ data, error } = await supabase
+      .from("professionnel")
+      .select(`${COLS},recevoir_alertes`)
+      .eq("user_id", session.user.id)
+      .maybeSingle());
+  }
+  if (error) {
+    // Fallback si recevoir_alertes (0051) n'est pas non plus appliquée.
     ({ data } = await supabase
       .from("professionnel")
       .select(COLS)
@@ -103,7 +112,7 @@ async function fetchPro(): Promise<SessionPro | null> {
       .maybeSingle());
   }
   if (!data) return null;
-  const p = { recevoir_alertes: false, ...(data as object) } as SessionPro;
+  const p = { recevoir_alertes: false, photo_url: null, ...(data as object) } as SessionPro;
   memPro = p;
   lsSet(LS_PRO, p);
   return p;

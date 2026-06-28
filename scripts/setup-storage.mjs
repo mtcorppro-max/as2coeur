@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // =====================================================================
-// Crée le bucket Storage privé "cicatrices" (photos médicales).
-// Idempotent : ne fait rien si le bucket existe déjà.
+// Crée les buckets Storage :
+//   - "cicatrices" : privé (photos médicales, accès via URL signée).
+//   - "avatars"    : public (photos de profil du personnel, non médical).
+// Idempotent : ne touche pas à un bucket déjà présent.
 //
 // Usage : node --env-file=.env.local scripts/setup-storage.mjs
 // =====================================================================
@@ -15,7 +17,12 @@ if (!url || !serviceKey) {
   process.exit(1);
 }
 
-const BUCKET = "cicatrices";
+const MIME = ["image/jpeg", "image/png", "image/webp", "image/heic"];
+const BUCKETS = [
+  { name: "cicatrices", public: false, fileSizeLimit: "10MB", allowedMimeTypes: MIME },
+  { name: "avatars", public: true, fileSizeLimit: "5MB", allowedMimeTypes: MIME },
+];
+
 const db = createClient(url, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
@@ -26,18 +33,15 @@ if (errList) {
   process.exit(1);
 }
 
-if (buckets.some((b) => b.name === BUCKET)) {
-  console.log(`✓ Bucket "${BUCKET}" déjà présent.`);
-  process.exit(0);
+for (const { name, ...opts } of BUCKETS) {
+  if (buckets.some((b) => b.name === name)) {
+    console.log(`✓ Bucket "${name}" déjà présent.`);
+    continue;
+  }
+  const { error } = await db.storage.createBucket(name, opts);
+  if (error) {
+    console.error(`❌ Création du bucket "${name}" échouée :`, error.message);
+    process.exit(1);
+  }
+  console.log(`✅ Bucket "${name}" (${opts.public ? "public" : "privé"}) créé.`);
 }
-
-const { error } = await db.storage.createBucket(BUCKET, {
-  public: false, // privé : accès uniquement via URL signée (cf. lib/photos.ts)
-  fileSizeLimit: "10MB",
-  allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/heic"],
-});
-if (error) {
-  console.error("❌ Création du bucket échouée :", error.message);
-  process.exit(1);
-}
-console.log(`✅ Bucket privé "${BUCKET}" créé.`);

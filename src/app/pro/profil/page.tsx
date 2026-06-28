@@ -6,13 +6,13 @@ import { useProSession, patchProSession } from "@/lib/hooks/useSession";
 import { LIBELLE_ROLE } from "@/lib/roles";
 
 type Form = {
-  titre: string; prenom: string; nom: string;
+  prenom: string; nom: string;
   telephone: string; email: string;
   specialite: string; rpps: string; cabinets: string;
   secretariat_nom: string; secretariat_email: string; secretariat_tel: string;
   zone_exercice: string;
 };
-const VIDE: Form = { titre: "", prenom: "", nom: "", telephone: "", email: "", specialite: "", rpps: "", cabinets: "", secretariat_nom: "", secretariat_email: "", secretariat_tel: "", zone_exercice: "" };
+const VIDE: Form = { prenom: "", nom: "", telephone: "", email: "", specialite: "", rpps: "", cabinets: "", secretariat_nom: "", secretariat_email: "", secretariat_tel: "", zone_exercice: "" };
 
 export default function MonProfil() {
   const pro = useProSession();
@@ -25,12 +25,14 @@ export default function MonProfil() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
 
   useEffect(() => {
     if (!pro?.id) return;
     createClient()
       .from("professionnel")
-      .select("titre,prenom,nom,telephone,email,specialite,rpps,cabinets,secretariat_nom,secretariat_email,secretariat_tel,zone_exercice,role")
+      .select("prenom,nom,telephone,email,specialite,rpps,cabinets,secretariat_nom,secretariat_email,secretariat_tel,zone_exercice,role")
       .eq("id", pro.id)
       .maybeSingle()
       .then(({ data }) => {
@@ -46,6 +48,35 @@ export default function MonProfil() {
   // Opt-in alertes : valeur issue de la session (pas de colonne dans le select
   // ci-dessus, pour rester robuste si la migration 0051 n'est pas encore appliquée).
   useEffect(() => { setRecevoirAlertes(!!pro?.recevoir_alertes); }, [pro?.recevoir_alertes]);
+
+  // Photo de profil : valeur issue de la session.
+  useEffect(() => { setPhotoUrl(pro?.photo_url ?? null); }, [pro?.photo_url]);
+
+  async function changerPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // permet de re-sélectionner le même fichier
+    if (!file) return;
+    setPhotoBusy(true); setErr(null); setMsg(null);
+    const fd = new FormData();
+    fd.append("fichier", file);
+    const res = await fetch("/api/profil/photo", { method: "POST", body: fd });
+    setPhotoBusy(false);
+    if (!res.ok) { const j = await res.json().catch(() => null); setErr(j?.message ?? "Échec de l'envoi de la photo."); return; }
+    const j = await res.json();
+    setPhotoUrl(j.photo_url);
+    patchProSession({ photo_url: j.photo_url });
+    setMsg("Photo de profil mise à jour ✓");
+  }
+
+  async function supprimerPhoto() {
+    setPhotoBusy(true); setErr(null); setMsg(null);
+    const res = await fetch("/api/profil/photo", { method: "DELETE" });
+    setPhotoBusy(false);
+    if (!res.ok) { setErr("Échec de la suppression."); return; }
+    setPhotoUrl(null);
+    patchProSession({ photo_url: null });
+    setMsg("Photo supprimée ✓");
+  }
 
   const set = (k: keyof Form) => (e: React.ChangeEvent<HTMLInputElement>) => setF((s) => ({ ...s, [k]: e.target.value }));
   const estChir = role === "chirurgien";
@@ -74,7 +105,7 @@ export default function MonProfil() {
     if (!pro?.id) return;
     setBusy(true); setErr(null); setMsg(null);
     const body: Record<string, unknown> = {
-      titre: f.titre, prenom: f.prenom, nom: f.nom, telephone: f.telephone, email: f.email,
+      prenom: f.prenom, nom: f.nom, telephone: f.telephone, email: f.email,
       ...(estChir ? { specialite: f.specialite, rpps: f.rpps, cabinets: f.cabinets, secretariat_nom: f.secretariat_nom, secretariat_email: f.secretariat_email, secretariat_tel: f.secretariat_tel, recevoir_alertes: recevoirAlertes } : {}),
       ...(estInfLib ? { zone_exercice: f.zone_exercice } : {}),
       ...(estDelegue ? { agences: agencesDelegue } : {}),
@@ -95,8 +126,21 @@ export default function MonProfil() {
         <p className="text-sm text-slate-400">Chargement…</p>
       ) : (
         <div className="card grid gap-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div><label className="label">Titre</label><input className="input" value={f.titre} onChange={set("titre")} /></div>
+          {/* Photo de profil */}
+          <div className="flex items-center gap-4">
+            <Avatar url={photoUrl} prenom={f.prenom} nom={f.nom} />
+            <div className="flex flex-wrap items-center gap-2">
+              <label className={`btn-secondary cursor-pointer px-3 py-1.5 text-sm ${photoBusy ? "pointer-events-none opacity-50" : ""}`}>
+                {photoBusy ? "Envoi…" : photoUrl ? "Changer la photo" : "Ajouter une photo"}
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/heic" className="hidden" onChange={changerPhoto} disabled={photoBusy} />
+              </label>
+              {photoUrl && (
+                <button onClick={supprimerPhoto} disabled={photoBusy} className="text-sm font-medium text-critique hover:underline disabled:opacity-50">Supprimer</button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <div><label className="label">Prénom</label><input className="input" value={f.prenom} onChange={set("prenom")} /></div>
             <div><label className="label">Nom</label><input className="input" value={f.nom} onChange={set("nom")} /></div>
           </div>
@@ -154,5 +198,16 @@ export default function MonProfil() {
         </div>
       )}
     </div>
+  );
+}
+
+// Pastille ronde : photo si présente, sinon initiales.
+function Avatar({ url, prenom, nom }: { url: string | null; prenom: string; nom: string }) {
+  const initiales = `${prenom?.[0] ?? ""}${nom?.[0] ?? ""}`.toUpperCase() || "?";
+  return url ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt="Photo de profil" className="h-20 w-20 shrink-0 rounded-full border border-rose-100 object-cover" />
+  ) : (
+    <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-rose-100 text-2xl font-bold text-brand">{initiales}</span>
   );
 }
