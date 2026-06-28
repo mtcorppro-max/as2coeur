@@ -14,8 +14,8 @@ const MODELE_DEFAUT = MODELES_ORDONNANCE[0];
 export function EditeurOrdonnancesTypes({ value, onChange }: { value: OrdonnanceType[]; onChange: (v: OrdonnanceType[]) => void }) {
   const [ouvert, setOuvert] = useState<string | null>(null);
 
-  const ajouter = () => {
-    const t: OrdonnanceType = { id: crypto.randomUUID(), nom: "", type: MODELE_DEFAUT.id, contenu: {} };
+  const ajouter = (typeId: string) => {
+    const t: OrdonnanceType = { id: crypto.randomUUID(), nom: "", type: typeId || MODELE_DEFAUT.id, contenu: {} };
     onChange([...value, t]);
     setOuvert(t.id);
   };
@@ -36,6 +36,7 @@ export function EditeurOrdonnancesTypes({ value, onChange }: { value: Ordonnance
         return (
           <div key={t.id} className="rounded-xl border border-rose-100 bg-rose-50/30 p-3">
             <div className="flex items-center gap-2">
+              <span className="badge shrink-0 bg-rose-100 text-brand">{modele.label}</span>
               <input
                 className="input flex-1" placeholder="Nom de l'ordonnance type (ex. « Acupan IV post-op »)"
                 value={t.nom} onChange={(e) => maj(t.id, { nom: e.target.value })}
@@ -64,9 +65,15 @@ export function EditeurOrdonnancesTypes({ value, onChange }: { value: Ordonnance
         );
       })}
 
-      <button type="button" onClick={ajouter} className="justify-self-start rounded-lg border border-dashed border-rose-300 px-4 py-2 text-sm font-semibold text-brand hover:bg-rose-50">
-        + Ajouter une ordonnance type
-      </button>
+      <div className="max-w-sm">
+        <label className="label">+ Ajouter une ordonnance type</label>
+        <Select
+          value=""
+          onChange={(v) => ajouter(v)}
+          placeholder="— Choisir le type d'ordonnance à ajouter —"
+          options={MODELES_ORDONNANCE.map((m) => ({ value: m.id, label: m.label }))}
+        />
+      </div>
     </div>
   );
 }
