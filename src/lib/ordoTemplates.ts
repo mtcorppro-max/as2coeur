@@ -109,7 +109,7 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   idel_kyste: {
-    template: "/IDEL%20Kyste1.pdf", presc: { x: 90, y: 100 }, patient: { x: 350, y: 100 }, date: { x: 385, y: 177 }, signature: { x: 310, y: 597 },
+    template: "/IDEL%20Kyste1.pdf", presc: { x: 90, y: 110 }, patient: { x: 450, y: 95 }, date: { x: 385, y: 177 }, signature: { x: 310, y: 597 },
     champs: [
       { k: "lignes", key: "autres", pos: { x: 43, y: 550 }, lineH: 14 },
       { k: "txt", key: "duree_jours", pos: { x: 80, y: 591 } },
