@@ -68,9 +68,10 @@ export async function POST(request: Request) {
   // Contrôle d'octroi : pas plus puissant que soi, et le niveau 1 (manager)
   // est réservé au niveau 0.
   // Un manager est toujours niveau 1 ; une infirmière libérale toujours niveau 3.
+  // Niveaux fixes par rôle ; seuls coordinatrice et délégué laissent le choix.
   const niveauDemande = role === "manager" ? 1
     : role === "livreur" ? 2
-    : (role === "infirmiere_liberale" || role === "pharmacie") ? 3
+    : (role === "infirmiere_liberale" || role === "pharmacie" || role === "chirurgien") ? 3
     : ([0, 1, 2, 3].includes(Number(body.niveau)) ? Number(body.niveau) : 3);
   if (!peutOctroyer(niveauCreateur, niveauDemande)) {
     return NextResponse.json(
