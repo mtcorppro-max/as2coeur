@@ -19,13 +19,11 @@ export function AstreinteAlerte() {
   useEffect(() => {
     if (estMedecin) return;
     createClient()
-      .from("astreinte")
-      .select("semaine_debut,type")
+      .from("evenement_planning")
+      .select("date_debut,date_fin")
+      .eq("type", "astreinte")
       .then(({ data }) => {
-        const cles = new Set(
-          (data ?? []).map((a) => `${a.semaine_debut}|${a.type}`)
-        );
-        setIncomplet(astreintesIncompletes(cles));
+        setIncomplet(astreintesIncompletes((data ?? []) as { date_debut: string | null; date_fin: string | null }[]));
       });
   }, [estMedecin]);
 

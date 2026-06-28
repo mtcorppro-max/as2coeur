@@ -26,20 +26,34 @@ export function semainesAVenir(n: number, depuis = new Date()): Date[] {
   });
 }
 
-// Les astreintes sont-elles incomplètes pour les `jours` prochains jours ?
-// `cles` = ensemble de clés "YYYY-MM-DD|semaine" / "YYYY-MM-DD|weekend".
-export function astreintesIncompletes(cles: Set<string>, jours = 15): boolean {
+// Ajoute n jours à une date ISO "YYYY-MM-DD".
+function addIso(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return isoDate(new Date(y, m - 1, d + n));
+}
+
+// Les astreintes couvrent-elles TOUS les jours des `jours` prochains jours ?
+// `evenements` = plages d'astreinte { date_debut, date_fin } (evenement_planning
+// de type "astreinte"). Renvoie true s'il manque au moins un jour non couvert.
+export function astreintesIncompletes(
+  evenements: { date_debut: string | null; date_fin: string | null }[],
+  jours = 15
+): boolean {
+  const couverts = new Set<string>();
+  for (const e of evenements) {
+    if (!e.date_debut || !e.date_fin) continue;
+    let d = e.date_debut;
+    for (let garde = 0; d <= e.date_fin && garde < 400; garde++) {
+      couverts.add(d);
+      d = addIso(d, 1);
+    }
+  }
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const limite = new Date(today);
-  limite.setDate(limite.getDate() + jours);
-
-  let m = lundiDe(today);
-  while (m <= limite) {
-    const k = isoDate(m);
-    if (!cles.has(`${k}|semaine`) || !cles.has(`${k}|weekend`)) return true;
-    m = new Date(m);
-    m.setDate(m.getDate() + 7);
+  for (let i = 0; i < jours; i++) {
+    const dt = new Date(today);
+    dt.setDate(dt.getDate() + i);
+    if (!couverts.has(isoDate(dt))) return true;
   }
   return false;
 }
