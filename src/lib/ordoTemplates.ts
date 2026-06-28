@@ -54,47 +54,42 @@ export const CONFIGS: Record<string, Conf> = {
   },
   ordo_pharma_piccline: {
     template: "/ORDO%20PHARMA%20PICCLINE.pdf", ...STD, date: { x: 110, y: 283 }, signature: { x: 390, y: 572 },
-    textes: [{ s: "Autres :", pos: { x: 14, y: 415 } }],
     champs: [
       { k: "txt", key: "nacl_50", pos: { x: 176, y: 353 } },
       { k: "txt", key: "nacl_100", pos: { x: 180, y: 364 } },
-      { k: "lignes", key: "autres", pos: { x: 20, y: 428 }, lineH: 15 },
+      { k: "lignes", key: "autres", pos: { x: 20, y: 416 }, lineH: 15 },
       { k: "txt", key: "qsp_jours", pos: { x: 50, y: 467 } },
     ],
   },
   ordo_glycemie: {
     template: "/ORDO%20GLYCEMIE.pdf", ...STD, date: { x: 444, y: 269 }, signature: { x: 390, y: 560 },
-    textes: [{ s: "Autres :", pos: { x: 41, y: 372 } }],
     champs: [
-      { k: "lignes", key: "autres", pos: { x: 47, y: 388 }, lineH: 16 },
+      { k: "lignes", key: "autres", pos: { x: 41, y: 374 }, lineH: 16 },
       { k: "txt", key: "ordonnance_jours", pos: { x: 130, y: 461 } },
     ],
   },
   ordo_taurolock: {
     template: "/ORDO%20TAUROLOCK.pdf", ...STD, date: { x: 506, y: 269 }, signature: { x: 390, y: 681 },
-    textes: [{ s: "Autres :", pos: { x: 20, y: 432 } }],
     champs: [
-      { k: "lignes", key: "autres", pos: { x: 26, y: 448 }, lineH: 16 },
+      { k: "lignes", key: "autres", pos: { x: 20, y: 434 }, lineH: 16 },
       { k: "txt", key: "qsp_jours", pos: { x: 50, y: 564 } },
       { k: "txt", key: "a_renouveler", pos: { x: 106, y: 576 } },
     ],
   },
   perfadom_npad: {
     template: "/PERFADOM%20NPAD.pdf", ...STD, date: { x: 440, y: 258 }, signature: { x: 390, y: 714 },
-    textes: [{ s: "Autres :", pos: { x: 20, y: 615 } }],
     champs: [
       { k: "checks", key: "options", map: { "Première installation": { x: 31, y: 313 }, "12 premières semaines": { x: 31, y: 343 }, "Après les 12 premières semaines": { x: 29, y: 490 } } },
       { k: "txt", key: "jours7_avant", pos: { x: 40, y: 388 } },
       { k: "txt", key: "jours7_apres", pos: { x: 40, y: 549 } },
-      { k: "lignes", key: "autres", pos: { x: 26, y: 630 }, lineH: 15 },
+      { k: "lignes", key: "autres", pos: { x: 20, y: 618 }, lineH: 15 },
       { k: "txt", key: "ordonnance_jours", pos: { x: 106, y: 655 } },
     ],
   },
   ordo_idel_po: {
     template: "/ORDO%20IDEL%20PO%20ET%20CONSTANTES.pdf", ...STD, date: { x: 532, y: 270 }, signature: { x: 390, y: 493 },
-    textes: [{ s: "Autres :", pos: { x: 20, y: 388 } }],
     champs: [
-      { k: "lignes", key: "autres", pos: { x: 26, y: 402 }, lineH: 15 },
+      { k: "lignes", key: "autres", pos: { x: 20, y: 390 }, lineH: 15 },
       { k: "txt", key: "ordonnance_jours", pos: { x: 113, y: 430 } },
       { k: "txt", key: "a_renouveler", pos: { x: 90, y: 445 } },
     ],
@@ -111,9 +106,8 @@ export const CONFIGS: Record<string, Conf> = {
   },
   idel_kyste: {
     template: "/IDEL%20Kyste1.pdf", presc: { x: 90, y: 100 }, patient: { x: 350, y: 100 }, date: { x: 385, y: 177 }, signature: { x: 310, y: 597 },
-    textes: [{ s: "Autres :", pos: { x: 43, y: 548 } }],
     champs: [
-      { k: "lignes", key: "autres", pos: { x: 49, y: 562 }, lineH: 14 },
+      { k: "lignes", key: "autres", pos: { x: 43, y: 550 }, lineH: 14 },
       { k: "txt", key: "duree_jours", pos: { x: 80, y: 591 } },
     ],
   },
