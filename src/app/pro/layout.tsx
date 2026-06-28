@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
 import { useProSession } from "@/lib/hooks/useSession";
-import { LIBELLE_ROLE, estCoordOuManager } from "@/lib/roles";
+import { LIBELLE_ROLE, estCoordOuManager, estRoleService } from "@/lib/roles";
 import { RechercheSoignants } from "@/components/RechercheSoignants";
 
 export default function ProLayout({ children }: { children: React.ReactNode }) {
@@ -16,8 +16,9 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   const estN0 = pro?.niveau === 0; // super-admin plateforme : accès à tout
   const estCoord = estCoordOuManager(pro?.role) || estN0;
   const estChir = pro?.role === "chirurgien" && !estN0;
-  // Gérer/créer des comptes & l'équipe : niveau 0, 1 ou 2 (hors chirurgien)
-  const peutGerer = estN0 || (!!pro && pro.niveau <= 2 && pro.role !== "chirurgien");
+  // Gérer/créer des comptes & l'équipe : niveau 0, 1 ou 2 (hors chirurgien et
+  // hors comptes service livreur/pharmacie)
+  const peutGerer = estN0 || (!!pro && pro.niveau <= 2 && pro.role !== "chirurgien" && !estRoleService(pro.role));
   // PEC : managers (niveau 1) et plateforme (niveau 0)
   const peutPec = !!pro && pro.niveau <= 1;
 

@@ -12,7 +12,7 @@ import type { Patient, RolePro, ProtocoleConsigne } from "@/lib/types";
 
 type Soignant = { id: string; nom: string; prenom: string | null; titre: string | null; role: RolePro; agence_id: string | null; telephone: string | null; specialite: string | null; protocoles: ProtocoleConsigne[] | null };
 // Soignant externe (sans compte) — cf. migrations 0040 / 0041.
-type Externe = { id: string; type: "medecin" | "infirmiere"; titre: string | null; prenom: string | null; nom: string; telephone: string | null; specialite: string | null; protocoles: ProtocoleConsigne[] | null };
+type Externe = { id: string; type: "medecin" | "infirmiere" | "pharmacie"; titre: string | null; prenom: string | null; nom: string; telephone: string | null; specialite: string | null; protocoles: ProtocoleConsigne[] | null };
 
 // Nom complet affiché et stocké : « [Titre] Prénom Nom ».
 const nomComplet = (s: { titre: string | null; prenom: string | null; nom: string }) => [s.titre, s.prenom, s.nom].filter(Boolean).join(" ");

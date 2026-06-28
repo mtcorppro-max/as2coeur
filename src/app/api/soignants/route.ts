@@ -4,8 +4,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { estEmailAdmin } from "@/lib/admin";
 import { peutOctroyer } from "@/lib/niveaux";
 
-type RolePro = "coordinatrice" | "chirurgien" | "delegue" | "manager" | "infirmiere_liberale";
-const ROLES: RolePro[] = ["coordinatrice", "chirurgien", "delegue", "manager", "infirmiere_liberale"];
+type RolePro = "coordinatrice" | "chirurgien" | "delegue" | "manager" | "infirmiere_liberale" | "livreur" | "pharmacie";
+const ROLES: RolePro[] = ["coordinatrice", "chirurgien", "delegue", "manager", "infirmiere_liberale", "livreur", "pharmacie"];
+// Comptes service : ne peuvent pas créer d'autres comptes.
+const estRoleService = (r: string | null | undefined) => r === "livreur" || r === "pharmacie";
 
 // Génère un mot de passe lisible (sans caractères ambigus).
 function genererMotDePasse(): string {
@@ -54,7 +56,7 @@ export async function POST(request: Request) {
     if (!prestataireId) {
       return NextResponse.json({ message: "Prestataire requis." }, { status: 400 });
     }
-  } else if (pro && (pro.niveau === 0 || (pro.niveau <= 2 && pro.role !== "chirurgien"))) {
+  } else if (pro && (pro.niveau === 0 || (pro.niveau <= 2 && pro.role !== "chirurgien" && !estRoleService(pro.role)))) {
     prestataireId = pro.prestataire_id;
   } else {
     return NextResponse.json(
@@ -67,7 +69,8 @@ export async function POST(request: Request) {
   // est réservé au niveau 0.
   // Un manager est toujours niveau 1 ; une infirmière libérale toujours niveau 3.
   const niveauDemande = role === "manager" ? 1
-    : role === "infirmiere_liberale" ? 3
+    : role === "livreur" ? 2
+    : (role === "infirmiere_liberale" || role === "pharmacie") ? 3
     : ([0, 1, 2, 3].includes(Number(body.niveau)) ? Number(body.niveau) : 3);
   if (!peutOctroyer(niveauCreateur, niveauDemande)) {
     return NextResponse.json(

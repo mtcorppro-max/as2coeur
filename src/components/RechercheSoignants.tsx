@@ -49,10 +49,10 @@ export function RechercheSoignants() {
         return { kind: "soignant", key: `c${i}`, id: x.id, nom, role, compte: true, detail: x.specialite, rpps: x.rpps, telephone: x.telephone, email: x.email, cabinets: x.cabinets, secretariat_nom: x.secretariat_nom, secretariat_email: x.secretariat_email, secretariat_tel: x.secretariat_tel, protocoles: x.protocoles, texte: `${nom} ${role} ${x.specialite ?? ""} ${interventions(x.protocoles)}`.toLowerCase() };
       });
       const rE: Resultat[] = (exts ?? []).map((e) => {
-        const x = e as { id: string; type: "medecin" | "infirmiere"; specialite: string | null; rpps: string | null; zone_exercice: string | null; telephone: string | null; email: string | null; cabinets: string | null; secretariat_nom: string | null; secretariat_tel: string | null; protocoles: ProtocolePdf[] | null };
-        const role = x.type === "medecin" ? labelMedecin(x.specialite) : "Infirmière libérale";
+        const x = e as { id: string; type: "medecin" | "infirmiere" | "pharmacie"; specialite: string | null; rpps: string | null; zone_exercice: string | null; telephone: string | null; email: string | null; cabinets: string | null; secretariat_nom: string | null; secretariat_tel: string | null; protocoles: ProtocolePdf[] | null };
+        const role = x.type === "medecin" ? labelMedecin(x.specialite) : x.type === "pharmacie" ? "Pharmacie" : "Infirmière libérale";
         const nom = nomComplet(e as never);
-        const detail = x.type === "medecin" ? x.specialite : x.zone_exercice;
+        const detail = x.type === "medecin" ? x.specialite : x.type === "pharmacie" ? x.cabinets : x.zone_exercice;
         return { kind: "soignant", key: `e${x.id}`, id: null, nom, role, compte: false, detail, rpps: x.rpps, telephone: x.telephone, email: x.email, cabinets: x.cabinets, secretariat_nom: x.secretariat_nom, secretariat_email: null, secretariat_tel: x.secretariat_tel, protocoles: x.protocoles, texte: `${nom} ${role} ${detail ?? ""} ${interventions(x.protocoles)}`.toLowerCase() };
       });
       setItems([...rP, ...rS, ...rE]);

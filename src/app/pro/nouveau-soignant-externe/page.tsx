@@ -47,6 +47,7 @@ export default function NouveauSoignantExterne() {
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setF((s) => ({ ...s, [k]: e.target.value }));
   const estMedecin = f.type === "medecin";
+  const estPharmacie = f.type === "pharmacie";
 
   async function enregistrer() {
     setErreur(null);
@@ -57,14 +58,14 @@ export default function NouveauSoignantExterne() {
       prestataire_id: pro.prestataire_id,
       type: f.type,
       titre: estMedecin ? f.titre || null : null,
-      prenom: f.prenom.trim() || null,
+      prenom: estPharmacie ? null : f.prenom.trim() || null,
       nom: f.nom.trim(),
       specialite: estMedecin ? f.specialite || null : null,
       rpps: estMedecin ? f.rpps.trim() || null : null,
       telephone: f.telephone.trim() || null,
       email: f.email.trim() || null,
-      zone_exercice: estMedecin ? null : f.zone_exercice.trim() || null,
-      cabinets: estMedecin ? f.cabinets.trim() || null : null,
+      zone_exercice: (estMedecin || estPharmacie) ? null : f.zone_exercice.trim() || null,
+      cabinets: (estMedecin || estPharmacie) ? f.cabinets.trim() || null : null,
       secretariat_nom: estMedecin ? f.secretariat_nom.trim() || null : null,
       secretariat_email: estMedecin ? f.secretariat_email.trim() || null : null,
       secretariat_tel: estMedecin ? f.secretariat_tel.trim() || null : null,
@@ -91,7 +92,7 @@ export default function NouveauSoignantExterne() {
         <RetourNouveau />
         <h1 className="text-2xl font-bold text-slate-800">Nouveau soignant externe</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Soignant hors entreprise, sans compte AS2CŒUR (médecin, chirurgien ou infirmière libérale).
+          Soignant ou partenaire hors entreprise, sans compte AS2CŒUR (médecin, chirurgien, infirmière libérale ou pharmacie).
         </p>
       </div>
 
@@ -104,6 +105,7 @@ export default function NouveauSoignantExterne() {
             options={[
               { value: "medecin", label: "Médecin / Chirurgien" },
               { value: "infirmiere", label: "Infirmière libérale" },
+              { value: "pharmacie", label: "Pharmacie" },
             ]}
           />
         </div>
@@ -139,21 +141,35 @@ export default function NouveauSoignantExterne() {
           </>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        {estPharmacie ? (
           <div>
-            <label className="label">Prénom</label>
-            <input className="input" value={f.prenom} onChange={set("prenom")} placeholder={estMedecin ? "Jean" : "Marie"} />
+            <label className="label">Nom de la pharmacie *</label>
+            <input className="input" value={f.nom} onChange={set("nom")} placeholder="Pharmacie du Centre" />
           </div>
-          <div>
-            <label className="label">Nom *</label>
-            <input className="input" value={f.nom} onChange={set("nom")} placeholder={estMedecin ? "MARTIN" : "DUPONT"} />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="label">Prénom</label>
+              <input className="input" value={f.prenom} onChange={set("prenom")} placeholder={estMedecin ? "Jean" : "Marie"} />
+            </div>
+            <div>
+              <label className="label">Nom *</label>
+              <input className="input" value={f.nom} onChange={set("nom")} placeholder={estMedecin ? "MARTIN" : "DUPONT"} />
+            </div>
           </div>
-        </div>
+        )}
 
-        {!estMedecin && (
+        {!estMedecin && !estPharmacie && (
           <div>
             <label className="label">Zone(s) d&apos;exercice</label>
             <input className="input" value={f.zone_exercice} onChange={set("zone_exercice")} placeholder="ex. Montpellier / Hérault" />
+          </div>
+        )}
+
+        {estPharmacie && (
+          <div>
+            <label className="label">Adresse</label>
+            <input className="input" value={f.cabinets} onChange={set("cabinets")} placeholder="12 rue de la Paix, 34000 Montpellier" />
           </div>
         )}
 

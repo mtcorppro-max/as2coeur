@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
+import { estRoleService } from "@/lib/roles";
 import { useData, invalidate } from "@/lib/hooks/useData";
 import { AstreinteAlerte } from "@/components/AstreinteAlerte";
 import { CentreAlertes } from "@/components/CentreAlertes";
@@ -115,8 +116,9 @@ export default function Dashboard() {
   const data = useData<DashData>("pro:dashboard", fetchDashboard);
   const [validesLocal, setValidesLocal] = useState<Set<string>>(new Set());
   // Un médecin / chirurgien ne reçoit les alertes patients que s'il l'a demandé.
+  // Les comptes service (livreur/pharmacie) ne reçoivent pas d'alertes.
   const estMedecin = pro?.role === "chirurgien";
-  const voitAlertes = !estMedecin || !!pro?.recevoir_alertes;
+  const voitAlertes = !estRoleService(pro?.role) && (!estMedecin || !!pro?.recevoir_alertes);
 
   const { patients, parPatient, totalActives, messages, actions } = useMemo<DashData>(() => (
     data ?? {

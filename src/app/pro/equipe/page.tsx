@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
-import { LIBELLE_ROLE } from "@/lib/roles";
+import { LIBELLE_ROLE, estRoleService } from "@/lib/roles";
 import { genererPdfConsignes, type ProtocolePdf } from "@/lib/pdfConsignes";
 import { NIVEAU_LABEL, optionsNiveau } from "@/lib/niveaux";
 import { Select } from "@/components/Select";
@@ -37,7 +37,7 @@ const COLS =
 // Soignant externe (sans compte) — cf. migrations 0040 / 0041 / 0042.
 type Externe = {
   id: string;
-  type: "medecin" | "infirmiere";
+  type: "medecin" | "infirmiere" | "pharmacie";
   titre: string | null;
   prenom: string | null;
   nom: string;
@@ -54,7 +54,7 @@ type Externe = {
 const COLS_EXT =
   "id,type,titre,prenom,nom,specialite,rpps,telephone,email,zone_exercice,cabinets,secretariat_nom,secretariat_tel,protocoles";
 
-const ROLES_INTERNES = ["coordinatrice", "manager", "delegue"] as const;
+const ROLES_INTERNES = ["coordinatrice", "manager", "delegue", "livreur", "pharmacie"] as const;
 
 // Libellé médecin/chirurgien selon la spécialité.
 const labelMedecin = (specialite: string | null) =>
@@ -135,7 +135,7 @@ export default function EquipePage() {
   // Un niveau 0/1 peut supprimer un compte qui n'est pas plus puissant que lui.
   const peutSupprimer = (s: Soignant) => niveauMoi <= 1 && pro?.id !== s.id && s.niveau >= niveauMoi;
 
-  if (pro && (pro.niveau > 2 || pro.role === "chirurgien")) {
+  if (pro && (pro.niveau > 2 || pro.role === "chirurgien" || estRoleService(pro.role))) {
     return <div className="card text-sm text-slate-500">L&apos;équipe soignante n&apos;est pas accessible à ce compte.</div>;
   }
 
@@ -179,6 +179,7 @@ export default function EquipePage() {
   const carteExterne = (e: Externe) => {
     const nomAffiche = [e.titre, e.prenom, e.nom].filter(Boolean).join(" ");
     const estMed = e.type === "medecin";
+    const badgeType = e.type === "medecin" ? labelMedecin(e.specialite) : e.type === "pharmacie" ? "Pharmacie" : "Infirmière libérale";
     return (
       <div
         key={e.id}
@@ -189,7 +190,7 @@ export default function EquipePage() {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold text-slate-800">{nomAffiche}</span>
-              <span className="badge bg-rose-100 text-brand">{estMed ? labelMedecin(e.specialite) : "Infirmière libérale"}</span>
+              <span className="badge bg-rose-100 text-brand">{badgeType}</span>
             </div>
             {estMed && e.specialite && <p className="mt-0.5 text-sm text-slate-500">{e.specialite}</p>}
             {!estMed && e.zone_exercice && <p className="mt-0.5 text-sm text-slate-500">{e.zone_exercice}</p>}
@@ -323,6 +324,7 @@ export default function EquipePage() {
   const infirmieresComptes = soignants.filter((s) => s.role === "infirmiere_liberale");
   const externesMed = externes.filter((e) => e.type === "medecin");
   const externesInf = externes.filter((e) => e.type === "infirmiere");
+  const externesPharma = externes.filter((e) => e.type === "pharmacie");
   const aucunExterne = medecinsComptes.length + infirmieresComptes.length + externes.length === 0;
 
   return (
@@ -389,6 +391,14 @@ export default function EquipePage() {
               </>
             )}
           </section>
+          <section className="grid gap-3">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Pharmacies</h2>
+            {externesPharma.length === 0 ? (
+              <p className="text-sm text-slate-400">Aucune pharmacie.</p>
+            ) : (
+              externesPharma.map(carteExterne)
+            )}
+          </section>
         </div>
       )}
 
@@ -451,6 +461,7 @@ function BlocProtocoles({ protocoles, setProtocoles }: { protocoles: Protocole[]
 
 function EditeurExterne({ externe, onClose, onSaved }: { externe: Externe; onClose: () => void; onSaved: () => void }) {
   const estMed = externe.type === "medecin";
+  const estPharma = externe.type === "pharmacie";
   const [f, setF] = useState({
     titre: externe.titre ?? "", prenom: externe.prenom ?? "", nom: externe.nom,
     specialite: externe.specialite ?? "", rpps: externe.rpps ?? "",
@@ -469,6 +480,8 @@ function EditeurExterne({ externe, onClose, onSaved }: { externe: Externe; onClo
     setBusy(true); setErr(null);
     const maj = estMed
       ? { titre: t(f.titre), prenom: t(f.prenom), nom: f.nom.trim(), specialite: t(f.specialite), rpps: t(f.rpps), telephone: t(f.telephone), email: t(f.email), cabinets: t(f.cabinets), secretariat_nom: t(f.secretariat_nom), secretariat_tel: t(f.secretariat_tel), protocoles: protocoles.map(protocolePropre) }
+      : estPharma
+      ? { prenom: null, nom: f.nom.trim(), telephone: t(f.telephone), email: t(f.email), cabinets: t(f.cabinets), zone_exercice: null }
       : { prenom: t(f.prenom), nom: f.nom.trim(), telephone: t(f.telephone), email: t(f.email), zone_exercice: t(f.zone_exercice) };
     const { error } = await createClient().from("soignant_externe").update(maj).eq("id", externe.id);
     setBusy(false);
@@ -479,19 +492,26 @@ function EditeurExterne({ externe, onClose, onSaved }: { externe: Externe; onClo
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/30 p-4 pt-12" onClick={onClose}>
       <div className="card grid w-full max-w-2xl gap-4" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-sm font-semibold text-slate-700">Soignant externe</h2>
+        <h2 className="text-sm font-semibold text-slate-700">{estPharma ? "Pharmacie externe" : "Soignant externe"}</h2>
         {estMed && (
           <div className="grid gap-4 sm:grid-cols-2">
             <div><label className="label">Spécialité</label><input className="input" value={f.specialite} onChange={set("specialite")} /></div>
             <div><label className="label">N° RPPS</label><input className="input" value={f.rpps} onChange={set("rpps")} inputMode="numeric" /></div>
           </div>
         )}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div><label className="label">Prénom</label><input className="input" value={f.prenom} onChange={set("prenom")} /></div>
-          <div><label className="label">Nom *</label><input className="input" value={f.nom} onChange={set("nom")} /></div>
-        </div>
-        {!estMed && (
+        {estPharma ? (
+          <div><label className="label">Nom de la pharmacie *</label><input className="input" value={f.nom} onChange={set("nom")} /></div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div><label className="label">Prénom</label><input className="input" value={f.prenom} onChange={set("prenom")} /></div>
+            <div><label className="label">Nom *</label><input className="input" value={f.nom} onChange={set("nom")} /></div>
+          </div>
+        )}
+        {!estMed && !estPharma && (
           <div><label className="label">Zone(s) d&apos;exercice</label><input className="input" value={f.zone_exercice} onChange={set("zone_exercice")} /></div>
+        )}
+        {estPharma && (
+          <div><label className="label">Adresse</label><input className="input" value={f.cabinets} onChange={set("cabinets")} /></div>
         )}
         <div className="grid gap-4 sm:grid-cols-2">
           <div><label className="label">Téléphone</label><input className="input" value={f.telephone} onChange={set("telephone")} inputMode="tel" /></div>

@@ -1,6 +1,6 @@
 // Types métier — alignés sur supabase/migrations/0001_init.sql
 
-export type RolePro = "coordinatrice" | "chirurgien" | "delegue" | "manager" | "infirmiere_liberale";
+export type RolePro = "coordinatrice" | "chirurgien" | "delegue" | "manager" | "infirmiere_liberale" | "livreur" | "pharmacie";
 
 export type TypeMesure =
   | "temperature"

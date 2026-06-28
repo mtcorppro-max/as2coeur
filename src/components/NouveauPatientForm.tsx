@@ -25,7 +25,7 @@ type Soignant = {
 // Soignant externe (sans compte) — cf. migrations 0040 / 0041.
 type Externe = {
   id: string;
-  type: "medecin" | "infirmiere";
+  type: "medecin" | "infirmiere" | "pharmacie";
   titre: string | null;
   prenom: string | null;
   nom: string;

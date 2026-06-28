@@ -3,13 +3,15 @@
 import { useProSession } from "@/lib/hooks/useSession";
 import { SoignantForm } from "@/components/SoignantForm";
 import { RetourNouveau } from "@/components/RetourNouveau";
+import { estRoleService } from "@/lib/roles";
 
 export default function NouveauSoignant() {
   const pro = useProSession();
 
-  // Réservé aux comptes gestionnaires (niveau 0/1/2, hors médecins / chirurgiens ;
-  // le super-admin niveau 0 n'est jamais bloqué)
-  if (pro && pro.niveau !== 0 && (pro.niveau > 2 || pro.role === "chirurgien")) {
+  // Réservé aux comptes gestionnaires (niveau 0/1/2, hors médecins / chirurgiens
+  // et hors comptes service livreur/pharmacie ; le super-admin niveau 0 n'est
+  // jamais bloqué)
+  if (pro && pro.niveau !== 0 && (pro.niveau > 2 || pro.role === "chirurgien" || estRoleService(pro.role))) {
     return (
       <div className="card text-sm text-slate-500">
         La création de comptes soignants n&apos;est pas accessible à ce compte.

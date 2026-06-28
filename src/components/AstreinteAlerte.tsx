@@ -4,15 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
+import { estRoleService } from "@/lib/roles";
 import { astreintesIncompletes } from "@/lib/astreinte";
 
 // Bannière d'alerte si les astreintes ne sont pas renseignées pour les
 // 15 prochains jours. Affichée sur le tableau de bord et la page Organisation.
-// Les médecins / chirurgiens ne reçoivent jamais ce message d'organisation interne.
+// Message d'organisation interne : jamais affiché aux médecins/chirurgiens ni
+// aux comptes service (livreur/pharmacie), qui ne gèrent pas les astreintes.
 export function AstreinteAlerte() {
   const pro = useProSession();
   const [incomplet, setIncomplet] = useState(false);
-  const estMedecin = pro?.role === "chirurgien";
+  const estMedecin = pro?.role === "chirurgien" || estRoleService(pro?.role);
 
   useEffect(() => {
     if (estMedecin) return;
