@@ -14,7 +14,7 @@ import { ChampsOrdonnance } from "@/components/ChampsOrdonnance";
 import { Select } from "@/components/Select";
 
 type Pro = { nom: string; prenom: string | null; titre: string | null; rpps: string | null; cabinets: string | null };
-type Ordo = {
+export type Ordo = {
   id: string;
   type: string;
   titre: string;
@@ -231,7 +231,7 @@ function EditeurOrdonnance({ ordo, onClose, onSaved }: { ordo: Ordo; onClose: ()
   );
 }
 
-function SignatureModal({ ordo, patientNom, signataire, onClose, onSigned }: { ordo: Ordo; patientNom: string; signataire: string; onClose: () => void; onSigned: () => void }) {
+export function SignatureModal({ ordo, patientNom, signataire, onClose, onSigned }: { ordo: Ordo; patientNom: string; signataire: string; onClose: () => void; onSigned: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dessine = useRef(false);
   const [vide, setVide] = useState(true);

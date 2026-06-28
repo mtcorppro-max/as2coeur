@@ -67,6 +67,18 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       });
   }, [pro, estCoord, pathname]);
 
+  // Ordonnances en attente de signature pour le médecin connecté (badge À signer).
+  const [nbASigner, setNbASigner] = useState(0);
+  useEffect(() => {
+    if (!pro || !estChir) return;
+    createClient()
+      .from("ordonnance")
+      .select("id", { count: "exact", head: true })
+      .eq("destinataire_id", pro.id)
+      .eq("statut", "a_signer")
+      .then(({ count }) => setNbASigner(count ?? 0));
+  }, [pro, estChir, pathname]);
+
   // Messages internes non lus (badge Messagerie).
   const [nbMessages, setNbMessages] = useState(0);
   useEffect(() => {
@@ -93,6 +105,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               <Onglet href="/pro" icon="dashboard" label="Tableau de bord" pathname={pathname} exact />
               {estCoord && <Onglet href="/pro/suivis" icon="calendar" label="Suivis" pathname={pathname} badge={nbSuivis} />}
               {estCoord && <Onglet href="/pro/calendrier" icon="clipboard" label="Organisation" pathname={pathname} badge={nbDemandes} />}
+              {estChir && <Onglet href="/pro/a-signer" icon="document" label="À signer" pathname={pathname} badge={nbASigner} />}
               {peutGerer && <Onglet href="/pro/equipe" icon="users" label="Équipe soignante" pathname={pathname} />}
               <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
               {peutPec && <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />}
@@ -129,6 +142,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         <NavItem href="/pro" icon="dashboard" label="Tableau" />
         {estCoord && <NavItem href="/pro/suivis" icon="calendar" label="Suivis" badge={nbSuivis} />}
         {estCoord && <NavItem href="/pro/calendrier" icon="clipboard" label="Organisation" badge={nbDemandes} />}
+        {estChir && <NavItem href="/pro/a-signer" icon="document" label="À signer" badge={nbASigner} />}
         {peutGerer && <NavItem href="/pro/equipe" icon="users" label="Équipe" />}
         <NavItem href="/pro/messagerie" icon="message" label="Messages" badge={nbMessages} />
         {peutPec && <NavItem href="/pro/pec" icon="chart" label="PEC" />}
