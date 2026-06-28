@@ -389,11 +389,15 @@ export function InfosPatient({
           </Bloc>
 
           <Bloc titre="Environnement de soins">
-            <Ligne
-              label="Opération"
-              value={vue.operation}
-              extra={vue.date_operation ? formatDate(vue.date_operation) : undefined}
-            />
+            {vue.operation ? (
+              <Ligne
+                label="Opération"
+                value={vue.operation}
+                extra={vue.date_operation ? formatDate(vue.date_operation) : undefined}
+              />
+            ) : vue.date_operation ? (
+              <Ligne label="Début de prise en charge" value={formatDate(vue.date_operation)} />
+            ) : null}
             <Ligne label="Prise en charge" value={duree ? `${duree} jours` : ""} />
             <Ligne label="Type de traitement" value={vue.traitement} />
             <Ligne label="Chirurgien" value={vue.chirurgien} />
