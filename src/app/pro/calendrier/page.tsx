@@ -6,8 +6,12 @@ import { useProSession } from "@/lib/hooks/useSession";
 import { Select } from "@/components/Select";
 import { estCoordOuManager } from "@/lib/roles";
 
-type RolePro = "coordinatrice" | "chirurgien" | "delegue";
-type ProLite = { id: string; nom: string; prenom: string | null; titre: string | null; role: RolePro; agence_id: string | null };
+type GroupePlanning = "coordinatrice" | "livreur";
+type ProLite = { id: string; nom: string; prenom: string | null; titre: string | null; role: GroupePlanning; agence_id: string | null };
+const LIBELLE_GROUPE: Record<GroupePlanning, { singulier: string; pluriel: string }> = {
+  coordinatrice: { singulier: "Coordinatrice", pluriel: "Coordinatrices" },
+  livreur: { singulier: "Livreur", pluriel: "Livreurs" },
+};
 type TypeEvt = "astreinte" | "cp" | "rtt" | "arret_maladie" | "formation" | "autre";
 type Evt = {
   id: string;
@@ -66,15 +70,21 @@ export default function OrganisationPage() {
   const [agenceRegion, setAgenceRegion] = useState<Map<string, string>>(new Map());
   const [moi, setMoi] = useState<{ niveau: number; agence_id: string | null; region_id: string | null } | null>(null);
   const [filtreAgence, setFiltreAgence] = useState("");
+  // Groupe affiché : coordinatrices ou livreurs (calendriers séparés).
+  const [groupe, setGroupe] = useState<GroupePlanning>("coordinatrice");
 
-  const interdit = pro && !estCoordOuManager(pro.role) && pro.niveau !== 0;
+  const estLivreurMoi = pro?.role === "livreur" && pro.niveau !== 0;
+  // Un livreur n'accède qu'au calendrier des livreurs (le sien).
+  useEffect(() => { if (estLivreurMoi) setGroupe("livreur"); }, [estLivreurMoi]);
+
+  const interdit = pro && !estCoordOuManager(pro.role) && pro.niveau !== 0 && pro.role !== "livreur";
   const fin = addDays(start, NB_JOURS - 1);
 
   const charger = useCallback(async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     const [{ data: pros }, { data: evts }, { data: ags }, { data: me }] = await Promise.all([
-      supabase.from("professionnel").select("id,nom,prenom,titre,role,agence_id").eq("role", "coordinatrice").order("nom"),
+      supabase.from("professionnel").select("id,nom,prenom,titre,role,agence_id").in("role", ["coordinatrice", "livreur"]).order("nom"),
       supabase.from("evenement_planning").select("id,professionnel_id,type,date_debut,date_fin,heure_debut,heure_fin,remplacant_id,note,statut")
         .lte("date_debut", fin).gte("date_fin", start),
       supabase.from("agence").select("id,nom,region_id"),
@@ -108,7 +118,8 @@ export default function OrganisationPage() {
 
   // Agence affichée : celle choisie, sinon la première du périmètre.
   const agenceCourante = filtreAgence || agencesPerimetre[0]?.value || "";
-  const coordsVisibles = coords.filter((c) => c.agence_id === agenceCourante);
+  // Lignes affichées : du groupe sélectionné (coordinatrices OU livreurs) et de l'agence courante.
+  const lignesVisibles = coords.filter((c) => c.role === groupe && c.agence_id === agenceCourante);
 
   // Demandes en attente de validation (managers / niveau 0), sur tout le périmètre.
   const nomPro = new Map(coords.map((c) => [c.id, nomComplet(c)]));
@@ -188,6 +199,7 @@ export default function OrganisationPage() {
 
   // ── Création par clic sur une cellule ───────────────────────────────
   function creer(proId: string, ds: string) {
+    if (estLivreurMoi && proId !== pro?.id) return; // un livreur ne pose que ses propres congés
     setEditing({ id: "", professionnel_id: proId, type: "cp", date_debut: ds, date_fin: ds, heure_debut: null, heure_fin: null, remplacant_id: null, note: null, statut: "valide" });
   }
 
@@ -233,7 +245,7 @@ export default function OrganisationPage() {
   }
 
   if (interdit) {
-    return <div className="card text-sm text-slate-500">L&apos;organisation est réservée aux infirmières coordinatrices.</div>;
+    return <div className="card text-sm text-slate-500">L&apos;organisation est réservée aux coordinatrices, managers et livreurs.</div>;
   }
 
   return (
@@ -241,6 +253,20 @@ export default function OrganisationPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold text-slate-800">Organisation</h1>
+          {/* Bascule entre les deux calendriers séparés (caché pour le livreur). */}
+          {!estLivreurMoi && (
+            <div className="inline-flex rounded-xl border border-rose-200 bg-white p-0.5">
+              {(["coordinatrice", "livreur"] as GroupePlanning[]).map((g) => (
+                <button
+                  key={g}
+                  onClick={() => setGroupe(g)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${groupe === g ? "bg-brand text-white" : "text-slate-500 hover:bg-rose-50"}`}
+                >
+                  {LIBELLE_GROUPE[g].pluriel}
+                </button>
+              ))}
+            </div>
+          )}
           {agencesPerimetre.length > 1 && (
             <div className="w-56">
               <Select
@@ -297,7 +323,7 @@ export default function OrganisationPage() {
         <div className="min-w-[1100px]">
           {/* En-tête jours */}
           <div className="flex border-b border-rose-100">
-            <div className="w-40 shrink-0 px-3 py-2 text-xs font-semibold text-slate-400">Coordinatrice</div>
+            <div className="w-40 shrink-0 px-3 py-2 text-xs font-semibold text-slate-400">{LIBELLE_GROUPE[groupe].singulier}</div>
             <div className="grid flex-1" style={{ gridTemplateColumns: `repeat(${NB_JOURS}, minmax(0,1fr))` }}>
               {jours.map((j) => (
                 <div
@@ -311,28 +337,32 @@ export default function OrganisationPage() {
             </div>
           </div>
 
-          {/* Lignes coordinatrices */}
-          {coordsVisibles.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-slate-400">Aucune infirmière coordinatrice dans votre périmètre.</p>
+          {/* Lignes du groupe sélectionné */}
+          {lignesVisibles.length === 0 ? (
+            <p className="px-4 py-6 text-sm text-slate-400">Aucun(e) {LIBELLE_GROUPE[groupe].singulier.toLowerCase()} dans votre périmètre.</p>
           ) : (
-            coordsVisibles.map((c) => {
+            lignesVisibles.map((c) => {
               const evs = events.filter((e) => e.professionnel_id === c.id);
               const lanes = assignerLanes(evs);
               const nbLanes = Math.max(1, ...lanes.values());
               const hauteur = nbLanes * 26 + 10;
+              // Un livreur ne peut éditer que sa propre ligne ; les autres lignes
+              // sont en lecture seule (consultation des absences de l'équipe).
+              const editable = !estLivreurMoi || c.id === pro?.id;
               return (
                 <div key={c.id} className="flex border-b border-rose-50">
                   <div className="flex w-40 shrink-0 items-center px-3 py-2 text-sm font-medium text-slate-700">
                     {nomComplet(c)}
                   </div>
                   <div data-zone className="relative flex-1" style={{ height: hauteur }}>
-                    {/* cellules cliquables */}
+                    {/* cellules cliquables (seulement si éditable) */}
                     <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${NB_JOURS}, minmax(0,1fr))` }}>
                       {jours.map((j) => (
                         <button
                           key={j.ds}
-                          onClick={() => creer(c.id, j.ds)}
-                          className={`${j.premier && j.i > 0 ? "border-l-2 border-slate-300" : "border-l border-rose-50"} ${j.we ? "bg-rose-50/40" : ""} hover:bg-rose-100/50`}
+                          onClick={editable ? () => creer(c.id, j.ds) : undefined}
+                          disabled={!editable}
+                          className={`${j.premier && j.i > 0 ? "border-l-2 border-slate-300" : "border-l border-rose-50"} ${j.we ? "bg-rose-50/40" : ""} ${editable ? "hover:bg-rose-100/50" : "cursor-default"}`}
                         />
                       ))}
                     </div>
@@ -345,9 +375,9 @@ export default function OrganisationPage() {
                       return (
                         <div
                           key={ev.id}
-                          onPointerDown={(p) => demarrerDrag(p, ev, "move")}
-                          onClick={(p) => { p.stopPropagation(); setEditing(ev); }}
-                          className={`absolute flex cursor-grab items-center rounded-md px-1.5 text-[10px] font-medium text-white ${TYPES[ev.type].bar} active:cursor-grabbing ${ev.statut === "en_attente" ? "opacity-50 ring-1 ring-amber-400 ring-offset-1" : ""}`}
+                          onPointerDown={editable ? (p) => demarrerDrag(p, ev, "move") : undefined}
+                          onClick={editable ? (p) => { p.stopPropagation(); setEditing(ev); } : undefined}
+                          className={`absolute flex items-center rounded-md px-1.5 text-[10px] font-medium text-white ${TYPES[ev.type].bar} ${editable ? "cursor-grab active:cursor-grabbing" : "cursor-default"} ${ev.statut === "en_attente" ? "opacity-50 ring-1 ring-amber-400 ring-offset-1" : ""}`}
                           style={{
                             left: `${(s / NB_JOURS) * 100}%`,
                             width: `${((e - s + 1) / NB_JOURS) * 100}%`,
@@ -361,10 +391,12 @@ export default function OrganisationPage() {
                             {TYPES[ev.type].label}
                             {ev.type === "astreinte" && ev.heure_debut ? ` ${ev.heure_debut}–${ev.heure_fin ?? ""}` : ""}
                           </span>
-                          <span
-                            onPointerDown={(p) => demarrerDrag(p, ev, "resize-r")}
-                            className="absolute right-0 top-0 h-full w-2 cursor-ew-resize rounded-r-md bg-black/10"
-                          />
+                          {editable && (
+                            <span
+                              onPointerDown={(p) => demarrerDrag(p, ev, "resize-r")}
+                              className="absolute right-0 top-0 h-full w-2 cursor-ew-resize rounded-r-md bg-black/10"
+                            />
+                          )}
                         </div>
                       );
                     })}
@@ -379,8 +411,9 @@ export default function OrganisationPage() {
       {editing && (
         <EditeurEvenement
           ev={editing}
-          coords={coordsVisibles}
+          coords={lignesVisibles}
           niveauMoi={niveauMoi}
+          estService={groupe === "livreur"}
           onClose={() => setEditing(null)}
           onSave={sauver}
           onDelete={supprimer}
@@ -409,11 +442,12 @@ function assignerLanes(evs: Evt[]): Map<string, number> {
 }
 
 function EditeurEvenement({
-  ev, coords, niveauMoi, onClose, onSave, onDelete,
+  ev, coords, niveauMoi, estService, onClose, onSave, onDelete,
 }: {
   ev: Evt;
   coords: ProLite[];
   niveauMoi: number;
+  estService: boolean;
   onClose: () => void;
   onSave: (e: Evt) => void;
   onDelete: (id: string) => void;
@@ -423,7 +457,12 @@ function EditeurEvenement({
   const remplacants = coords.filter((c) => c.id !== f.professionnel_id);
   const estAbsence = ABSENCES.includes(f.type);
   // L'arrêt maladie n'est posable que par un manager / niveau 0.
-  const typesDispo = (Object.keys(TYPES) as TypeEvt[]).filter((t) => t !== "arret_maladie" || niveauMoi <= 1);
+  // Les livreurs n'ont pas d'astreinte (calendrier de service).
+  const typesDispo = (Object.keys(TYPES) as TypeEvt[]).filter((t) => {
+    if (t === "arret_maladie" && niveauMoi > 1) return false;
+    if (t === "astreinte" && estService) return false;
+    return true;
+  });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" onClick={onClose}>

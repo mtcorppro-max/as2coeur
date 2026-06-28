@@ -132,7 +132,10 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   const entreesMobile: NavEntree[] = estPharmacie
     ? [{ href: "/pro/pharmacie", icon: "clipboard", label: "Mes patients", badge: nbOrdoPharma }]
     : estLivreur
-    ? [{ href: "/pro/livraisons", icon: "truck", label: "Tournée" }]
+    ? [
+        { href: "/pro/livraisons", icon: "truck", label: "Tournée" },
+        { href: "/pro/calendrier", icon: "clipboard", label: "Organisation" },
+      ]
     : [
         { href: "/pro", icon: "dashboard", label: "Tableau" },
         ...(estCoord ? [{ href: "/pro/suivis", icon: "calendar", label: "Suivis", badge: nbSuivis }] : []),
@@ -159,7 +162,10 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               {estPharmacie ? (
                 <Onglet href="/pro/pharmacie" icon="clipboard" label="Mes patients" pathname={pathname} badge={nbOrdoPharma} />
               ) : estLivreur ? (
-                <Onglet href="/pro/livraisons" icon="truck" label="Tournée" pathname={pathname} />
+                <>
+                  <Onglet href="/pro/livraisons" icon="truck" label="Tournée" pathname={pathname} />
+                  <Onglet href="/pro/calendrier" icon="clipboard" label="Organisation" pathname={pathname} />
+                </>
               ) : (
                 <>
                   <Onglet href="/pro" icon="dashboard" label="Tableau de bord" pathname={pathname} exact />
