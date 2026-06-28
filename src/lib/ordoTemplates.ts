@@ -141,8 +141,19 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   nead_idel: {
-    template: "/NEAD%20Idel%202.pdf", presc: { x: 45, y: 80 }, rpps: { x: 45, y: 100 }, patient: { x: 465, y: 82 }, date: { x: 500, y: 312 }, signature: { x: 400, y: 760 },
-    champs: [],
+    template: "/NEAD%20Idel%202.pdf", presc: { x: 45, y: 80 }, rpps: { x: 45, y: 100 }, patient: { x: 465, y: 82 }, date: { x: 500, y: 198 }, signature: { x: 400, y: 790 },
+    champs: [
+      { k: "checks", key: "admin", map: { "Pompe": { x: 21, y: 275 }, "Gravité": { x: 127, y: 275 }, "SNG": { x: 21, y: 291 }, "Sonde Naso-jéjunale": { x: 127, y: 291 }, "Bouton ou sonde de gastrostomie": { x: 270, y: 291 }, "Continu": { x: 21, y: 306 }, "Discontinu": { x: 127, y: 306 } } },
+      { k: "radio", key: "per_os", map: { "OUI": { x: 21, y: 348 }, "NON": { x: 21, y: 364 } } },
+      { k: "checks", key: "produits", map: { "STANDARD": { x: 22, y: 428 }, "HYPERÉNERGÉTIQUE": { x: 22, y: 442 }, "HYPERÉNERGÉTIQUE HP": { x: 22, y: 456 }, "AUTRE": { x: 22, y: 472 } } },
+      { k: "checks", key: "fibres", map: { "Fibres STANDARD": { x: 182, y: 428 }, "Fibres HYPERÉNERGÉTIQUE": { x: 182, y: 442 }, "Fibres HP": { x: 182, y: 456 }, "Fibres AUTRE": { x: 182, y: 472 } } },
+      { k: "txt", key: "nom_std", pos: { x: 354, y: 428 }, centre: true, size: 11, masque: [228, 418, 252, 13] }, { k: "txt", key: "qte_std", pos: { x: 525, y: 428 }, centre: true, size: 11, masque: [482, 418, 87, 13] },
+      { k: "txt", key: "nom_he", pos: { x: 354, y: 442 }, centre: true, size: 11, masque: [228, 432, 252, 13] }, { k: "txt", key: "qte_he", pos: { x: 525, y: 442 }, centre: true, size: 11, masque: [482, 432, 87, 13] },
+      { k: "txt", key: "nom_hp", pos: { x: 354, y: 456 }, centre: true, size: 11, masque: [228, 446, 252, 13] }, { k: "txt", key: "qte_hp", pos: { x: 525, y: 456 }, centre: true, size: 11, masque: [482, 446, 87, 13] },
+      { k: "txt", key: "nom_autre", pos: { x: 354, y: 472 }, centre: true, size: 11, masque: [228, 462, 252, 13] }, { k: "txt", key: "qte_autre", pos: { x: 525, y: 472 }, centre: true, size: 11, masque: [482, 462, 87, 13] },
+      { k: "txt", key: "frequence", pos: { x: 100, y: 720 } },
+      { k: "txt", key: "renouveler", pos: { x: 210, y: 748 } },
+    ],
   },
 };
 
