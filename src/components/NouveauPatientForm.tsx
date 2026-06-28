@@ -319,7 +319,7 @@ export function NouveauPatientForm() {
           <label className="label">Chirurgien / Médecin</label>
           <Select
             value={form.chirurgien}
-            onChange={(v) => setForm((f) => ({ ...f, chirurgien: v, traitement: "", traitement_autre: "" }))}
+            onChange={(v) => { setForm((f) => ({ ...f, chirurgien: v, traitement: "", traitement_autre: "", operation: "" })); setJoursSuivi([]); setSeuilsProto([]); setSortiePostOp(null); }}
             placeholder="— Choisir un chirurgien / médecin —"
             options={optionsChirurgien}
           />

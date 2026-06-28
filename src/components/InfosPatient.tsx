@@ -217,41 +217,43 @@ export function InfosPatient({
             <label className="label">Chirurgien / Médecin</label>
             <Select
               value={form.chirurgien}
-              onChange={(v) => setVal("chirurgien", v)}
+              onChange={(v) => { setForm((f) => ({ ...f, chirurgien: v, traitement: "", operation: "" })); setAutreTrait(false); setJoursSuivi([]); }}
               placeholder="— Choisir un chirurgien / médecin —"
               options={optionsChirurgien}
             />
           </div>
-          {protocolesChir.length > 0 && (
+          {form.chirurgien && (
             <div>
-              <label className="label">Protocole / intervention appliqué</label>
+              <label className="label">Type de traitement</label>
+              <Select
+                value={autreTrait ? "Autre traitement" : form.traitement}
+                onChange={(v) => {
+                  if (v === "Autre traitement") { setAutreTrait(true); setVal("traitement", ""); }
+                  else { setAutreTrait(false); setVal("traitement", v); }
+                }}
+                placeholder="— Choisir un type de traitement —"
+                options={TRAITEMENTS.map((t) => ({ value: t, label: t }))}
+              />
+              {autreTrait && (
+                <input className="input mt-2" placeholder="Préciser le traitement" value={form.traitement} onChange={(e) => setVal("traitement", e.target.value)} />
+              )}
+            </div>
+          )}
+          {estChirurgical && form.traitement === "Post op" && protocolesChir.length > 0 && (
+            <div>
+              <label className="label">Protocole à suivre</label>
               <Select
                 value=""
                 onChange={appliquerProtocole}
-                placeholder="— Choisir un protocole —"
+                placeholder="— Choisir un protocole du chirurgien —"
                 options={protocolesChir.map((p, i) => ({
                   value: String(i),
                   label: `${p.intervention || `Protocole ${i + 1}`}${p.duree ? ` — ${p.duree} j` : ""}`,
                 }))}
               />
-              <p className="mt-1 text-xs text-slate-400">Remplit l&apos;opération, la durée et les jours de suivi.</p>
+              <p className="mt-1 text-xs text-slate-400">Remplit automatiquement l&apos;opération, la durée et les jours de suivi.</p>
             </div>
           )}
-          <div>
-            <label className="label">Type de traitement</label>
-            <Select
-              value={autreTrait ? "Autre traitement" : form.traitement}
-              onChange={(v) => {
-                if (v === "Autre traitement") { setAutreTrait(true); setVal("traitement", ""); }
-                else { setAutreTrait(false); setVal("traitement", v); }
-              }}
-              placeholder="— Choisir un type de traitement —"
-              options={TRAITEMENTS.map((t) => ({ value: t, label: t }))}
-            />
-            {autreTrait && (
-              <input className="input mt-2" placeholder="Préciser le traitement" value={form.traitement} onChange={(e) => setVal("traitement", e.target.value)} />
-            )}
-          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Champ label={estChirurgical ? "Date de l'opération" : "Date de début de prise en charge"} type="date" value={form.date_operation} onChange={set("date_operation")} />
             <Champ label="Jours de prise en charge" value={form.duree_prise_en_charge} onChange={set("duree_prise_en_charge")} />
