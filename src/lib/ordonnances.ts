@@ -144,6 +144,12 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     id: "nead",
     label: "NEAD (nutrition entérale)",
     champs: [
+      { key: "forfaits", label: "Forfaits", type: "checkboxes", options: ["Forfait de première installation", "Forfait hebdomadaire avec pompe", "Forfait hebdomadaire sans pompe"] },
+      { key: "standards", label: "Nutriments STANDARDS (cocher les lignes utilisées)", type: "checkboxes", options: ["Ligne 1", "Ligne 2"] },
+      { key: "std1_ml", label: "STANDARDS ligne 1 — ml par jour", type: "text" },
+      { key: "std1_produit", label: "STANDARDS ligne 1 — produit", type: "text" },
+      { key: "std2_ml", label: "STANDARDS ligne 2 — ml par jour", type: "text" },
+      { key: "std2_produit", label: "STANDARDS ligne 2 — produit", type: "text" },
       { key: "ordonnance_jours", label: "Ordonnance pour (durée, ex. 180 jours ou 6 mois)", type: "text" },
       { key: "a_renouveler", label: "À renouveler (fois)", type: "text" },
     ],

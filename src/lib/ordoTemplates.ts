@@ -123,8 +123,17 @@ export const CONFIGS: Record<string, Conf> = {
   },
   // PDF image (sans couche texte) : en-tête + jours + signature (positions à affiner).
   nead: {
-    template: "/NEAD.pdf", presc: { x: 60, y: 108 }, rpps: { x: 60, y: 128 }, patient: { x: 438, y: 112 }, date: { x: 360, y: 240 }, signature: { x: 400, y: 665 },
-    champs: [{ k: "txt", key: "ordonnance_jours", pos: { x: 385, y: 613 } }, { k: "txt", key: "a_renouveler", pos: { x: 410, y: 631 } }],
+    template: "/NEAD.pdf", presc: { x: 60, y: 108 }, rpps: { x: 60, y: 128 }, patient: { x: 438, y: 112 }, date: { x: 465, y: 235 }, signature: { x: 400, y: 730 },
+    champs: [
+      { k: "checks", key: "forfaits", map: { "Forfait de première installation": { x: 33, y: 256 }, "Forfait hebdomadaire avec pompe": { x: 33, y: 280 }, "Forfait hebdomadaire sans pompe": { x: 33, y: 303 } } },
+      { k: "checks", key: "standards", map: { "Ligne 1": { x: 33, y: 337 }, "Ligne 2": { x: 33, y: 355 } } },
+      { k: "txt", key: "std1_ml", pos: { x: 140, y: 335 } },
+      { k: "txt", key: "std1_produit", pos: { x: 292, y: 335 } },
+      { k: "txt", key: "std2_ml", pos: { x: 140, y: 353 } },
+      { k: "txt", key: "std2_produit", pos: { x: 292, y: 353 } },
+      { k: "txt", key: "ordonnance_jours", pos: { x: 395, y: 665 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 452, y: 690 } },
+    ],
   },
   nead_idel: {
     template: "/NEAD%20IDEL.pdf", presc: { x: 135, y: 115 }, rpps: { x: 135, y: 135 }, patient: { x: 425, y: 111 }, patientGauche: true, date: { x: 360, y: 240 }, signature: { x: 400, y: 665 },
