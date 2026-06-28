@@ -26,7 +26,7 @@ export async function ouvrirTemplate(path: string) {
     const w = font.widthOfTextAtSize(String(s), size);
     page.drawText(String(s), { x: p.x - w / 2, y: H - p.y, size, font, color: rgb(0.1, 0.1, 0.12) });
   };
-  const coche = (p: Pt) => page.drawText("X", { x: p.x, y: H - p.y, size: 10, font, color: rgb(0.75, 0.1, 0.36) });
+  const coche = (p: Pt) => page.drawText("X", { x: p.x, y: H - p.y, size: 10, font, color: rgb(0, 0, 0) });
   // Masque une zone (rectangle blanc) — yTop = bord haut de la zone.
   const blanc = (x: number, yTop: number, w: number, h: number) => page.drawRectangle({ x, y: H - yTop - h, width: w, height: h, color: rgb(1, 1, 1) });
   const signer = async (dataUrl: string | null | undefined, p: Pt, w = 95, h = 28) => {
