@@ -364,22 +364,34 @@ function ExtraireMenu({ onExtraire }: { onExtraire: (mode: "tableau" | "graphiqu
   const [open, setOpen] = useState<null | "tableau" | "graphique">(null);
   const periodes: [Periode, string][] = [["semaine", "Dernière semaine"], ["mois", "Dernier mois"], ["annee", "Dernière année"]];
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="relative flex items-center gap-1.5">
       {(["tableau", "graphique"] as const).map((mode) => (
-        <div key={mode} className="relative">
-          <button onClick={() => setOpen(open === mode ? null : mode)} className="btn-secondary px-2.5 py-1 text-xs capitalize">{mode}</button>
-          {open === mode && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setOpen(null)} />
-              <div className="absolute right-0 z-20 mt-1 w-44 rounded-xl border border-rose-100 bg-white p-1 shadow-lg">
-                {periodes.map(([p, l]) => (
-                  <button key={p} onClick={() => { setOpen(null); onExtraire(mode, p); }} className="block w-full rounded-lg px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-rose-50">{l}</button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+        <button
+          key={mode}
+          onClick={() => setOpen(open === mode ? null : mode)}
+          className={`relative z-30 btn-secondary px-2.5 py-1 text-xs capitalize ${open === mode ? "bg-rose-50" : ""}`}
+        >
+          {mode}
+        </button>
       ))}
+      {open && (
+        <>
+          {/* Voile sous les boutons (z-20) : un seul tap pour basculer/fermer. */}
+          <div className="fixed inset-0 z-20" onClick={() => setOpen(null)} />
+          {/* Ancré à gauche sur mobile (boutons à gauche), à droite sur desktop. */}
+          <div className="absolute left-0 top-full z-30 mt-1 w-44 max-w-[calc(100vw-3rem)] rounded-xl border border-rose-100 bg-white p-1 shadow-lg sm:left-auto sm:right-0">
+            {periodes.map(([p, l]) => (
+              <button
+                key={p}
+                onClick={() => { const m = open; setOpen(null); if (m) onExtraire(m, p); }}
+                className="block w-full rounded-lg px-3 py-1.5 text-left text-sm text-slate-700 hover:bg-rose-50"
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -387,7 +399,7 @@ function ExtraireMenu({ onExtraire }: { onExtraire: (mode: "tableau" | "graphiqu
 function Bloc({ titre, lignes, onLigne, onExtraire }: { titre: string; lignes: [string, Patient[]][]; onLigne: (nom: string, pts: Patient[]) => void; onExtraire?: (mode: "tableau" | "graphique", periode: Periode) => void }) {
   return (
     <section className="card grid gap-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-sm font-semibold text-slate-700">{titre}</h2>
         {onExtraire && <ExtraireMenu onExtraire={onExtraire} />}
       </div>
