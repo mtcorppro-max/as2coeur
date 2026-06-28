@@ -104,6 +104,9 @@ export function NouveauPatientForm() {
   const [seuilsProto, setSeuilsProto] = useState<{ type: string; min: string; max: string }[]>([]);
   const [sortiePostOp, setSortiePostOp] = useState<number | null>(null); // J+N post-op du protocole
   const [externes, setExternes] = useState<Externe[]>([]);
+  const [ajoutInf, setAjoutInf] = useState(false);
+  const [infNew, setInfNew] = useState({ prenom: "", nom: "", tel: "" });
+  const [busyInf, setBusyInf] = useState(false);
   const pro = useProSession();
   const [agenceId, setAgenceId] = useState("");
   const [agences, setAgences] = useState<{ value: string; label: string }[]>([]);
@@ -158,6 +161,26 @@ export function NouveauPatientForm() {
     const ext = externesInf.find((e) => nomExterne(e) === v);
     setForm((f) => ({ ...f, infirmiere_nom: v, infirmiere_tel: inf?.telephone ?? ext?.telephone ?? f.infirmiere_tel }));
   };
+
+  // Crée une infirmière libérale externe (ajoutée au site) et la rattache au patient.
+  async function ajouterInfirmiere() {
+    if (!infNew.nom.trim()) return;
+    if (!pro?.prestataire_id) { setErreur("Aucun prestataire associé à votre compte."); return; }
+    setBusyInf(true);
+    const { data, error } = await createClient().from("soignant_externe").insert({
+      prestataire_id: pro.prestataire_id,
+      type: "infirmiere",
+      prenom: infNew.prenom.trim() || null,
+      nom: infNew.nom.trim(),
+      telephone: infNew.tel.trim() || null,
+    }).select("id,type,titre,prenom,nom,specialite,telephone,protocoles").single();
+    setBusyInf(false);
+    if (error) { setErreur("Échec ajout infirmière : " + error.message); return; }
+    const ext = data as Externe;
+    setExternes((arr) => [...arr, ext]);
+    setForm((f) => ({ ...f, infirmiere_nom: nomExterne(ext), infirmiere_tel: ext.telephone ?? "" }));
+    setAjoutInf(false); setInfNew({ prenom: "", nom: "", tel: "" });
+  }
 
   // Compte chirurgien/médecin sélectionné + classification (chirurgien vs médecin).
   const selChirurgien = chirurgiens.find((s) => nomComplet(s) === form.chirurgien);
@@ -412,6 +435,22 @@ export function NouveauPatientForm() {
             ]}
           />
           <p className="mt-1 text-xs text-slate-400">Un compte rattaché pourra voir ce patient et saisir ses constantes ; une infirmière externe est indiquée à titre de référence.</p>
+          {!ajoutInf ? (
+            <button type="button" onClick={() => setAjoutInf(true)} className="mt-2 text-sm font-medium text-brand hover:underline">+ Nouvelle infirmière libérale</button>
+          ) : (
+            <div className="mt-2 grid gap-2 rounded-xl border border-rose-200 bg-rose-50/40 p-3">
+              <p className="text-xs font-semibold text-slate-600">Nouvelle infirmière libérale (ajoutée au site)</p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <input className="input" placeholder="Prénom" value={infNew.prenom} onChange={(e) => setInfNew((s) => ({ ...s, prenom: e.target.value }))} />
+                <input className="input" placeholder="Nom" value={infNew.nom} onChange={(e) => setInfNew((s) => ({ ...s, nom: e.target.value }))} />
+                <input className="input" placeholder="Téléphone" inputMode="tel" value={infNew.tel} onChange={(e) => setInfNew((s) => ({ ...s, tel: e.target.value }))} />
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={ajouterInfirmiere} disabled={busyInf || !infNew.nom.trim()} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">{busyInf ? "Ajout…" : "Ajouter au site"}</button>
+                <button type="button" onClick={() => { setAjoutInf(false); setInfNew({ prenom: "", nom: "", tel: "" }); }} className="btn-secondary px-3 py-1.5 text-sm">Annuler</button>
+              </div>
+            </div>
+          )}
         </div>
         <div>
           <label className="label">Délégué médical (rattaché)</label>
