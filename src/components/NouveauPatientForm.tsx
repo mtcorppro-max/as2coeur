@@ -60,6 +60,7 @@ export const TRAITEMENTS = [
   "NEAD",
   "NPAD",
   "Pansements",
+  "Sevrage Alcoolique",
   "Autre traitement",
 ];
 
