@@ -154,7 +154,7 @@ export default function LivraisonsPage() {
       </div>
 
       {/* ── Carte de la tournée du jour ── */}
-      <section className="card grid gap-4">
+      <section className="card grid grid-cols-1 gap-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
           <div className="w-full sm:w-auto">
             <label className="label">Jour de tournée</label>
@@ -170,7 +170,7 @@ export default function LivraisonsPage() {
         {etapesJour.length === 0 ? (
           <p className="text-sm text-slate-400">Aucune livraison planifiée le {formatDate(jour)}.</p>
         ) : (
-          <ol className="grid gap-2">
+          <ol className="grid grid-cols-1 gap-2">
             {etapesJour.map((l, i) => {
               const p = patientDe(l); if (!p) return null;
               const c = coords[p.id];
@@ -195,7 +195,7 @@ export default function LivraisonsPage() {
       </section>
 
       {/* ── À programmer (pool de l'agence) ── */}
-      <section className="grid gap-3">
+      <section className="grid grid-cols-1 gap-3">
         <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">À programmer ({pool.length})</h2>
         {!pret ? (
           <p className="text-sm text-slate-400">Chargement…</p>
@@ -205,7 +205,7 @@ export default function LivraisonsPage() {
           pool.map((l) => {
             const p = patientDe(l); if (!p) return null;
             return (
-              <div key={l.id} className="card grid gap-3">
+              <div key={l.id} className="card grid grid-cols-1 gap-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-slate-700">{p.nom}</p>
@@ -225,14 +225,14 @@ export default function LivraisonsPage() {
 
       {/* ── Mes livraisons (prises en charge) ── */}
       {planifiees.length > 0 && (
-        <section className="grid gap-3">
+        <section className="grid grid-cols-1 gap-3">
           <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Mes livraisons ({planifiees.length})</h2>
           {[...planifiees]
             .sort((a, b) => (a.date_prevue ?? "").localeCompare(b.date_prevue ?? ""))
             .map((l) => {
               const p = patientDe(l); if (!p) return null;
               return (
-                <div key={l.id} className="card grid gap-3">
+                <div key={l.id} className="card grid grid-cols-1 gap-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-slate-700">{p.nom}</p>
@@ -256,7 +256,7 @@ export default function LivraisonsPage() {
 
       {/* ── Livrées ── */}
       {livrees.length > 0 && (
-        <section className="grid gap-3">
+        <section className="grid grid-cols-1 gap-3">
           <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Livrées ({livrees.length})</h2>
           {livrees.map((l) => {
             const p = patientDe(l); if (!p) return null;
@@ -281,9 +281,9 @@ export default function LivraisonsPage() {
 
 function Bloc({ titre, children }: { titre: string; children: React.ReactNode }) {
   return (
-    <div className="grid gap-2">
+    <div className="grid grid-cols-1 gap-2">
       <p className="text-xs font-bold uppercase tracking-widest text-rose-400">{titre}</p>
-      <div className="grid gap-1.5">{children}</div>
+      <div className="grid grid-cols-1 gap-1.5">{children}</div>
     </div>
   );
 }
@@ -304,7 +304,7 @@ function DetailsPatient({ p }: { p: PatientLite }) {
   const ville = [p.code_postal, p.ville].filter(Boolean).join(" ");
   const duree = p.duree_prise_en_charge ? `${p.duree_prise_en_charge} jours` : "";
   return (
-    <div className="grid gap-5 rounded-xl border border-rose-100 bg-rose-50/30 p-3 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-5 rounded-xl border border-rose-100 bg-rose-50/30 p-3 sm:grid-cols-2">
       <Bloc titre="Coordonnées">
         <Ligne label="Naissance" value={formatDate(p.date_naissance)} />
         <Ligne label="Téléphone" value={p.telephone} href={p.telephone ? `tel:${p.telephone}` : undefined} />
