@@ -125,7 +125,7 @@ export const CONFIGS: Record<string, Conf> = {
   // PDF image (sans couche texte) : en-tête + jours + signature (positions à affiner).
   nead: {
     template: "/NEAD%20Presta.pdf", presc: { x: 45, y: 80 }, rpps: { x: 45, y: 100 }, patient: { x: 465, y: 82 }, date: { x: 500, y: 198 }, signature: { x: 380, y: 765 },
-    blancs: [[78, 711, 80, 16]], // efface « 14 jours » imprimé — ne reste que « QSP »
+    blancs: [[77, 708, 82, 24]], // efface entièrement « 14 jours » imprimé — ne reste que « QSP »
     champs: [
       { k: "checks", key: "produits", map: { "STANDARD": { x: 27, y: 270 }, "HYPERÉNERGÉTIQUE": { x: 27, y: 286 }, "HYPERÉNERGÉTIQUE HP": { x: 27, y: 300 }, "AUTRE": { x: 27, y: 314 } } },
       { k: "checks", key: "fibres", map: { "Fibres STANDARD": { x: 182, y: 270 }, "Fibres HYPERÉNERGÉTIQUE": { x: 182, y: 286 }, "Fibres HP": { x: 182, y: 300 }, "Fibres AUTRE": { x: 182, y: 314 } } },
