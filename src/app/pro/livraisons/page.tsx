@@ -206,13 +206,13 @@ export default function LivraisonsPage() {
             const p = patientDe(l); if (!p) return null;
             return (
               <div key={l.id} className="card grid gap-3">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <p className="font-semibold text-slate-700">{p.nom}</p>
-                    <p className="text-xs text-slate-400">{adresseComplete(p) || "Adresse non renseignée"}</p>
+                    <p className="truncate font-semibold text-slate-700">{p.nom}</p>
+                    <p className="break-words text-xs text-slate-400">{adresseComplete(p) || "Adresse non renseignée"}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => prendre(l.id)} disabled={busy === l.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">{busy === l.id ? "…" : "J'effectue cette livraison"}</button>
+                  <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                    <button onClick={() => prendre(l.id)} disabled={busy === l.id} className="btn-primary flex-1 px-3 py-1.5 text-sm disabled:opacity-50 sm:flex-none">{busy === l.id ? "…" : "J'effectue cette livraison"}</button>
                     <button onClick={() => toggleDetails(p.id)} className="btn-secondary px-3 py-1.5 text-sm">{ouverts.has(p.id) ? "Masquer" : "Détails"}</button>
                   </div>
                 </div>
@@ -233,16 +233,18 @@ export default function LivraisonsPage() {
               const p = patientDe(l); if (!p) return null;
               return (
                 <div key={l.id} className="card grid gap-3">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                      <p className="font-semibold text-slate-700">{p.nom}</p>
-                      <p className="text-xs text-slate-400">{adresseComplete(p) || "Adresse non renseignée"}</p>
+                      <p className="truncate font-semibold text-slate-700">{p.nom}</p>
+                      <p className="break-words text-xs text-slate-400">{adresseComplete(p) || "Adresse non renseignée"}</p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="badge bg-rose-100 text-brand">{formatDate(l.date_prevue) || "Sans date"}</span>
-                      <div className="w-36"><DateField value={l.date_prevue ?? ""} onChange={(v) => v && maj(l.id, { date_prevue: v, statut: "planifiee" })} placeholder="Date" /></div>
-                      <button onClick={() => maj(l.id, { statut: "livree" })} disabled={busy === l.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">Livrée</button>
-                      <button onClick={() => toggleDetails(p.id)} className="btn-secondary px-3 py-1.5 text-sm">{ouverts.has(p.id) ? "Masquer" : "Détails"}</button>
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-end">
+                      <span className="badge w-fit bg-rose-100 text-brand">{formatDate(l.date_prevue) || "Sans date"}</span>
+                      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+                        <div className="w-full sm:w-36"><DateField value={l.date_prevue ?? ""} onChange={(v) => v && maj(l.id, { date_prevue: v, statut: "planifiee" })} placeholder="Date" /></div>
+                        <button onClick={() => maj(l.id, { statut: "livree" })} disabled={busy === l.id} className="btn-primary flex-1 px-3 py-1.5 text-sm disabled:opacity-50 sm:flex-none">Livrée</button>
+                        <button onClick={() => toggleDetails(p.id)} className="btn-secondary flex-1 px-3 py-1.5 text-sm sm:flex-none">{ouverts.has(p.id) ? "Masquer" : "Détails"}</button>
+                      </div>
                     </div>
                   </div>
                   {ouverts.has(p.id) && <DetailsPatient p={p} />}
@@ -259,12 +261,12 @@ export default function LivraisonsPage() {
           {livrees.map((l) => {
             const p = patientDe(l); if (!p) return null;
             return (
-              <div key={l.id} className="card flex flex-wrap items-center justify-between gap-3 opacity-75">
+              <div key={l.id} className="card flex flex-col gap-3 opacity-75 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-700">{p.nom}</p>
-                  <p className="text-xs text-slate-400">{adresseComplete(p) || "Adresse non renseignée"}{l.date_prevue ? ` · ${formatDate(l.date_prevue)}` : ""}</p>
+                  <p className="truncate font-semibold text-slate-700">{p.nom}</p>
+                  <p className="break-words text-xs text-slate-400">{adresseComplete(p) || "Adresse non renseignée"}{l.date_prevue ? ` · ${formatDate(l.date_prevue)}` : ""}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                   <span className="badge bg-green-100 text-ok">Livrée ✓</span>
                   <button onClick={() => maj(l.id, { statut: "planifiee" })} disabled={busy === l.id} className="text-sm font-medium text-brand hover:underline">Annuler</button>
                 </div>
