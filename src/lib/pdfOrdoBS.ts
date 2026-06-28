@@ -19,6 +19,7 @@ export async function genererPdfOrdoBS(d: DocOrdoData, mode: "download" | "blobu
 
   txt(nomPrescripteur(d), { x: 70, y: 128 });
   blanc(84, 134, 130, 12); // masque les barres |__|__| de l'identifiant
+  blanc(38, 689, 110, 14); // masque la mention imprimée « Ordonnance … jours »
   if (d.prescripteurRpps) txt(`N° RPPS : ${d.prescripteurRpps}`, { x: 86, y: 143 }, 8);
   txt(d.patientNom, { x: 215, y: 212 });
   txt(d.date || new Date().toLocaleDateString("fr-FR"), { x: 32, y: 308 });
