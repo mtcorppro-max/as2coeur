@@ -10,6 +10,7 @@ import { useProSession } from "@/lib/hooks/useSession";
 import { LIBELLE_ROLE, estCoordOuManager, estRoleService } from "@/lib/roles";
 import { TYPES_ORDO_PHARMACIE, clePharmaVu } from "@/lib/ordonnances";
 import { RechercheSoignants } from "@/components/RechercheSoignants";
+import { Avatar } from "@/components/Avatar";
 
 export default function ProLayout({ children }: { children: React.ReactNode }) {
   const pro = useProSession();
@@ -193,7 +194,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
             )}
             {pro && (
               <Link href="/pro/profil" prefetch className="flex items-center gap-2 rounded-lg px-2 py-1 text-left transition hover:bg-rose-50" title="Mon profil">
-                <AvatarPro pro={pro} />
+                <Avatar url={pro.photo_url} prenom={pro.prenom} nom={pro.nom} taille="sm" />
                 <span className="hidden leading-tight sm:block">
                   <span className="block text-sm font-semibold text-slate-700">
                     {[pro.titre, pro.prenom, pro.nom].filter(Boolean).join(" ")}
@@ -259,17 +260,6 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         )}
       </nav>
     </div>
-  );
-}
-
-// Pastille de profil dans l'en-tête : photo si présente, sinon initiales.
-function AvatarPro({ pro }: { pro: { prenom: string | null; nom: string; photo_url: string | null } }) {
-  const initiales = `${pro.prenom?.[0] ?? ""}${pro.nom?.[0] ?? ""}`.toUpperCase() || "?";
-  return pro.photo_url ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={pro.photo_url} alt="" className="h-8 w-8 shrink-0 rounded-full border border-rose-100 object-cover" />
-  ) : (
-    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-100 text-xs font-bold text-brand">{initiales}</span>
   );
 }
 

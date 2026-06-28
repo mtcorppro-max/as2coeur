@@ -9,6 +9,7 @@ import { genererPdfConsignes, type ProtocolePdf } from "@/lib/pdfConsignes";
 import { NIVEAU_LABEL, optionsNiveau } from "@/lib/niveaux";
 import { Select } from "@/components/Select";
 import { ProtocoleEditor, protocoleVide, protocolePropre, protocoleDepuis, type Protocole } from "@/components/protocole";
+import { Avatar } from "@/components/Avatar";
 
 type Soignant = {
   id: string;
@@ -30,10 +31,11 @@ type Soignant = {
   protocoles: ProtocolePdf[] | null;
   recevoir_alertes: boolean | null;
   agences: string[] | null;
+  photo_url: string | null;
 };
 
 const COLS =
-  "id,nom,prenom,titre,role,niveau,agence_id,region_id,email,telephone,specialite,rpps,cabinets,secretariat_nom,secretariat_email,secretariat_tel,protocoles,recevoir_alertes,agences";
+  "id,nom,prenom,titre,role,niveau,agence_id,region_id,email,telephone,specialite,rpps,cabinets,secretariat_nom,secretariat_email,secretariat_tel,protocoles,recevoir_alertes,agences,photo_url";
 
 // Soignant externe (sans compte) — cf. migrations 0040 / 0041 / 0042.
 type Externe = {
@@ -188,13 +190,16 @@ export default function EquipePage() {
         className={`card grid gap-3 ${peutEditerExterne ? "cursor-pointer transition hover:border-rose-200 hover:shadow-md" : ""}`}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-semibold text-slate-800">{nomAffiche}</span>
-              <span className="badge bg-rose-100 text-brand">{badgeType}</span>
+          <div className="flex min-w-0 items-start gap-3">
+            <Avatar prenom={e.prenom} nom={e.nom} taille="md" />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold text-slate-800">{nomAffiche}</span>
+                <span className="badge bg-rose-100 text-brand">{badgeType}</span>
+              </div>
+              {estMed && e.specialite && <p className="mt-0.5 text-sm text-slate-500">{e.specialite}</p>}
+              {!estMed && e.zone_exercice && <p className="mt-0.5 text-sm text-slate-500">{e.zone_exercice}</p>}
             </div>
-            {estMed && e.specialite && <p className="mt-0.5 text-sm text-slate-500">{e.specialite}</p>}
-            {!estMed && e.zone_exercice && <p className="mt-0.5 text-sm text-slate-500">{e.zone_exercice}</p>}
           </div>
           {peutGererExterne && (
             <button
@@ -238,7 +243,9 @@ export default function EquipePage() {
         className={`card grid gap-3 ${modifiable ? "cursor-pointer transition hover:border-rose-200 hover:shadow-md" : ""}`}
       >
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
+          <div className="flex min-w-0 items-start gap-3">
+            <Avatar url={s.photo_url} prenom={s.prenom} nom={s.nom} taille="md" />
+            <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold text-slate-800">{nomAffiche}</span>
               <span className="badge bg-rose-100 text-brand">{estChir ? labelMedecin(s.specialite) : LIBELLE_ROLE[s.role]}</span>
@@ -258,6 +265,7 @@ export default function EquipePage() {
               })}
             </div>
             {s.specialite && <p className="mt-0.5 text-sm text-slate-500">{s.specialite}</p>}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {s.id !== pro?.id && (

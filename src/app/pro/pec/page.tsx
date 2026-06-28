@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
+import { Avatar } from "@/components/Avatar";
 
 type Patient = {
   id: string;
@@ -16,7 +17,7 @@ type Patient = {
   traitement: string | null;
   statut: string;
 };
-type Coord = { id: string; nom: string; prenom: string | null; titre: string | null; agence_id: string | null };
+type Coord = { id: string; nom: string; prenom: string | null; titre: string | null; agence_id: string | null; photo_url: string | null };
 type Liaison = { patient_id: string; professionnel_id: string };
 
 const nomComplet = (p: { titre?: string | null; prenom?: string | null; nom: string }) =>
@@ -151,7 +152,7 @@ export default function PecPage() {
     const supabase = createClient();
     Promise.all([
       supabase.from("patient").select("id,nom,date_operation,duree_prise_en_charge,chirurgien,delegue_nom,agence_id,traitement,statut"),
-      supabase.from("professionnel").select("id,nom,prenom,titre,agence_id").eq("role", "coordinatrice"),
+      supabase.from("professionnel").select("id,nom,prenom,titre,agence_id,photo_url").eq("role", "coordinatrice"),
       supabase.from("patient_soignant").select("patient_id,professionnel_id"),
       supabase.from("agence").select("id,nom"),
     ]).then(([{ data: pts }, { data: cs }, { data: ls }, { data: ags }]) => {
@@ -306,13 +307,16 @@ export default function PecPage() {
               <button
                 key={c.id}
                 onClick={() => ouvrir(`Patients de ${nomComplet(c)}`, pts)}
-                className="flex items-center justify-between rounded-lg px-2 py-1.5 text-sm transition hover:bg-rose-50"
+                className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-sm transition hover:bg-rose-50"
               >
-                <span className="text-slate-700">
-                  {nomComplet(c)}
-                  {c.agence_id && <span className="text-slate-400"> · {agenceNom.get(c.agence_id)}</span>}
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <Avatar url={c.photo_url} prenom={c.prenom} nom={c.nom} taille="sm" />
+                  <span className="min-w-0 text-left text-slate-700">
+                    {nomComplet(c)}
+                    {c.agence_id && <span className="text-slate-400"> · {agenceNom.get(c.agence_id)}</span>}
+                  </span>
                 </span>
-                <span className="badge bg-rose-100 text-brand">{pts.length} patient(s)</span>
+                <span className="badge shrink-0 bg-rose-100 text-brand">{pts.length} patient(s)</span>
               </button>
             ))}
           </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession, patchProSession } from "@/lib/hooks/useSession";
 import { LIBELLE_ROLE } from "@/lib/roles";
+import { Avatar } from "@/components/Avatar";
 
 type Form = {
   prenom: string; nom: string;
@@ -128,7 +129,7 @@ export default function MonProfil() {
         <div className="card grid gap-4">
           {/* Photo de profil */}
           <div className="flex items-center gap-4">
-            <Avatar url={photoUrl} prenom={f.prenom} nom={f.nom} />
+            <Avatar url={photoUrl} prenom={f.prenom} nom={f.nom} taille="lg" />
             <div className="flex flex-wrap items-center gap-2">
               <label className={`btn-secondary cursor-pointer px-3 py-1.5 text-sm ${photoBusy ? "pointer-events-none opacity-50" : ""}`}>
                 {photoBusy ? "Envoi…" : photoUrl ? "Changer la photo" : "Ajouter une photo"}
@@ -198,16 +199,5 @@ export default function MonProfil() {
         </div>
       )}
     </div>
-  );
-}
-
-// Pastille ronde : photo si présente, sinon initiales.
-function Avatar({ url, prenom, nom }: { url: string | null; prenom: string; nom: string }) {
-  const initiales = `${prenom?.[0] ?? ""}${nom?.[0] ?? ""}`.toUpperCase() || "?";
-  return url ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={url} alt="Photo de profil" className="h-20 w-20 shrink-0 rounded-full border border-rose-100 object-cover" />
-  ) : (
-    <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-rose-100 text-2xl font-bold text-brand">{initiales}</span>
   );
 }
