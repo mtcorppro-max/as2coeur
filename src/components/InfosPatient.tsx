@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useProSession } from "@/lib/hooks/useSession";
 import { LIBELLE_ROLE } from "@/lib/roles";
 import { AdresseAutocomplete } from "@/components/AdresseAutocomplete";
 import { Select } from "@/components/Select";
@@ -71,6 +72,11 @@ export function InfosPatient({
   const [agenceId, setAgenceId] = useState(patient.agence_id ?? "");
   const [autreTrait, setAutreTrait] = useState(!!patient.traitement && !TRAITEMENTS.includes(patient.traitement as typeof TRAITEMENTS[number]));
   const [agences, setAgences] = useState<{ value: string; label: string }[]>([]);
+  const [ajoutInf, setAjoutInf] = useState(false);
+  const [infNew, setInfNew] = useState({ prenom: "", nom: "", tel: "" });
+  const [busyInf, setBusyInf] = useState(false);
+  const [erreurInf, setErreurInf] = useState<string | null>(null);
+  const pro = useProSession();
 
   useEffect(() => {
     if (!edition || soignants.length) return;
@@ -116,11 +122,44 @@ export function InfosPatient({
       : []),
   ];
 
+  // Options du sélecteur infirmière : comptes rattachés + soignants externes
+  // (+ la valeur actuelle si elle n'est plus dans la liste).
+  const optionsInfirmiere = [
+    ...infirmieres.map((s) => ({ value: nomComplet(s), label: `${nomComplet(s)} (${LIBELLE_ROLE[s.role]})` })),
+    ...externesInf.map((e) => ({ value: nomComplet(e), label: `${nomComplet(e)} · externe` })),
+    ...(form.infirmiere_nom
+      && !infirmieres.some((s) => nomComplet(s) === form.infirmiere_nom)
+      && !externesInf.some((e) => nomComplet(e) === form.infirmiere_nom)
+      ? [{ value: form.infirmiere_nom, label: form.infirmiere_nom }]
+      : []),
+  ];
+
   const choisirInfirmiere = (v: string) => {
     const inf = infirmieres.find((s) => nomComplet(s) === v);
     const ext = externesInf.find((e) => nomComplet(e) === v);
     setForm((f) => ({ ...f, infirmiere_nom: v, infirmiere_tel: inf?.telephone ?? ext?.telephone ?? f.infirmiere_tel }));
   };
+
+  // Crée une infirmière libérale externe (ajoutée au site) et la rattache au patient.
+  async function ajouterInfirmiere() {
+    if (!infNew.nom.trim()) return;
+    if (!pro?.prestataire_id) { setErreurInf("Aucun prestataire associé à votre compte."); return; }
+    setBusyInf(true);
+    setErreurInf(null);
+    const { data, error } = await createClient().from("soignant_externe").insert({
+      prestataire_id: pro.prestataire_id,
+      type: "infirmiere",
+      prenom: infNew.prenom.trim() || null,
+      nom: infNew.nom.trim(),
+      telephone: infNew.tel.trim() || null,
+    }).select("id,type,titre,prenom,nom,telephone,specialite,protocoles").single();
+    setBusyInf(false);
+    if (error) { setErreurInf("Échec ajout infirmière : " + error.message); return; }
+    const ext = data as Externe;
+    setExternes((arr) => [...arr, ext]);
+    setForm((f) => ({ ...f, infirmiere_nom: nomComplet(ext), infirmiere_tel: ext.telephone ?? "" }));
+    setAjoutInf(false); setInfNew({ prenom: "", nom: "", tel: "" });
+  }
 
   // Choix d'une coordinatrice pour une alerte : enregistre nom + téléphone du compte.
   const choisirAlerte = (champNom: Champ, champTel: Champ) => (v: string) => {
@@ -265,7 +304,33 @@ export function InfosPatient({
             <Champ label="Pharmacie" value={form.pharmacie} onChange={set("pharmacie")} />
             <Champ label="Tél. pharmacie" value={form.pharmacie_tel} onChange={set("pharmacie_tel")} />
           </div>
-          <SelectSoignant label="Infirmière libérale (compte rattaché)" value={form.infirmiere_nom} soignants={infirmieres} onChange={choisirInfirmiere} />
+          <div>
+            <label className="label">Infirmière libérale</label>
+            <Select
+              value={form.infirmiere_nom}
+              onChange={choisirInfirmiere}
+              placeholder={optionsInfirmiere.length ? "— Choisir une infirmière libérale —" : "Aucune infirmière libérale"}
+              options={optionsInfirmiere}
+            />
+            <p className="mt-1 text-xs text-slate-400">Un compte rattaché pourra voir ce patient et saisir ses constantes ; une infirmière externe est indiquée à titre de référence.</p>
+            {!ajoutInf ? (
+              <button type="button" onClick={() => setAjoutInf(true)} className="mt-2 text-sm font-medium text-brand hover:underline">+ Nouvelle infirmière libérale</button>
+            ) : (
+              <div className="mt-2 grid gap-2 rounded-xl border border-rose-200 bg-rose-50/40 p-3">
+                <p className="text-xs font-semibold text-slate-600">Nouvelle infirmière libérale (ajoutée au site)</p>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <input className="input" placeholder="Prénom" value={infNew.prenom} onChange={(e) => setInfNew((s) => ({ ...s, prenom: e.target.value }))} />
+                  <input className="input" placeholder="Nom" value={infNew.nom} onChange={(e) => setInfNew((s) => ({ ...s, nom: e.target.value }))} />
+                  <input className="input" placeholder="Téléphone" inputMode="tel" value={infNew.tel} onChange={(e) => setInfNew((s) => ({ ...s, tel: e.target.value }))} />
+                </div>
+                {erreurInf && <p className="text-xs text-critique">{erreurInf}</p>}
+                <div className="flex gap-2">
+                  <button type="button" onClick={ajouterInfirmiere} disabled={busyInf || !infNew.nom.trim()} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">{busyInf ? "Ajout…" : "Ajouter au site"}</button>
+                  <button type="button" onClick={() => { setAjoutInf(false); setInfNew({ prenom: "", nom: "", tel: "" }); setErreurInf(null); }} className="btn-secondary px-3 py-1.5 text-sm">Annuler</button>
+                </div>
+              </div>
+            )}
+          </div>
           <SelectSoignant label="Délégué médical (rattaché)" value={form.delegue_nom} soignants={delegues} onChange={(v) => setVal("delegue_nom", v)} />
           <SelectSoignant label="Alerte 1 — infirmière coordinatrice" value={form.alerte_1_nom} soignants={coordinatrices} onChange={choisirAlerte("alerte_1_nom", "tel_alerte_1")} />
           <SelectSoignant label="Alerte 2 — infirmière coordinatrice" value={form.alerte_2_nom} soignants={coordinatrices} onChange={choisirAlerte("alerte_2_nom", "tel_alerte_2")} />
