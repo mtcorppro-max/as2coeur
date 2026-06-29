@@ -19,7 +19,6 @@ type StockRow = {
   article_code: string;
   quantite: number;
   en_commande: number;
-  reserve: number;
   seuil_alerte: number;
   article: { designation: string } | { designation: string }[] | null;
 };
@@ -45,20 +44,25 @@ export default function MagasinPage() {
       for (let from = 0; ; from += chunk) {
         const { data, error } = await supabase
           .from("stock")
-          .select("id,article_code,quantite,en_commande,reserve,seuil_alerte,article:article_code(designation)")
+          .select("id,article_code,quantite,en_commande,seuil_alerte,article:article_code(designation)")
           .order("article_code")
           .range(from, from + chunk - 1);
         if (error || !data) break;
         all.push(...(data as unknown as StockRow[]));
         if (data.length < chunk) break;
       }
+      // « Réservé » par article (livraisons non livrées) — calculé côté serveur.
+      const { data: res } = await supabase.rpc("stock_reserve");
+      const reserveParArticle = new Map<string, number>(
+        ((res ?? []) as { article_code: string; qte: number }[]).map((r) => [r.article_code, Number(r.qte)])
+      );
       setLignes(
         all.map((s) => ({
           id: s.id,
           code: s.article_code,
           quantite: s.quantite,
           en_commande: s.en_commande ?? 0,
-          reserve: s.reserve ?? 0,
+          reserve: reserveParArticle.get(s.article_code) ?? 0,
           seuil: s.seuil_alerte ?? 0,
           designation: (Array.isArray(s.article) ? s.article[0]?.designation : s.article?.designation) ?? "",
         }))
