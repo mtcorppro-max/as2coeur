@@ -152,6 +152,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
     ? [
         { href: "/pro/magasin", icon: "box", label: "Magasin" },
         { href: "/pro/preparations", icon: "prep", label: "Préparations" },
+        { href: "/pro/parc", icon: "parc", label: "Parc" },
       ]
     : [
         { href: "/pro", icon: "dashboard", label: "Tableau" },
@@ -197,6 +198,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                 <>
                   <Onglet href="/pro/magasin" icon="box" label="Magasin" pathname={pathname} />
                   <Onglet href="/pro/preparations" icon="prep" label="Préparations" pathname={pathname} />
+                  <Onglet href="/pro/parc" icon="parc" label="Parc" pathname={pathname} />
                 </>
               ) : (
                 <>
@@ -361,6 +363,7 @@ function IconeNav({ name, className }: { name: string; className?: string }) {
     ellipsis: (<><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none" /></>),
     box: (<><path d="m3 7.5 9-4.5 9 4.5v9l-9 4.5-9-4.5z" /><path d="m3 7.5 9 4.5 9-4.5" /><path d="M12 12v9" /></>),
     prep: (<><rect x="8" y="3" width="8" height="4" rx="1" /><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></>),
+    parc: (<><rect x="3" y="4.5" width="18" height="12" rx="2" /><line x1="8.5" y1="20" x2="15.5" y2="20" /><line x1="12" y1="16.5" x2="12" y2="20" /><path d="M7.5 10.5h2l1-2 1.5 4 1-2h3.5" /></>),
   };
   return (
     <svg viewBox="0 0 24 24" className={className} {...p} aria-hidden="true">
