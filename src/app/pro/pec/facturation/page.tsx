@@ -29,6 +29,28 @@ const STATUTS: Record<string, { label: string; cls: string }> = {
   annulee: { label: "Annulée", cls: "bg-slate-200 text-slate-500" },
 };
 
+type ProjF = { patient_id: string; date_debut: string; date_fin: string; lpp: { prix_ttc: number | null; periodicite: string } | { prix_ttc: number | null; periodicite: string }[] | null };
+
+// Dates de début de chaque période d'un forfait, jusqu'à la fin de PEC.
+function periodStarts(periodicite: string, dDebut: string, dFin: string): Date[] {
+  const fin = new Date(dFin); fin.setHours(0, 0, 0, 0);
+  const out: Date[] = [];
+  if (periodicite === "installation" || periodicite === "unitaire") {
+    const d = new Date(dDebut); d.setHours(0, 0, 0, 0);
+    if (d <= fin) out.push(d);
+    return out;
+  }
+  const incr = periodicite === "journalier" ? 1 : periodicite === "hebdomadaire" ? 7 : 0;
+  for (let k = 0; k < 4000; k++) {
+    const d = new Date(dDebut); d.setHours(0, 0, 0, 0);
+    if (periodicite === "mensuel") d.setMonth(d.getMonth() + k); else d.setDate(d.getDate() + k * incr);
+    if (d > fin) break;
+    out.push(d);
+    if (incr === 0 && periodicite !== "mensuel") break;
+  }
+  return out;
+}
+
 function telechargerCSV(nomFichier: string, contenu: string) {
   const blob = new Blob(["﻿" + contenu], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -41,6 +63,7 @@ function telechargerCSV(nomFichier: string, contenu: string) {
 export default function FacturationPage() {
   const pro = useProSession();
   const [factures, setFactures] = useState<Facture[]>([]);
+  const [forfaits, setForfaits] = useState<ProjF[]>([]);
   const [pret, setPret] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [fStatut, setFStatut] = useState("");
@@ -57,6 +80,12 @@ export default function FacturationPage() {
       .select("id,patient_id,agence_id,medecin_id,medecin_nom,montant_base,part_secu,part_mutuelle,part_patient,statut,ref_externe,periode_debut,envoyee_le,payee_le,patient:patient_id(nom),agence:agence_id(nom)")
       .order("periode_debut", { ascending: false });
     setFactures((data ?? []) as unknown as Facture[]);
+    // Forfaits actifs → projection du CA prévisionnel (périodes à venir).
+    const { data: ff } = await supabase
+      .from("patient_forfait")
+      .select("patient_id,date_debut,date_fin,lpp:lpp_code(prix_ttc,periodicite)")
+      .eq("actif", true);
+    setForfaits((ff ?? []) as unknown as ProjF[]);
     setPret(true);
   }, []);
   useEffect(() => { if (pro && peut) charger(); else if (pro) setPret(true); }, [pro, peut, charger]);
@@ -82,8 +111,27 @@ export default function FacturationPage() {
       const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       serie.push({ label: moisCourt(d), total: factures.filter((f) => mkey(f.periode_debut) === k && f.statut !== "annulee").reduce((a, f) => a + f.montant_base, 0) });
     }
-    return { aFacturerMois, dejaFacture, paye, attenteSecu, aFacturerTotal, patientsMois: patientsMois.size, delaiMoyen: delaiN ? Math.round(delaiSum / delaiN) : null, serie };
+    return { aFacturerMois, dejaFacture, paye, attenteSecu, aFacturerTotal, patientsMoisSet: patientsMois, delaiMoyen: delaiN ? Math.round(delaiSum / delaiN) : null, serie };
   }, [factures]);
+
+  // ── Projection prévisionnelle (forfaits à venir, non encore facturés) ──
+  const proj = useMemo(() => {
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    let aVenir = 0, ceMois = 0;
+    const pats = new Set<string>();
+    for (const f of forfaits) {
+      const lp = un(f.lpp); if (!lp?.prix_ttc) continue;
+      const futurs = periodStarts(lp.periodicite, f.date_debut, f.date_fin).filter((d) => d > now);
+      if (futurs.length) pats.add(f.patient_id);
+      aVenir += lp.prix_ttc * futurs.length;
+      ceMois += lp.prix_ttc * futurs.filter((d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` === ym).length;
+    }
+    return { aVenir, ceMois, patients: pats };
+  }, [forfaits]);
+
+  const patientsActifs = useMemo(() => new Set([...s.patientsMoisSet, ...proj.patients]).size, [s.patientsMoisSet, proj.patients]);
+  const genereCeMois = s.aFacturerMois + proj.ceMois;
 
   // ── Options de filtres ──
   const agences = useMemo(() => [...new Map(factures.map((f) => [f.agence_id, un(f.agence)?.nom]).filter(([id]) => id) as [string, string][]).entries()].map(([value, label]) => ({ value, label })), [factures]);
@@ -157,11 +205,16 @@ export default function FacturationPage() {
         <p className="text-sm text-slate-400">Calcul en cours…</p>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50 to-white p-4">
               <p className="text-sm text-slate-500">Ce mois-ci</p>
-              <p className="mt-1 text-xl font-bold text-brand">Vous générerez {eur(s.aFacturerMois)}</p>
-              <p className="text-sm text-slate-500">avec {s.patientsMois} patient(s) actif(s)</p>
+              <p className="mt-1 text-xl font-bold text-brand">Vous générerez {eur(genereCeMois)}</p>
+              <p className="text-sm text-slate-500">avec {patientsActifs} patient(s) actif(s)</p>
+            </div>
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+              <p className="text-sm text-slate-500">CA prévisionnel à venir</p>
+              <p className="mt-1 text-xl font-bold text-brand">{eur(proj.aVenir)}</p>
+              <p className="text-sm text-slate-500">forfaits non encore facturés</p>
             </div>
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
               <p className="text-sm text-slate-500">En attente d&apos;envoi à la Sécu</p>
