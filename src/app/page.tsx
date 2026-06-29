@@ -340,6 +340,12 @@ const FEATURES = [
     description:
       "Pool de livraisons par agence, carte interactive, itinéraire optimisé. Le livreur voit sa tournée du jour sur son téléphone.",
   },
+  {
+    icon: "chart",
+    titre: "Pilotage multi-niveaux",
+    description:
+      "Statistiques par agence, médecin, délégué, type de traitement. Exports PDF par période. Vision région, vision nationale.",
+  },
 ];
 
 const FAQ = [
@@ -410,6 +416,7 @@ function FeatureIcon({ name, className }: { name: string; className?: string }) 
     dashboard: (<><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /></>),
     ordonnance: (<><rect x="8" y="3" width="8" height="4" rx="1" /><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2" /><path d="M12 11v6M9 14h6" /></>),
     truck: (<><path d="M3 6.5h11v9H3z" /><path d="M14 9.5h4l3 3v3h-7z" /><circle cx="7" cy="18" r="1.7" /><circle cx="17" cy="18" r="1.7" /></>),
+    chart: (<><path d="M4 20V4" /><path d="M4 20h16" /><rect x="7" y="12" width="3" height="5" rx="0.5" /><rect x="12" y="8" width="3" height="9" rx="0.5" /><rect x="17" y="14" width="3" height="3" rx="0.5" /></>),
   };
   return (
     <svg viewBox="0 0 24 24" className={className} {...p} aria-hidden="true">
