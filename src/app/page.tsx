@@ -235,6 +235,26 @@ export default function Landing() {
             </div>
           </div>
         </section>
+
+        {/* ── Huit rôles ──────────────────────────────────────── */}
+        <section className="bg-rose-900 py-20">
+          <div className="mx-auto max-w-4xl px-6 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-rose-300">Une plateforme, tous les métiers</p>
+            <h2 className="mt-2 text-3xl font-bold text-white md:text-4xl">Huit rôles, un seul outil.</h2>
+            <div className="mt-8 flex flex-wrap justify-center gap-2.5">
+              {ROLES.map((r) => (
+                <span key={r} className="rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-sm font-medium text-white">
+                  {r}
+                </span>
+              ))}
+            </div>
+            <p className="mx-auto mt-8 max-w-2xl leading-relaxed text-rose-200">
+              Chacun a sa vue, ses droits, ses outils. Cloisonnement strict des
+              données par région et par agence — sécurité jusqu&apos;à la base de
+              données.
+            </p>
+          </div>
+        </section>
       </main>
 
       {/* ── Footer ──────────────────────────────────────────── */}
@@ -351,6 +371,17 @@ const FAQ = [
     q: "L'application est-elle conforme au RGPD ?",
     a: "L'application est conçue selon les principes du RGPD : accès par rôle, cloisonnement strict des données et journalisation des actions. Les données de santé (constantes, photos, dossiers) relèvent de l'hébergement HDS (Hébergeur de Données de Santé), certification obligatoire en France : la mise en production s'appuie sur un hébergeur certifié HDS, conformément à la réglementation.",
   },
+];
+
+const ROLES = [
+  "Dirigeants",
+  "Médecins",
+  "Coordinatrices",
+  "Managers",
+  "Délégués",
+  "Infirmières libérales",
+  "Livreurs",
+  "Pharmacies",
 ];
 
 const SECURITE = [
