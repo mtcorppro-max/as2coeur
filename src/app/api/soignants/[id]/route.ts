@@ -106,8 +106,9 @@ export async function PATCH(
   const t = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
   const maj: Record<string, unknown> = {};
 
-  // Coordonnées / infos pro : soi-même ou niveau ≤ 2.
-  const peutContact = admin_ || estSelf || niveauMoi <= 2;
+  // Coordonnées / infos pro : soi-même, admin, ou un gestionnaire (niveau ≤ 2),
+  // mais JAMAIS sur un compte plus puissant que soi (niveau strictement inférieur).
+  const peutContact = admin_ || estSelf || (niveauMoi <= 2 && cible.niveau >= niveauMoi);
   if (peutContact) {
     for (const k of ["telephone", "email", "rpps", "specialite", "cabinets", "secretariat_nom", "secretariat_email", "secretariat_tel", "zone_exercice", "titre", "prenom"]) {
       if (body[k] !== undefined) maj[k] = t(body[k]);

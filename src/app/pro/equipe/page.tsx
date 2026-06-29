@@ -132,9 +132,10 @@ export default function EquipePage() {
   const soignantsVisibles = soignants.filter(visible);
 
   const labelAgence = (id: string | null) => agences.find((a) => a.value === id)?.label ?? null;
-  // Un niveau 0/1 peut modifier les comptes de niveau 2 ou 3 (sauf le sien).
-  // Édition du profil (coordonnées) : niveau 0/1/2. (Le niveau/agence reste géré dans l'éditeur, réservé 0/1.)
-  const peutModifier = (s: Soignant) => niveauMoi <= 2 && pro?.id !== s.id;
+  // Édition du profil (coordonnées) : niveau 0/1/2, jamais sur un compte plus
+  // puissant que soi (niveau strictement inférieur). Le niveau/agence reste
+  // géré dans l'éditeur, réservé aux niveaux 0/1.
+  const peutModifier = (s: Soignant) => niveauMoi <= 2 && pro?.id !== s.id && s.niveau >= niveauMoi;
   // Un niveau 0/1 peut supprimer un compte qui n'est pas plus puissant que lui.
   const peutSupprimer = (s: Soignant) => niveauMoi <= 1 && pro?.id !== s.id && s.niveau >= niveauMoi;
 
