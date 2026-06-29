@@ -261,7 +261,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl overflow-x-hidden px-4 py-6 pb-24 sm:px-6 sm:pb-6">{children}</main>
+      <main className="mx-auto max-w-6xl overflow-x-clip px-4 py-6 pb-24 sm:px-6 sm:pb-6">{children}</main>
 
       {/* Feuille « Plus » : entrées qui débordent de la barre mobile. */}
       {menuOuvert && (
