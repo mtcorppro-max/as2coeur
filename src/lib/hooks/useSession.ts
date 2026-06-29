@@ -29,6 +29,12 @@ function lsSet<T>(key: string, v: T) {
 let memPatient: SessionPatient | null = null;
 let memPro: SessionPro | null = null;
 
+// Abonnés à la session pro : permet de mettre à jour tous les composants qui
+// utilisent useProSession (ex. l'avatar de l'en-tête) après un patchProSession,
+// sans rechargement de page.
+const proListeners = new Set<() => void>();
+function notifierPro() { proListeners.forEach((l) => l()); }
+
 // ── Patient ──────────────────────────────────────────────────────────
 
 export function usePatientSession() {
@@ -72,10 +78,17 @@ export function useProSession() {
   const [pro, setPro] = useState<SessionPro | null>(memPro);
 
   useEffect(() => {
-    if (pro) return;
-    const cached = lsGet<SessionPro>(LS_PRO);
-    if (cached) { memPro = cached; setPro(cached); return; }
-    fetchPro().then((p) => { if (p) setPro(p); });
+    // S'abonner aux mises à jour de la session (patchProSession) pour refléter
+    // les changements (photo de profil, opt-in alertes…) sans recharger la page.
+    const maj = () => setPro(memPro);
+    proListeners.add(maj);
+
+    if (!memPro) {
+      const cached = lsGet<SessionPro>(LS_PRO);
+      if (cached) { memPro = cached; setPro(cached); }
+      else fetchPro().then((p) => { if (p) setPro(p); });
+    }
+    return () => { proListeners.delete(maj); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -129,6 +142,7 @@ export function patchProSession(patch: Partial<SessionPro>) {
   if (!memPro) return;
   memPro = { ...memPro, ...patch };
   lsSet(LS_PRO, memPro);
+  notifierPro(); // rafraîchit l'en-tête et tout composant abonné
 }
 
 // Exposer pour invalider le cache à la déconnexion
@@ -136,4 +150,5 @@ export function clearSessionCache() {
   memPatient = null;
   memPro = null;
   try { localStorage.removeItem(LS_PATIENT); localStorage.removeItem(LS_PRO); } catch { /* */ }
+  notifierPro();
 }
