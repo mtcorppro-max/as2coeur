@@ -16,8 +16,16 @@ function lsGet<T>(key: string): T | null {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
     const { v, ts } = JSON.parse(raw) as Cached<T>;
-    if (Date.now() - ts > TTL) { localStorage.removeItem(key); return null; }
+    if (Date.now() - ts > TTL) return null; // périmé (mais on ne supprime pas : stale-while-revalidate)
     return v;
+  } catch { return null; }
+}
+
+// Lit le cache SANS tenir compte du TTL (affichage immédiat, même périmé).
+function lsRead<T>(key: string): Cached<T> | null {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as Cached<T>) : null;
   } catch { return null; }
 }
 
@@ -34,6 +42,15 @@ let memPro: SessionPro | null = null;
 // sans rechargement de page.
 const proListeners = new Set<() => void>();
 function notifierPro() { proListeners.forEach((l) => l()); }
+
+// Revalidation en tâche de fond de la session pro. Ne vide JAMAIS la session
+// en cas d'échec (réseau, jeton momentanément invalide) — on garde l'existant.
+let proRevalEnCours = false;
+function revaliderPro() {
+  if (proRevalEnCours) return;
+  proRevalEnCours = true;
+  fetchPro().then((p) => { if (p) notifierPro(); }).finally(() => { proRevalEnCours = false; });
+}
 
 // ── Patient ──────────────────────────────────────────────────────────
 
@@ -83,11 +100,16 @@ export function useProSession() {
     const maj = () => setPro(memPro);
     proListeners.add(maj);
 
+    // Affichage immédiat depuis le cache, même périmé (stale-while-revalidate) :
+    // évite que la navbar retombe sur « Tableau + Messages » pendant un
+    // rechargement de session ou un blip réseau.
     if (!memPro) {
-      const cached = lsGet<SessionPro>(LS_PRO);
-      if (cached) { memPro = cached; setPro(cached); }
-      else fetchPro().then((p) => { if (p) setPro(p); });
+      const cache = lsRead<SessionPro>(LS_PRO);
+      if (cache) { memPro = cache.v; setPro(cache.v); }
     }
+    // Revalidation en arrière-plan si pas de session ou cache périmé (> TTL).
+    const cache = lsRead<SessionPro>(LS_PRO);
+    if (!memPro || !cache || Date.now() - cache.ts > TTL) revaliderPro();
     return () => { proListeners.delete(maj); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
