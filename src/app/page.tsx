@@ -308,6 +308,18 @@ const FEATURES = [
     description:
       "Dashboard trié par criticité, fiche patient complète avec seuils ajustables, création de patient et génération de code.",
   },
+  {
+    icon: "℞",
+    titre: "Ordonnances automatiques",
+    description:
+      "Protocole chirurgien → génération CERFA → signature électronique → envoi pharmacie. Zéro ressaisie, circuit tracé et horodaté.",
+  },
+  {
+    icon: "▣",
+    titre: "Gestion des livraisons",
+    description:
+      "Pool de livraisons par agence, carte interactive, itinéraire optimisé. Le livreur voit sa tournée du jour sur son téléphone.",
+  },
 ];
 
 const FAQ = [
