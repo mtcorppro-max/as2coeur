@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { estCoordOuManager } from "@/lib/roles";
 import { Select } from "@/components/Select";
+import { EquipementsLivraison } from "@/components/EquipementsLivraison";
 
 type Pro = { nom: string; prenom: string | null; titre: string | null };
 type Livraison = { id: string; livreur_id: string | null; statut: string; date_prevue: string | null; created_at: string; livreur: Pro | Pro[] | null };
@@ -174,6 +175,7 @@ export function LivraisonPatient({ patientId, prestataireId }: { patientId: stri
               )}
               </div>
               {peutGerer && <LignesLivraison livraisonId={l.id} editable={peutPanier && l.statut !== "livree"} />}
+              {peutGerer && <EquipementsLivraison livraisonId={l.id} mode={peutPanier && l.statut !== "livree" ? "demande" : "lecture"} />}
             </div>
           ))}
         </div>

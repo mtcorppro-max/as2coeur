@@ -102,6 +102,12 @@ export default function FicheEquipement() {
         </div>
         {peutGerer && (
           <div className="flex flex-wrap gap-2 border-t border-rose-50 pt-3">
+            {eq.statut === "en_transit" && (
+              <>
+                <button onClick={() => majStatut("disponible", {}, "retour_agence")} disabled={busy} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">Retour OK (remettre en stock)</button>
+                <button onClick={() => majStatut("en_maintenance", {}, "retour_agence")} disabled={busy} className="btn-secondary px-3 py-1.5 text-sm">Retour → maintenance</button>
+              </>
+            )}
             {eq.statut === "en_maintenance" ? (
               <button onClick={finMaintenance} disabled={busy} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">Maintenance terminée</button>
             ) : eq.statut === "disponible" ? (

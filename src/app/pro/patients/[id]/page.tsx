@@ -11,6 +11,7 @@ import { SeuilEditor } from "@/components/SeuilEditor";
 import { ChatBox } from "@/components/ChatBox";
 import { InfosPatient } from "@/components/InfosPatient";
 import { LivraisonPatient } from "@/components/LivraisonPatient";
+import { EquipementsPatient } from "@/components/EquipementsPatient";
 import { OrdonnancesPatient } from "@/components/OrdonnancesPatient";
 import { MarquerVisite } from "@/components/MarquerVisite";
 import { AlertesPatient } from "@/components/AlertesPatient";
@@ -170,6 +171,9 @@ export default function FichePatient() {
 
       {/* ── Livraisons (programmées par la coordinatrice, prises par un livreur) ── */}
       <LivraisonPatient patientId={patient.id} prestataireId={patient.prestataire_id} />
+
+      {/* ── Matériel de location en cours chez le patient ── */}
+      <EquipementsPatient patientId={patient.id} />
 
       {/* ── Ordonnances du patient ── */}
       <OrdonnancesPatient patientId={patient.id} patientNom={patient.nom} patientNaissance={patient.date_naissance} patientChirurgien={patient.chirurgien} />

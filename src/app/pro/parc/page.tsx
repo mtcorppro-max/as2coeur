@@ -6,11 +6,12 @@ import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { Select } from "@/components/Select";
 import { STATUTS } from "@/lib/parc";
+import { genererEtiquettes } from "@/lib/genererBons";
 
 type TypeEq = { id: string; nom: string; maintenance_jours: number; location_max_jours: number | null };
 type Equip = {
   id: string; numero_serie: string; statut: string; prochaine_maintenance: string | null; chez_patient_depuis: string | null;
-  type: { nom: string } | { nom: string }[] | null;
+  type: { nom: string; location_max_jours: number | null } | { nom: string; location_max_jours: number | null }[] | null;
   patient: { nom: string } | { nom: string }[] | null;
   type_id: string;
 };
@@ -42,7 +43,7 @@ export default function ParcPage() {
   const charger = useCallback(async () => {
     const supabase = createClient();
     const [{ data: eq }, { data: ty }] = await Promise.all([
-      supabase.from("equipement").select("id,numero_serie,statut,prochaine_maintenance,chez_patient_depuis,type_id,type:type_id(nom),patient:patient_actuel_id(nom)").order("numero_serie"),
+      supabase.from("equipement").select("id,numero_serie,statut,prochaine_maintenance,chez_patient_depuis,type_id,type:type_id(nom,location_max_jours),patient:patient_actuel_id(nom)").order("numero_serie"),
       supabase.from("equipement_type").select("id,nom,maintenance_jours,location_max_jours").order("nom"),
     ]);
     setEquips((eq ?? []) as unknown as Equip[]);
@@ -52,6 +53,11 @@ export default function ParcPage() {
   useEffect(() => { if (pro && peutGerer) charger(); else if (pro) setPret(true); }, [pro, peutGerer, charger]);
 
   const enRetard = (e: Equip) => !!e.prochaine_maintenance && e.prochaine_maintenance < todayIso() && e.statut !== "hors_service";
+  const locTropLongue = (e: Equip) => {
+    const max = un(e.type)?.location_max_jours;
+    if (e.statut !== "chez_patient" || !e.chez_patient_depuis || !max) return false;
+    return (Date.now() - new Date(e.chez_patient_depuis).getTime()) / 86_400_000 > max;
+  };
 
   const filtres = useMemo(() => {
     return equips.filter((e) =>
@@ -116,6 +122,13 @@ export default function ParcPage() {
         <button onClick={() => setRetard((v) => !v)} className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-medium transition ${retard ? "border-rose-300 bg-rose-100 text-critique" : "border-rose-200 bg-white text-slate-600 hover:bg-rose-50"}`}>
           Maintenance en retard{nbRetard > 0 ? ` (${nbRetard})` : ""}
         </button>
+        <button
+          onClick={() => { if (filtres.length) genererEtiquettes(filtres.map((e) => ({ code: e.numero_serie, designation: un(e.type)?.nom ?? "" }))); }}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-rose-50"
+          title="Étiquettes QR (n° de série) à coller sur le matériel"
+        >
+          Étiquettes QR
+        </button>
       </div>
 
       {!pret ? (
@@ -135,8 +148,9 @@ export default function ParcPage() {
                     {un(e.patient) ? `Chez ${un(e.patient)?.nom}` : "—"} · Prochaine maintenance : {fmt(e.prochaine_maintenance)}
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                   {r && <span className="badge bg-critique text-white">Maintenance dépassée</span>}
+                  {locTropLongue(e) && <span className="badge bg-amber-100 text-attention">Location longue</span>}
                   <span className={`badge ${st.cls}`}>{st.label}</span>
                 </div>
               </Link>

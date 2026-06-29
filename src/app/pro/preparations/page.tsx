@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { SignaturePad } from "@/components/SignaturePad";
 import { Scanner } from "@/components/Scanner";
+import { EquipementsLivraison } from "@/components/EquipementsLivraison";
 import { genererBonCommande, genererBonLivraison, type BonLigne, type BonPatient } from "@/lib/genererBons";
 
 type Patient = { nom: string; adresse: string | null; code_postal: string | null; ville: string | null; telephone: string | null; agence_id: string | null };
@@ -33,6 +34,9 @@ function bip(ok: boolean) {
   } catch { /* audio non dispo */ }
 }
 
+type EquipRecup = { id: string; numero_serie: string; type: { nom: string } | { nom: string }[] | null; patient: { nom: string } | { nom: string }[] | null };
+const nomDe = (v: { nom: string } | { nom: string }[] | null) => (Array.isArray(v) ? v[0]?.nom : v?.nom) ?? "";
+
 const patientDe = (l: Liv) => (Array.isArray(l.patient) ? l.patient[0] : l.patient) ?? null;
 const desig = (a: Ligne["article"]) => (Array.isArray(a) ? a[0]?.designation : a?.designation) ?? "";
 const ref = (l: Liv) => l.id.slice(0, 8).toUpperCase();
@@ -53,6 +57,8 @@ export default function PreparationsPage() {
   const [scanArticle, setScanArticle] = useState<Liv | null>(null);
   const [scanBon, setScanBon] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [aRecup, setARecup] = useState<EquipRecup[]>([]);
+  const peutRecup = pro?.role === "livreur" || pro?.role === "magasinier" || pro?.niveau === 0;
   const [feedback, setFeedback] = useState<{ type: "ok" | "info" | "erreur"; msg: string } | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -61,7 +67,8 @@ export default function PreparationsPage() {
   const estMag = pro?.role === "magasinier" || pro?.niveau === 0;
 
   const charger = useCallback(async () => {
-    const { data } = await createClient()
+    const supabase = createClient();
+    const { data } = await supabase
       .from("livraison")
       .select("id,patient_id,statut,date_prevue,signataire,livree_le,patient:patient_id(nom,adresse,code_postal,ville,telephone,agence_id),lignes:livraison_ligne(id,article_code,quantite,prepare,article:article_code(designation))")
       .in("statut", ["planifiee", "preparee", "livree"])
@@ -69,8 +76,13 @@ export default function PreparationsPage() {
     let arr = (data ?? []) as unknown as Liv[];
     // Cloisonnement agence (la coordinatrice voit le prestataire ; on filtre).
     if (pro?.agence_id) arr = arr.filter((l) => patientDe(l)?.agence_id === pro.agence_id);
-    arr = arr.filter((l) => l.lignes.length > 0); // seules les livraisons avec panier
-    setLivs(arr);
+    setLivs(arr.filter((l) => l.lignes.length > 0)); // livraisons avec panier
+    // Matériel de location chez les patients (à récupérer).
+    const { data: eq } = await supabase
+      .from("equipement")
+      .select("id,numero_serie,type:type_id(nom),patient:patient_actuel_id(nom)")
+      .eq("statut", "chez_patient");
+    setARecup((eq ?? []) as unknown as EquipRecup[]);
     setPret(true);
   }, [pro?.agence_id]);
   useEffect(() => { if (pro && peutAcceder) charger(); else if (pro) setPret(true); }, [pro, peutAcceder, charger]);
@@ -153,6 +165,15 @@ export default function PreparationsPage() {
     if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 120);
   }, [openId, pret]);
 
+  // Récupération chez le patient (livreur/magasinier) → en_transit.
+  async function recuperer(eq: EquipRecup) {
+    const etat = window.prompt("État au retour (ex. bon / à vérifier) :", "bon");
+    if (etat === null) return;
+    const { error } = await createClient().rpc("equipement_recuperer", { p_equipement: eq.id, p_etat: etat || null });
+    if (error) { alert("Échec : " + error.message); return; }
+    charger();
+  }
+
   if (pro && !peutAcceder) {
     return <div className="card text-sm text-slate-500">La préparation de commande est réservée au magasinier, aux coordinatrices et aux livreurs.</div>;
   }
@@ -194,6 +215,8 @@ export default function PreparationsPage() {
             </label>
           ))}
         </div>
+
+        <EquipementsLivraison livraisonId={l.id} mode={estMag && l.statut === "planifiee" ? "preparation" : "lecture"} />
 
         <div className="flex flex-wrap items-center justify-end gap-2">
           {l.statut === "planifiee" && estMag && (
@@ -237,6 +260,23 @@ export default function PreparationsPage() {
           <Section titre={`Prêtes à livrer (${pretes.length})`} vide="">{pretes.map(carte)}</Section>
           {livrees.length > 0 && <Section titre={`Livrées (${livrees.length})`} vide="">{livrees.map(carte)}</Section>}
         </>
+      )}
+
+      {pret && aRecup.length > 0 && (
+        <section className="grid grid-cols-1 gap-3">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Matériel à récupérer ({aRecup.length})</h2>
+          {aRecup.map((eq) => (
+            <div key={eq.id} className="card flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium text-slate-700">{nomDe(eq.type)} · <span className="font-mono text-sm text-slate-500">{eq.numero_serie}</span></p>
+                <p className="text-xs text-slate-400">Chez {nomDe(eq.patient) || "—"}</p>
+              </div>
+              {peutRecup && (
+                <button onClick={() => recuperer(eq)} className="btn-primary px-3 py-1.5 text-sm">Récupérer</button>
+              )}
+            </div>
+          ))}
+        </section>
       )}
 
       {signer && <SignaturePad onValider={confirmerLivraison} onAnnuler={() => setSigner(null)} />}
