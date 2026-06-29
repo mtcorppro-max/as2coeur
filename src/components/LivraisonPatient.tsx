@@ -32,6 +32,7 @@ export function LivraisonPatient({ patientId, prestataireId }: { patientId: stri
   // Livreurs et coordinatrices de l'agence du patient, désignables comme livreur.
   const [livreurs, setLivreurs] = useState<{ value: string; label: string }[]>([]);
   const [choix, setChoix] = useState(""); // "" = laisser au pool
+  const [changeId, setChangeId] = useState<string | null>(null); // ligne en cours de réassignation
 
   const charger = useCallback(async () => {
     const { data } = await createClient()
@@ -77,15 +78,23 @@ export function LivraisonPatient({ patientId, prestataireId }: { patientId: stri
     setChoix("");
     charger();
   }
-  // Attribuer un livreur à une livraison déjà « à programmer ».
-  async function assigner(id: string, livreurId: string) {
-    const { error } = await createClient()
-      .from("livraison")
-      .update({ livreur_id: livreurId, statut: "planifiee", updated_at: new Date().toISOString() })
-      .eq("id", id);
+  // (Ré)assigner le livreur d'une livraison, ou la remettre au pool (livreurId vide).
+  async function reassigner(id: string, livreurId: string) {
+    const patch = livreurId
+      ? { livreur_id: livreurId, statut: "planifiee", updated_at: new Date().toISOString() }
+      : { livreur_id: null, statut: "a_programmer", updated_at: new Date().toISOString() };
+    const { error } = await createClient().from("livraison").update(patch).eq("id", id);
     if (error) { alert("Échec : " + error.message); return; }
     charger();
   }
+  // Options du sélecteur de livreur (avec le livreur actuel s'il n'est pas dans la liste).
+  const optionsLivreur = (l: Livraison) => {
+    const base = [{ value: "", label: "— Pool (aucun livreur) —" }, ...livreurs];
+    if (l.livreur_id && !livreurs.some((x) => x.value === l.livreur_id)) {
+      base.push({ value: l.livreur_id, label: nomPro(l.livreur) || "Livreur actuel" });
+    }
+    return base;
+  };
   async function supprimer(id: string) {
     if (!confirm("Supprimer cette livraison à programmer ?")) return;
     const { error } = await createClient().from("livraison").delete().eq("id", id);
@@ -132,14 +141,28 @@ export function LivraisonPatient({ patientId, prestataireId }: { patientId: stri
             <div key={l.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-rose-100 px-3 py-2 text-sm">
               <div className="flex flex-wrap items-center gap-2">
                 {badge(l.statut)}
-                {l.livreur_id ? (
-                  <span className="text-slate-600">Livreur : {nomPro(l.livreur)}</span>
-                ) : peutGerer && l.statut === "a_programmer" ? (
+                {!peutGerer || l.statut === "livree" ? (
+                  l.livreur_id ? (
+                    <span className="text-slate-600">Livreur : {nomPro(l.livreur)}</span>
+                  ) : (
+                    <span className="text-slate-400">En attente d&apos;un livreur</span>
+                  )
+                ) : changeId === l.id ? (
                   <div className="w-52">
-                    <Select value="" onChange={(v) => v && assigner(l.id, v)} placeholder="Attribuer un livreur" options={livreurs} />
+                    <Select
+                      value={l.livreur_id ?? ""}
+                      onChange={(v) => { reassigner(l.id, v); setChangeId(null); }}
+                      placeholder="Choisir un livreur"
+                      options={optionsLivreur(l)}
+                    />
                   </div>
+                ) : l.livreur_id ? (
+                  <span className="text-slate-600">
+                    Livreur : {nomPro(l.livreur)}
+                    <button onClick={() => setChangeId(l.id)} className="ml-2 text-xs font-medium text-brand hover:underline">Changer</button>
+                  </span>
                 ) : (
-                  <span className="text-slate-400">En attente d&apos;un livreur</span>
+                  <button onClick={() => setChangeId(l.id)} className="text-sm font-medium text-brand hover:underline">Attribuer un livreur</button>
                 )}
                 {l.date_prevue && <span className="text-slate-500">· {fmt(l.date_prevue)}</span>}
               </div>
