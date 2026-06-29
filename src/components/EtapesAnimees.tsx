@@ -5,28 +5,28 @@ import { motion, useAnimate, useInView } from "framer-motion";
 
 const ETAPES = [
   {
-    icon: "∿",
+    icon: "pulse",
     titre: "Le patient transmet ses données",
     description:
       "Constantes (température, tension, SpO₂, fréquence cardiaque, poids) et photos de cicatrice depuis son téléphone, ou saisies par l'infirmière lors de son passage.",
   },
   {
-    icon: "◎",
+    icon: "bell",
     titre: "Surveillance & alertes",
     description:
       "Dès qu'une valeur franchit un seuil, une alerte est générée automatiquement et envoyée par SMS, avec escalade vers un second contact en l'absence de réponse.",
   },
   {
-    icon: "◇",
-    titre: "Suivi & échanges",
+    icon: "chat",
+    titre: "Suivi, échanges & ordonnances",
     description:
-      "L'équipe échange avec le patient par messagerie, avec des suivis planifiés à J1 et au dernier jour de prise en charge, et des rappels d'actions à réaliser.",
+      "L'équipe échange avec le patient par messagerie sécurisée, valide les suivis planifiés. Le chirurgien génère et signe électroniquement les ordonnances CERFA depuis son protocole — envoyées automatiquement à la pharmacie.",
   },
   {
-    icon: "▤",
-    titre: "Compte rendu & coordination",
+    icon: "truck",
+    titre: "Coordination & livraison",
     description:
-      "Chaque suivi génère un compte rendu PDF (courbes et photos). Protocoles médecin et organisation de l'équipe centralisés pour fluidifier l'hôpital ↔ domicile.",
+      "Chaque suivi génère un compte rendu PDF. Le livreur reçoit sa tournée du jour avec carte et itinéraire optimisé. Le manager pilote par agence et par région.",
   },
 ];
 
@@ -93,12 +93,12 @@ export function EtapesAnimees() {
           {/* Icône avec apparition douce */}
           <motion.div
             data-step-icon={i}
-            className="grid h-12 w-12 place-items-center rounded-2xl bg-brand text-xl text-white shadow-md"
+            className="grid h-12 w-12 place-items-center rounded-2xl bg-brand text-white shadow-md"
             initial={{ scale: 0.7, opacity: 0 }}
             animate={inView ? { scale: 1, opacity: 1 } : {}}
             transition={{ duration: 0.4, delay: 0.2 + i * 0.12, ease: "backOut" }}
           >
-            {e.icon}
+            <EtapeIcon name={e.icon} className="h-6 w-6" />
           </motion.div>
 
           <motion.div
@@ -116,5 +116,21 @@ export function EtapesAnimees() {
         </div>
       ))}
     </div>
+  );
+}
+
+// Icônes des étapes (style ligne, cohérent avec la nav et les fonctionnalités).
+function EtapeIcon({ name, className }: { name: string; className?: string }) {
+  const p = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  const paths: Record<string, React.ReactNode> = {
+    pulse: (<path d="M3 12h4l2.5-7 4 14 2.5-7H21" />),
+    bell: (<><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7 2.5 7H3.5S6 15 6 9Z" /><path d="M10.3 21a1.8 1.8 0 0 0 3.4 0" /></>),
+    chat: (<path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />),
+    truck: (<><path d="M3 6.5h11v9H3z" /><path d="M14 9.5h4l3 3v3h-7z" /><circle cx="7" cy="18" r="1.7" /><circle cx="17" cy="18" r="1.7" /></>),
+  };
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...p} aria-hidden="true">
+      {paths[name] ?? paths.chat}
+    </svg>
   );
 }
