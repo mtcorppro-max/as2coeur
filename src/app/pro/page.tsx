@@ -19,6 +19,7 @@ type DashData = {
   totalActives: number;
   messages: Map<string, number>; // patient_id -> nb de messages patient en attente de réponse
   actions: Map<string, ActionItem[]>; // patient_id -> suivis J1/dernier jour à réaliser
+  livraisons: Map<string, number>; // patient_id -> nb de livraisons à attribuer (sans livreur)
 };
 
 // "YYYY-MM-DD" (heure locale) du jour
@@ -44,12 +45,13 @@ function libelleAction(a: ActionItem): string {
 
 async function fetchDashboard(): Promise<DashData> {
   const supabase = createClient();
-  const [{ data: pts }, { data: als }, { data: msgs }, { data: svs }, { data: rps }] = await Promise.all([
+  const [{ data: pts }, { data: als }, { data: msgs }, { data: svs }, { data: rps }, { data: livs }] = await Promise.all([
     supabase.from("patient").select("id,nom,statut,code_postal,prestataire_id,user_id,date_operation,duree_prise_en_charge,jours_suivi").order("nom"),
     supabase.from("alerte").select("id,patient_id,statut").in("statut", ["declenchee", "escaladee", "acquittee"]),
     supabase.from("message").select("patient_id,auteur_user_id,horodatage").order("horodatage", { ascending: true }).limit(2000),
     supabase.from("suivi").select("patient_id,created_at"),
     supabase.from("rappel_suivi_valide").select("patient_id,type,echeance"),
+    supabase.from("livraison").select("patient_id,statut,livreur_id").eq("statut", "a_programmer").is("livreur_id", null),
   ]);
   const parPatient = new Map<string, AlerteInfo>();
   (als ?? []).forEach((a) => {
@@ -100,14 +102,22 @@ async function fetchDashboard(): Promise<DashData> {
     if (items.length) actions.set(p.id, items);
   });
 
+  // Livraisons à attribuer (programmées sans livreur) — par patient.
+  const livraisons = new Map<string, number>();
+  (livs ?? []).forEach((l) => {
+    const id = (l as { patient_id: string }).patient_id;
+    livraisons.set(id, (livraisons.get(id) ?? 0) + 1);
+  });
+
   const score = (p: Patient) =>
     (parPatient.get(p.id)?.active ?? 0) * 100 +
     (actions.get(p.id)?.length ?? 0) * 20 +
     (messages.get(p.id) ?? 0) * 10 +
+    (livraisons.get(p.id) ?? 0) * 15 +
     (parPatient.get(p.id)?.acquittees ?? 0);
   const patients = [...patientsRaw].sort((a, b) => score(b) - score(a));
   const totalActives = [...parPatient.values()].reduce((s, e) => s + e.active, 0);
-  return { patients, parPatient, totalActives, messages, actions };
+  return { patients, parPatient, totalActives, messages, actions, livraisons };
 }
 
 export default function Dashboard() {
@@ -127,13 +137,14 @@ export default function Dashboard() {
     else if (pro?.role === "dirigeant") router.replace("/pro/pec");
   }, [pro?.role, router]);
 
-  const { patients, parPatient, totalActives, messages, actions } = useMemo<DashData>(() => (
+  const { patients, parPatient, totalActives, messages, actions, livraisons } = useMemo<DashData>(() => (
     data ?? {
       patients: [],
       parPatient: new Map<string, AlerteInfo>(),
       totalActives: 0,
       messages: new Map<string, number>(),
       actions: new Map<string, ActionItem[]>(),
+      livraisons: new Map<string, number>(),
     }
   ), [data]);
 
@@ -231,7 +242,12 @@ export default function Dashboard() {
                         {acts.length} action · valider
                       </button>
                     )}
-                    {!critique && (e?.acquittees ?? 0) === 0 && (messages.get(p.id) ?? 0) === 0 && acts.length === 0 && (
+                    {(livraisons.get(p.id) ?? 0) > 0 && (
+                      <span className="badge bg-amber-100 text-attention" title="Livraison programmée sans livreur — indiquez qui livre">
+                        {livraisons.get(p.id)} livraison · attribuer
+                      </span>
+                    )}
+                    {!critique && (e?.acquittees ?? 0) === 0 && (messages.get(p.id) ?? 0) === 0 && acts.length === 0 && (livraisons.get(p.id) ?? 0) === 0 && (
                       <span className="text-slate-300 text-sm">—</span>
                     )}
                     <span className="text-brand">→</span>
@@ -293,24 +309,32 @@ export default function Dashboard() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {acts.length > 0 ? (
-                          <span className="inline-flex items-center gap-2">
-                            <span
-                              className="badge bg-rose-800 text-white"
-                              title={acts.map(libelleAction).join(", ")}
-                            >
-                              {acts.length}
+                        <span className="flex flex-wrap items-center gap-2">
+                          {acts.length > 0 && (
+                            <span className="inline-flex items-center gap-2">
+                              <span
+                                className="badge bg-rose-800 text-white"
+                                title={acts.map(libelleAction).join(", ")}
+                              >
+                                {acts.length}
+                              </span>
+                              <button
+                                onClick={(ev) => { ev.stopPropagation(); validerActions(p.id, acts); }}
+                                className="text-xs font-medium text-brand hover:underline"
+                              >
+                                Valider
+                              </button>
                             </span>
-                            <button
-                              onClick={(ev) => { ev.stopPropagation(); validerActions(p.id, acts); }}
-                              className="text-xs font-medium text-brand hover:underline"
-                            >
-                              Valider
-                            </button>
-                          </span>
-                        ) : (
-                          <span className="text-slate-300">—</span>
-                        )}
+                          )}
+                          {(livraisons.get(p.id) ?? 0) > 0 && (
+                            <span className="badge bg-amber-100 text-attention" title="Livraison programmée sans livreur — indiquez qui livre">
+                              {livraisons.get(p.id)} livraison · attribuer
+                            </span>
+                          )}
+                          {acts.length === 0 && (livraisons.get(p.id) ?? 0) === 0 && (
+                            <span className="text-slate-300">—</span>
+                          )}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <Link href={`/pro/patients/${p.id}`} className="text-sm font-medium text-brand hover:underline">

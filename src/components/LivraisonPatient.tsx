@@ -77,6 +77,15 @@ export function LivraisonPatient({ patientId, prestataireId }: { patientId: stri
     setChoix("");
     charger();
   }
+  // Attribuer un livreur à une livraison déjà « à programmer ».
+  async function assigner(id: string, livreurId: string) {
+    const { error } = await createClient()
+      .from("livraison")
+      .update({ livreur_id: livreurId, statut: "planifiee", updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) { alert("Échec : " + error.message); return; }
+    charger();
+  }
   async function supprimer(id: string) {
     if (!confirm("Supprimer cette livraison à programmer ?")) return;
     const { error } = await createClient().from("livraison").delete().eq("id", id);
@@ -110,6 +119,11 @@ export function LivraisonPatient({ patientId, prestataireId }: { patientId: stri
           </div>
         )}
       </div>
+      {peutGerer && livraisons.some((l) => l.statut === "a_programmer" && !l.livreur_id) && (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-attention">
+          ⚠️ Livraison à attribuer — indiquez qui livre.
+        </p>
+      )}
       {livraisons.length === 0 ? (
         <p className="text-sm text-slate-400">Aucune livraison. {peutGerer ? "Choisissez un livreur (ou laissez au pool de l'agence) puis « Programmer »." : ""}</p>
       ) : (
@@ -120,6 +134,10 @@ export function LivraisonPatient({ patientId, prestataireId }: { patientId: stri
                 {badge(l.statut)}
                 {l.livreur_id ? (
                   <span className="text-slate-600">Livreur : {nomPro(l.livreur)}</span>
+                ) : peutGerer && l.statut === "a_programmer" ? (
+                  <div className="w-52">
+                    <Select value="" onChange={(v) => v && assigner(l.id, v)} placeholder="Attribuer un livreur" options={livreurs} />
+                  </div>
                 ) : (
                   <span className="text-slate-400">En attente d&apos;un livreur</span>
                 )}
