@@ -137,6 +137,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
     : estLivreur
     ? [
         { href: "/pro/livraisons", icon: "truck", label: "Tournée" },
+        { href: "/pro/preparations", icon: "prep", label: "Préparations" },
         { href: "/pro/calendrier", icon: "clipboard", label: "Organisation" },
         { href: "/pro/magasin", icon: "box", label: "Magasin" },
       ]
@@ -150,6 +151,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         ...(estCoord ? [{ href: "/pro/suivis", icon: "calendar", label: "Suivis", badge: nbSuivis }] : []),
         ...(estCoord ? [{ href: "/pro/calendrier", icon: "clipboard", label: "Organisation", badge: nbDemandes }] : []),
         ...(estCoord ? [{ href: "/pro/livraisons", icon: "truck", label: "Ma tournée" }] : []),
+        ...(estCoord ? [{ href: "/pro/preparations", icon: "prep", label: "Préparations" }] : []),
         ...(pro?.role === "coordinatrice" || estN0 ? [{ href: "/pro/magasin", icon: "box", label: "Magasin" }] : []),
         ...(estChir ? [{ href: "/pro/a-signer", icon: "document", label: "À signer", badge: nbASigner }] : []),
         { href: "/pro/messagerie", icon: "message", label: "Messages", badge: nbMessages },
@@ -175,6 +177,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               ) : estLivreur ? (
                 <>
                   <Onglet href="/pro/livraisons" icon="truck" label="Tournée" pathname={pathname} />
+                  <Onglet href="/pro/preparations" icon="prep" label="Préparations" pathname={pathname} />
                   <Onglet href="/pro/calendrier" icon="clipboard" label="Organisation" pathname={pathname} />
                   <Onglet href="/pro/magasin" icon="box" label="Magasin" pathname={pathname} />
                 </>
@@ -189,6 +192,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                   {estCoord && <Onglet href="/pro/suivis" icon="calendar" label="Suivis" pathname={pathname} badge={nbSuivis} />}
                   {estCoord && <Onglet href="/pro/calendrier" icon="clipboard" label="Organisation" pathname={pathname} badge={nbDemandes} />}
                   {estCoord && <Onglet href="/pro/livraisons" icon="truck" label="Ma tournée" pathname={pathname} />}
+                  {estCoord && <Onglet href="/pro/preparations" icon="prep" label="Préparations" pathname={pathname} />}
                   {(pro?.role === "coordinatrice" || estN0) && <Onglet href="/pro/magasin" icon="box" label="Magasin" pathname={pathname} />}
                   {estChir && <Onglet href="/pro/a-signer" icon="document" label="À signer" pathname={pathname} badge={nbASigner} />}
                   {peutGerer && <Onglet href="/pro/equipe" icon="users" label="Équipe soignante" pathname={pathname} />}
@@ -344,6 +348,7 @@ function IconeNav({ name, className }: { name: string; className?: string }) {
     truck: (<><path d="M3 6h11v9H3z" /><path d="M14 9h4l3 3v3h-7z" /><circle cx="7" cy="18" r="1.6" /><circle cx="17" cy="18" r="1.6" /></>),
     ellipsis: (<><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none" /></>),
     box: (<><path d="m3 7.5 9-4.5 9 4.5v9l-9 4.5-9-4.5z" /><path d="m3 7.5 9 4.5 9-4.5" /><path d="M12 12v9" /></>),
+    prep: (<><rect x="8" y="3" width="8" height="4" rx="1" /><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></>),
   };
   return (
     <svg viewBox="0 0 24 24" className={className} {...p} aria-hidden="true">
