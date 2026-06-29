@@ -69,8 +69,8 @@ export default function FicheEquipement() {
 
   const mettreEnMaintenance = () => majStatut("en_maintenance", {}, "mise_maintenance");
   const finMaintenance = () => {
-    const j = un(eq!.article)?.maintenance_jours ?? 365;
-    majStatut("disponible", { derniere_maintenance: todayIso(), prochaine_maintenance: addDaysIso(j) }, "fin_maintenance");
+    const j = un(eq!.article)?.maintenance_jours ?? 0;
+    majStatut("disponible", { derniere_maintenance: todayIso(), prochaine_maintenance: j > 0 ? addDaysIso(j) : null }, "fin_maintenance");
   };
   const reformer = () => { if (confirm("Réformer cet équipement (hors service définitif) ?")) majStatut("hors_service", {}, "reforme"); };
 

@@ -212,7 +212,7 @@ export default function MagasinPage() {
                 {peutEditer ? (
                   l.location ? (
                     <div className="flex shrink-0 flex-wrap items-end justify-end gap-3">
-                      <label className="text-xs text-slate-400">
+                      <label className="text-xs text-slate-400" title="Intervalle de maintenance préventive — 0 = aucune (ex. attelles, machines cryo)">
                         Maintenance (j)
                         <input
                           type="number" min={0} defaultValue={l.maintenanceJours}

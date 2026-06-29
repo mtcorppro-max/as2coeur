@@ -76,10 +76,11 @@ export default function ParcPage() {
   async function ajouter() {
     if (!nSerie.trim() || !artAjout || !pro?.agence_id) return;
     const a = arts.find((x) => x.code === artAjout);
+    const mj = a?.maintenance_jours ?? 0;
     setBusy(true);
     const { data, error } = await createClient().from("equipement").insert({
       agence_id: pro.agence_id, article_code: artAjout, numero_serie: nSerie.trim(),
-      statut: "disponible", prochaine_maintenance: addDaysIso(a?.maintenance_jours ?? 365),
+      statut: "disponible", prochaine_maintenance: mj > 0 ? addDaysIso(mj) : null,
     }).select("id").single();
     if (!error && data) {
       await createClient().from("equipement_mouvement").insert({
