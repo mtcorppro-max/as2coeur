@@ -180,12 +180,9 @@ export function SuiviPatient({
   async function apercu(s: Suivi) {
     const win = window.open("", "_blank");
     const url = await genererPdfSuivi(patient, s, "bloburl");
-    if (typeof url === "string") {
-      if (win) win.location.href = url;
-      else window.open(url, "_blank");
-    } else {
-      win?.close();
-    }
+    if (typeof url !== "string") { win?.close(); return; }
+    if (win && !win.closed) win.location.href = url;
+    else window.location.href = url; // pop-up bloquée (Android/Samsung) → onglet courant
   }
 
   return (

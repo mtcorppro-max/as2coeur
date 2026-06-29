@@ -118,8 +118,9 @@ export default function PreparationsPage() {
   async function apercu(gen: () => string | void | Promise<string | void>) {
     const win = window.open("", "_blank");
     const url = await gen();
-    if (typeof url === "string" && win) win.location.href = url;
-    else win?.close();
+    if (typeof url !== "string") { win?.close(); return; }
+    if (win && !win.closed) win.location.href = url;
+    else window.location.href = url; // pop-up bloquée (Android/Samsung) → onglet courant
   }
 
   async function validerPrep(l: Liv) {

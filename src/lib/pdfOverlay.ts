@@ -38,9 +38,12 @@ export async function ouvrirTemplate(path: string) {
     const blob = new Blob([bytes as unknown as BlobPart], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     if (mode === "bloburl") return url;
+    // Téléchargement robuste mobile : lien ajouté au DOM + révocation différée
+    // (sur Android, révoquer aussitôt annule le téléchargement avant son départ).
     const a = document.createElement("a");
-    a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
+    a.href = url; a.download = filename; a.rel = "noopener";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   };
 
   return { txt, txtC, coche, blanc, signer, finaliser };

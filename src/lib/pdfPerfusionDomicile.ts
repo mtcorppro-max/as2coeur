@@ -136,7 +136,10 @@ export async function genererPdfPerfusionDomicile(d: PerfDomicileData, mode: "do
   const blob = new Blob([bytes as unknown as BlobPart], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
   if (mode === "bloburl") return url;
+  // Téléchargement robuste mobile : lien dans le DOM + révocation différée
+  // (sur Android, révoquer aussitôt annule le téléchargement).
   const a = document.createElement("a");
-  a.href = url; a.download = "prescription-perfusion-domicile.pdf"; a.click();
-  URL.revokeObjectURL(url);
+  a.href = url; a.download = "prescription-perfusion-domicile.pdf"; a.rel = "noopener";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }

@@ -93,10 +93,11 @@ export default function PharmaciePage() {
     const win = window.open("", "_blank");
     try {
       const url = await genererPdfOrdo(o, patientNom, naissance, "bloburl");
-      if (typeof url === "string") { if (win) win.location.href = url; else window.open(url, "_blank"); }
-      else if (win) win.close();
+      if (typeof url !== "string") { win?.close(); return; }
+      if (win && !win.closed) win.location.href = url;
+      else window.location.href = url; // pop-up bloquée (Android/Samsung) → onglet courant
     } catch (e) {
-      if (win) win.close();
+      win?.close();
       alert("Impossible d'ouvrir le PDF.\n" + (e instanceof Error ? e.message : ""));
     }
   }

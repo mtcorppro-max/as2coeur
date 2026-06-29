@@ -125,8 +125,9 @@ export function LivraisonPatient({ patientId, prestataireId }: { patientId: stri
   async function apercuBon(l: Livraison) {
     const win = window.open("", "_blank");
     const u = await genererBon(l, "bloburl");
-    if (typeof u === "string" && win) win.location.href = u;
-    else win?.close();
+    if (typeof u !== "string") { win?.close(); return; }
+    if (win && !win.closed) win.location.href = u;
+    else window.location.href = u; // pop-up bloquée (Android/Samsung) → onglet courant
   }
 
   // Annule/supprime une livraison non livrée (le matériel affecté est libéré par trigger).
