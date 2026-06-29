@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
-import { estRoleService } from "@/lib/roles";
+import { estRoleService, estCoordOuManager } from "@/lib/roles";
 import { useData, invalidate } from "@/lib/hooks/useData";
 import { AstreinteAlerte } from "@/components/AstreinteAlerte";
 import { CentreAlertes } from "@/components/CentreAlertes";
@@ -129,6 +129,8 @@ export default function Dashboard() {
   // Les comptes service (livreur/pharmacie) ne reçoivent pas d'alertes.
   const estMedecin = pro?.role === "chirurgien";
   const voitAlertes = !estRoleService(pro?.role) && (!estMedecin || !!pro?.recevoir_alertes);
+  // Le suivi des livraisons à attribuer est réservé aux coordinatrices/managers.
+  const peutVoirLivraisons = estCoordOuManager(pro?.role);
 
   // Pharmacie, livreur et dirigeant n'ont pas de tableau de bord : on les renvoie vers leur espace.
   useEffect(() => {
@@ -207,6 +209,7 @@ export default function Dashboard() {
               const e = parPatient.get(p.id);
               const critique = (e?.active ?? 0) > 0;
               const acts = actionsDe(p.id);
+              const nbLiv = peutVoirLivraisons ? (livraisons.get(p.id) ?? 0) : 0;
               return (
                 <Link
                   key={p.id}
@@ -242,12 +245,12 @@ export default function Dashboard() {
                         {acts.length} action · valider
                       </button>
                     )}
-                    {(livraisons.get(p.id) ?? 0) > 0 && (
+                    {nbLiv > 0 && (
                       <span className="badge bg-amber-100 text-attention" title="Livraison programmée sans livreur — indiquez qui livre">
-                        {livraisons.get(p.id)} livraison · attribuer
+                        {nbLiv} livraison · attribuer
                       </span>
                     )}
-                    {!critique && (e?.acquittees ?? 0) === 0 && (messages.get(p.id) ?? 0) === 0 && acts.length === 0 && (livraisons.get(p.id) ?? 0) === 0 && (
+                    {!critique && (e?.acquittees ?? 0) === 0 && (messages.get(p.id) ?? 0) === 0 && acts.length === 0 && nbLiv === 0 && (
                       <span className="text-slate-300 text-sm">—</span>
                     )}
                     <span className="text-brand">→</span>
@@ -282,6 +285,7 @@ export default function Dashboard() {
                   const e = parPatient.get(p.id);
                   const critique = (e?.active ?? 0) > 0;
                   const acts = actionsDe(p.id);
+                  const nbLiv = peutVoirLivraisons ? (livraisons.get(p.id) ?? 0) : 0;
                   return (
                     <tr
                       key={p.id}
@@ -326,12 +330,12 @@ export default function Dashboard() {
                               </button>
                             </span>
                           )}
-                          {(livraisons.get(p.id) ?? 0) > 0 && (
+                          {nbLiv > 0 && (
                             <span className="badge bg-amber-100 text-attention" title="Livraison programmée sans livreur — indiquez qui livre">
-                              {livraisons.get(p.id)} livraison · attribuer
+                              {nbLiv} livraison · attribuer
                             </span>
                           )}
-                          {acts.length === 0 && (livraisons.get(p.id) ?? 0) === 0 && (
+                          {acts.length === 0 && nbLiv === 0 && (
                             <span className="text-slate-300">—</span>
                           )}
                         </span>
