@@ -13,6 +13,7 @@ import { InfosPatient } from "@/components/InfosPatient";
 import { LivraisonPatient } from "@/components/LivraisonPatient";
 import { EquipementsPatient } from "@/components/EquipementsPatient";
 import { OrdonnancesPatient } from "@/components/OrdonnancesPatient";
+import { FacturationPatient } from "@/components/FacturationPatient";
 import { MarquerVisite } from "@/components/MarquerVisite";
 import { AlertesPatient } from "@/components/AlertesPatient";
 import { SuiviPatient } from "@/components/SuiviPatient";
@@ -179,6 +180,9 @@ export default function FichePatient() {
 
       {/* ── Ordonnances du patient ── */}
       <OrdonnancesPatient patientId={patient.id} patientNom={patient.nom} patientNaissance={patient.date_naissance} patientChirurgien={patient.chirurgien} />
+
+      {/* ── CA généré + prévisionnel (managers/coordinatrices) ── */}
+      <FacturationPatient patientId={patient.id} />
 
       {/* ── Dernières valeurs ── */}
       <section>
