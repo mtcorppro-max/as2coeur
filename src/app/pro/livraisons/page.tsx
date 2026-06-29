@@ -7,7 +7,9 @@ import { useProSession } from "@/lib/hooks/useSession";
 import { estCoordOuManager } from "@/lib/roles";
 import { DateField } from "@/components/DateField";
 import { CarteLivraisons, type PointLivraison } from "@/components/CarteLivraisons";
+import { SignaturePad } from "@/components/SignaturePad";
 import { geocodeAdresse, type LatLng } from "@/lib/geocode";
+import { genererBonLivraison, type BonLigne, type BonPatient } from "@/lib/genererBons";
 
 type PatientLite = {
   id: string;
@@ -31,6 +33,7 @@ type PatientLite = {
   infirmiere_tel: string | null;
   duree_prise_en_charge: number | null;
 };
+type LigneBon = { article_code: string; quantite: number; article: { designation: string } | { designation: string }[] | null };
 type Liv = {
   id: string;
   patient_id: string;
@@ -38,6 +41,7 @@ type Liv = {
   statut: "a_programmer" | "a_planifier" | "planifiee" | "preparee" | "livree";
   date_prevue: string | null;
   patient: PatientLite | PatientLite[] | null;
+  lignes: LigneBon[];
 };
 
 const patientDe = (l: Liv): PatientLite | null => (Array.isArray(l.patient) ? l.patient[0] : l.patient) ?? null;
@@ -45,6 +49,12 @@ const patientDe = (l: Liv): PatientLite | null => (Array.isArray(l.patient) ? l.
 type EquipRecup = { id: string; numero_serie: string; article: { designation: string } | { designation: string }[] | null; patient: { nom: string } | { nom: string }[] | null };
 const nomDe = (v: { nom: string } | { nom: string }[] | null) => (Array.isArray(v) ? v[0]?.nom : v?.nom) ?? "";
 const desigDe = (v: { designation: string } | { designation: string }[] | null) => (Array.isArray(v) ? v[0]?.designation : v?.designation) ?? "Équipement";
+
+// Bon de livraison (signé) — helpers.
+const refLiv = (l: Liv) => l.id.slice(0, 8).toUpperCase();
+const bonLignes = (l: Liv): BonLigne[] => l.lignes.map((x) => ({ code: x.article_code, designation: desigDe(x.article), quantite: x.quantite }));
+const bonPatient = (p: PatientLite | null): BonPatient => ({ nom: p?.nom ?? "Patient", adresse: p?.adresse, code_postal: p?.code_postal, ville: p?.ville, telephone: p?.telephone });
+const urlQR = (l: Liv) => `${typeof window !== "undefined" ? window.location.origin : ""}/pro/preparations?l=${l.id}`;
 
 function todayIso(): string {
   const d = new Date();
@@ -86,6 +96,7 @@ export default function LivraisonsPage() {
     setOuverts((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const [aRecup, setARecup] = useState<EquipRecup[]>([]);
+  const [signer, setSigner] = useState<Liv | null>(null);
   const estLivreur = pro?.role === "livreur";
   const estCoord = estCoordOuManager(pro?.role);
   // Livreurs ET coordinatrices/managers peuvent effectuer des livraisons.
@@ -98,7 +109,7 @@ export default function LivraisonsPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from("livraison")
-      .select(`id,patient_id,livreur_id,statut,date_prevue,patient:patient_id(${PATIENT_COLS})`)
+      .select(`id,patient_id,livreur_id,statut,date_prevue,patient:patient_id(${PATIENT_COLS}),lignes:livraison_ligne(article_code,quantite,article:article_code(designation))`)
       .order("date_prevue", { ascending: true });
     setLivs((data ?? []) as unknown as Liv[]);
     // Matériel de location actuellement chez les patients (cloisonné agence par RLS).
@@ -176,6 +187,21 @@ export default function LivraisonsPage() {
     charger();
   }
 
+  // Livraison avec signature du patient → statut livrée + bon de livraison signé.
+  async function confirmerLivraison(image: string, nom: string) {
+    const l = signer; if (!l) return;
+    setBusy(l.id);
+    const now = new Date();
+    const { error } = await createClient()
+      .from("livraison")
+      .update({ statut: "livree", signature: image, signataire: nom || null, livree_le: now.toISOString(), updated_at: now.toISOString() })
+      .eq("id", l.id);
+    setBusy(null); setSigner(null);
+    if (error) { alert("Échec : " + error.message); return; }
+    await genererBonLivraison({ reference: refLiv(l) }, bonPatient(patientDe(l)), bonLignes(l), urlQR(l), { image, nom: nom || "—", date: now });
+    charger();
+  }
+
   // Coordinatrice : valide la livraison PUIS ouvre un suivi à remplir en direct.
   async function livrerEtSuivre(l: Liv) {
     setBusy(l.id);
@@ -188,16 +214,16 @@ export default function LivraisonsPage() {
     router.push(`/pro/patients/${l.patient_id}?suivi=1`);
   }
 
-  // Boutons de clôture : « Livré » + « Livré + suivi » pour la coordinatrice,
-  // « Livrée » seul pour le livreur.
+  // Clôture : le livreur fait signer le patient (bon de livraison signé) ;
+  // la coordinatrice peut aussi enchaîner sur un suivi clinique.
   const boutonsFin = (l: Liv) =>
     estCoord ? (
       <>
-        <button onClick={() => maj(l.id, { statut: "livree" })} disabled={busy === l.id} className="btn-secondary px-3 py-1.5 text-sm disabled:opacity-50">Livré</button>
+        <button onClick={() => setSigner(l)} disabled={busy === l.id} className="btn-secondary px-3 py-1.5 text-sm disabled:opacity-50">Livrer (signature)</button>
         <button onClick={() => livrerEtSuivre(l)} disabled={busy === l.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">{busy === l.id ? "…" : "Livré + suivi"}</button>
       </>
     ) : (
-      <button onClick={() => maj(l.id, { statut: "livree" })} disabled={busy === l.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">{busy === l.id ? "…" : "Livrée"}</button>
+      <button onClick={() => setSigner(l)} disabled={busy === l.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">Livrer (signature)</button>
     );
 
   if (pro && !peutLivrer) {
@@ -351,6 +377,8 @@ export default function LivraisonsPage() {
           ))}
         </section>
       )}
+
+      {signer && <SignaturePad onValider={confirmerLivraison} onAnnuler={() => setSigner(null)} />}
     </div>
   );
 }

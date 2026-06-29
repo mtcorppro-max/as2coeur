@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
-import { SignaturePad } from "@/components/SignaturePad";
 import { Scanner } from "@/components/Scanner";
 import { Select } from "@/components/Select";
 import { genererBonCommande, genererBonLivraison, type BonLigne, type BonPatient } from "@/lib/genererBons";
@@ -59,7 +58,6 @@ export default function PreparationsPage() {
   const [livs, setLivs] = useState<Liv[]>([]);
   const [pret, setPret] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
-  const [signer, setSigner] = useState<Liv | null>(null);
   const [scanArticle, setScanArticle] = useState<Liv | null>(null);
   const [scanBon, setScanBon] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -132,19 +130,6 @@ export default function PreparationsPage() {
     setBusy(null);
     if (error) { alert("Échec : " + error.message); return; }
     await genererBonLivraison({ reference: ref(l) }, bonPatient(patientDe(l)), bonLignes(l), urlQR(l));
-    charger();
-  }
-
-  async function confirmerLivraison(image: string, nom: string) {
-    const l = signer; if (!l) return;
-    setBusy(l.id);
-    const now = new Date();
-    const { error } = await createClient().from("livraison")
-      .update({ statut: "livree", signature: image, signataire: nom || null, livree_le: now.toISOString(), updated_at: now.toISOString() })
-      .eq("id", l.id);
-    setBusy(null); setSigner(null);
-    if (error) { alert("Échec : " + error.message); return; }
-    await genererBonLivraison({ reference: ref(l) }, bonPatient(patientDe(l)), bonLignes(l), urlQR(l), { image, nom: nom || "—", date: now });
     charger();
   }
 
@@ -266,9 +251,9 @@ export default function PreparationsPage() {
           )}
           {l.statut === "preparee" && (
             <>
+              <span className="mr-auto text-xs text-ok">Préparée ✓ — prête pour la tournée du livreur</span>
               <button onClick={() => apercu(() => genererBonLivraison({ reference: ref(l) }, bonPatient(p), bonLignes(l), urlQR(l), null, "bloburl"))} className="btn-secondary px-2.5 py-1.5 text-sm" title="Aperçu (sans télécharger)"><Oeil /></button>
               <button onClick={() => genererBonLivraison({ reference: ref(l) }, bonPatient(p), bonLignes(l), urlQR(l))} className="btn-secondary px-3 py-1.5 text-sm"><IconeDoc /> Bon de livraison</button>
-              <button onClick={() => setSigner(l)} disabled={busy === l.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">Livrer (signature)</button>
             </>
           )}
           {l.statut === "livree" && (
@@ -301,7 +286,6 @@ export default function PreparationsPage() {
         </>
       )}
 
-      {signer && <SignaturePad onValider={confirmerLivraison} onAnnuler={() => setSigner(null)} />}
       {scanArticle && <Scanner continu titre="Scanner les articles" onScan={scanArticleScan} onClose={() => setScanArticle(null)} />}
       {feedback && (
         <div
