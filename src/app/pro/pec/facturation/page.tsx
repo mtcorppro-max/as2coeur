@@ -9,7 +9,7 @@ import { genererPdfFactures, type FactureExport } from "@/lib/pdfFactures";
 
 type Facture = {
   id: string; patient_id: string; agence_id: string | null; medecin_id: string | null; medecin_nom: string | null;
-  montant_base: number; part_secu: number; part_mutuelle: number; part_patient: number;
+  montant_base: number; montant_ht: number; part_secu: number; part_mutuelle: number; part_patient: number;
   statut: string; source: string; ref_externe: string | null; periode_debut: string | null; envoyee_le: string | null; payee_le: string | null;
   patient: { nom: string } | { nom: string }[] | null;
   agence: { nom: string } | { nom: string }[] | null;
@@ -29,7 +29,7 @@ const STATUTS: Record<string, { label: string; cls: string }> = {
   annulee: { label: "Annulée", cls: "bg-slate-200 text-slate-500" },
 };
 
-type ProjF = { patient_id: string; date_debut: string; date_fin: string; lpp: { prix_ttc: number | null; periodicite: string } | { prix_ttc: number | null; periodicite: string }[] | null };
+type ProjF = { patient_id: string; date_debut: string; date_fin: string; lpp: { prix_ttc: number | null; periodicite: string; taux_tva: number } | { prix_ttc: number | null; periodicite: string; taux_tva: number }[] | null };
 
 // Dates de début de chaque période d'un forfait, jusqu'à la fin de PEC.
 function periodStarts(periodicite: string, dDebut: string, dFin: string): Date[] {
@@ -77,13 +77,13 @@ export default function FacturationPage() {
     await supabase.rpc("generer_factures_previsionnelles"); // génération auto (idempotente)
     const { data } = await supabase
       .from("facture_previsionnelle")
-      .select("id,patient_id,agence_id,medecin_id,medecin_nom,montant_base,part_secu,part_mutuelle,part_patient,statut,source,ref_externe,periode_debut,envoyee_le,payee_le,patient:patient_id(nom),agence:agence_id(nom)")
+      .select("id,patient_id,agence_id,medecin_id,medecin_nom,montant_base,montant_ht,part_secu,part_mutuelle,part_patient,statut,source,ref_externe,periode_debut,envoyee_le,payee_le,patient:patient_id(nom),agence:agence_id(nom)")
       .order("periode_debut", { ascending: false });
     setFactures((data ?? []) as unknown as Facture[]);
     // Forfaits actifs → projection du CA prévisionnel (périodes à venir).
     const { data: ff } = await supabase
       .from("patient_forfait")
-      .select("patient_id,date_debut,date_fin,lpp:lpp_code(prix_ttc,periodicite)")
+      .select("patient_id,date_debut,date_fin,lpp:lpp_code(prix_ttc,periodicite,taux_tva)")
       .eq("actif", true);
     setForfaits((ff ?? []) as unknown as ProjF[]);
     setPret(true);
@@ -95,16 +95,17 @@ export default function FacturationPage() {
     const now = new Date();
     const moisCle = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     let aFacturerMois = 0, dejaFacture = 0, paye = 0, attenteSecu = 0, aFacturerTotal = 0, unitCeMois = 0, genereForfait = 0;
+    let aFacturerMoisHt = 0, dejaFactureHt = 0, payeHt = 0, attenteSecuHt = 0, aFacturerTotalHt = 0, unitCeMoisHt = 0, genereForfaitHt = 0;
     const patientsMois = new Set<string>();
     let delaiSum = 0, delaiN = 0;
     for (const f of factures) {
       const m = mkey(f.periode_debut);
-      if (f.statut === "a_facturer") { aFacturerTotal += f.montant_base; if (m === moisCle) { aFacturerMois += f.montant_base; patientsMois.add(f.patient_id); } }
-      if (f.statut === "envoyee" || f.statut === "payee") dejaFacture += f.montant_base;
-      if (f.statut === "payee") paye += f.montant_base;
-      if (f.statut === "envoyee") attenteSecu += f.montant_base;
-      if (f.statut !== "annulee" && f.source === "forfait") genereForfait += f.montant_base;
-      if (f.statut !== "annulee" && f.source !== "forfait" && m === moisCle) { unitCeMois += f.montant_base; patientsMois.add(f.patient_id); }
+      if (f.statut === "a_facturer") { aFacturerTotal += f.montant_base; aFacturerTotalHt += f.montant_ht; if (m === moisCle) { aFacturerMois += f.montant_base; aFacturerMoisHt += f.montant_ht; patientsMois.add(f.patient_id); } }
+      if (f.statut === "envoyee" || f.statut === "payee") { dejaFacture += f.montant_base; dejaFactureHt += f.montant_ht; }
+      if (f.statut === "payee") { paye += f.montant_base; payeHt += f.montant_ht; }
+      if (f.statut === "envoyee") { attenteSecu += f.montant_base; attenteSecuHt += f.montant_ht; }
+      if (f.statut !== "annulee" && f.source === "forfait") { genereForfait += f.montant_base; genereForfaitHt += f.montant_ht; }
+      if (f.statut !== "annulee" && f.source !== "forfait" && m === moisCle) { unitCeMois += f.montant_base; unitCeMoisHt += f.montant_ht; patientsMois.add(f.patient_id); }
       if (f.envoyee_le && f.periode_debut) { const j = (new Date(f.envoyee_le).getTime() - new Date(f.periode_debut).getTime()) / 86_400_000; if (j >= 0) { delaiSum += j; delaiN += 1; } }
     }
     const serie: { label: string; total: number }[] = [];
@@ -113,28 +114,36 @@ export default function FacturationPage() {
       const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       serie.push({ label: moisCourt(d), total: factures.filter((f) => mkey(f.periode_debut) === k && f.statut !== "annulee").reduce((a, f) => a + f.montant_base, 0) });
     }
-    return { aFacturerMois, dejaFacture, paye, attenteSecu, aFacturerTotal, unitCeMois, genereForfait, patientsMoisSet: patientsMois, delaiMoyen: delaiN ? Math.round(delaiSum / delaiN) : null, serie };
+    return { aFacturerMois, dejaFacture, paye, attenteSecu, aFacturerTotal, unitCeMois, genereForfait,
+             aFacturerMoisHt, dejaFactureHt, payeHt, attenteSecuHt, aFacturerTotalHt, unitCeMoisHt, genereForfaitHt,
+             patientsMoisSet: patientsMois, delaiMoyen: delaiN ? Math.round(delaiSum / delaiN) : null, serie };
   }, [factures]);
 
   // ── Projection des forfaits (sur toute la PEC, indépendante du jour) ──
   const proj = useMemo(() => {
     const now = new Date();
     const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    let total = 0, ceMois = 0;
+    let total = 0, totalHt = 0, ceMois = 0, ceMoisHt = 0;
     const pats = new Set<string>();
     for (const f of forfaits) {
       const lp = un(f.lpp); if (!lp?.prix_ttc) continue;
+      const ht = lp.prix_ttc / (1 + (lp.taux_tva ?? 0.2));
       const starts = periodStarts(lp.periodicite, f.date_debut, f.date_fin);
       if (starts.length) pats.add(f.patient_id);
       total += lp.prix_ttc * starts.length;
-      ceMois += lp.prix_ttc * starts.filter((d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` === ym).length;
+      totalHt += ht * starts.length;
+      const nMois = starts.filter((d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` === ym).length;
+      ceMois += lp.prix_ttc * nMois;
+      ceMoisHt += ht * nMois;
     }
-    return { total, ceMois, patients: pats };
+    return { total, totalHt, ceMois, ceMoisHt, patients: pats };
   }, [forfaits]);
 
   const patientsActifs = useMemo(() => new Set([...s.patientsMoisSet, ...proj.patients]).size, [s.patientsMoisSet, proj.patients]);
-  const genereCeMois = s.unitCeMois + proj.ceMois;            // CA attendu ce mois (unité réelle + forfaits planifiés)
-  const aVenir = Math.max(0, proj.total - s.genereForfait);   // forfaits restant à facturer
+  const genereCeMois = s.unitCeMois + proj.ceMois;
+  const genereCeMoisHt = s.unitCeMoisHt + proj.ceMoisHt;
+  const aVenir = Math.max(0, proj.total - s.genereForfait);
+  const aVenirHt = Math.max(0, proj.totalHt - s.genereForfaitHt);
 
   // ── Options de filtres ──
   const agences = useMemo(() => [...new Map(factures.map((f) => [f.agence_id, un(f.agence)?.nom]).filter(([id]) => id) as [string, string][]).entries()].map(([value, label]) => ({ value, label })), [factures]);
@@ -212,17 +221,17 @@ export default function FacturationPage() {
             <div className="rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-50 to-white p-4">
               <p className="text-sm text-slate-500">Ce mois-ci</p>
               <p className="mt-1 text-xl font-bold text-brand">Vous générerez {eur(genereCeMois)}</p>
-              <p className="text-sm text-slate-500">avec {patientsActifs} patient(s) actif(s)</p>
+              <p className="text-xs text-slate-400">soit {eur(genereCeMoisHt)} HT · {patientsActifs} patient(s) actif(s)</p>
             </div>
             <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
               <p className="text-sm text-slate-500">CA prévisionnel à venir</p>
               <p className="mt-1 text-xl font-bold text-brand">{eur(aVenir)}</p>
-              <p className="text-sm text-slate-500">forfaits non encore facturés</p>
+              <p className="text-xs text-slate-400">soit {eur(aVenirHt)} HT · forfaits non facturés</p>
             </div>
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
               <p className="text-sm text-slate-500">En attente d&apos;envoi à la Sécu</p>
               <p className="mt-1 text-xl font-bold text-attention">{eur(s.aFacturerTotal)}</p>
-              <p className="text-sm text-slate-500">factures à transmettre</p>
+              <p className="text-xs text-slate-400">soit {eur(s.aFacturerTotalHt)} HT · à transmettre</p>
             </div>
             <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4">
               <p className="text-sm text-slate-500">Délai moyen livraison → facturation</p>
@@ -232,10 +241,10 @@ export default function FacturationPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Kpi label="CA à facturer ce mois" value={eur(s.aFacturerMois)} accent />
-            <Kpi label="CA déjà facturé" value={eur(s.dejaFacture)} />
-            <Kpi label="CA payé" value={eur(s.paye)} />
-            <Kpi label="CA en attente Sécu" value={eur(s.attenteSecu)} />
+            <Kpi label="CA à facturer ce mois" value={eur(s.aFacturerMois)} ht={eur(s.aFacturerMoisHt)} accent />
+            <Kpi label="CA déjà facturé" value={eur(s.dejaFacture)} ht={eur(s.dejaFactureHt)} />
+            <Kpi label="CA payé" value={eur(s.paye)} ht={eur(s.payeHt)} />
+            <Kpi label="CA en attente Sécu" value={eur(s.attenteSecu)} ht={eur(s.attenteSecuHt)} />
           </div>
 
           <section className="card grid gap-4">
@@ -310,11 +319,12 @@ export default function FacturationPage() {
   );
 }
 
-function Kpi({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function Kpi({ label, value, ht, accent }: { label: string; value: string; ht?: string; accent?: boolean }) {
   return (
     <div className="card p-4">
       <p className="text-xs text-slate-400">{label}</p>
       <p className={`mt-1 text-2xl font-bold ${accent ? "text-brand" : "text-slate-800"}`}>{value}</p>
+      {ht && <p className="text-xs text-slate-400">{ht} HT</p>}
     </div>
   );
 }

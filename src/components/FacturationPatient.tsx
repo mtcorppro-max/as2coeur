@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { Select } from "@/components/Select";
 
-type Forfait = { id: string; lpp_code: string; date_debut: string; date_fin: string; actif: boolean; lpp: { libelle: string; prix_ttc: number | null; periodicite: string } | { libelle: string; prix_ttc: number | null; periodicite: string }[] | null };
+type LppEmbed = { libelle: string; prix_ttc: number | null; periodicite: string; taux_tva: number };
+type Forfait = { id: string; lpp_code: string; date_debut: string; date_fin: string; actif: boolean; lpp: LppEmbed | LppEmbed[] | null };
 type LppF = { code: string; libelle: string; prix_ttc: number | null; periodicite: string; famille: string | null };
 const FAMILLES = [
   { value: "perfusion", label: "Perfusion (PERFADOM)" },
@@ -37,7 +38,7 @@ function nbPeriodes(periodicite: string, dDebut: string, dFin: string): number {
 
 export function FacturationPatient({ patientId }: { patientId: string }) {
   const pro = useProSession();
-  const [gen, setGen] = useState<{ unit: number; forfait: number }>({ unit: 0, forfait: 0 });
+  const [gen, setGen] = useState<{ unit: number; forfait: number; unitHt: number; forfaitHt: number }>({ unit: 0, forfait: 0, unitHt: 0, forfaitHt: 0 });
   const [forfaits, setForfaits] = useState<Forfait[]>([]);
   const [lppF, setLppF] = useState<LppF[]>([]);
   const [pec, setPec] = useState<{ debut: string | null; fin: string | null }>({ debut: null, fin: null });
@@ -51,14 +52,17 @@ export function FacturationPatient({ patientId }: { patientId: string }) {
     const supabase = createClient();
     await supabase.rpc("generer_factures_previsionnelles");
     const [{ data: facts }, { data: ff }, { data: pat }] = await Promise.all([
-      supabase.from("facture_previsionnelle").select("montant_base,statut,source").eq("patient_id", patientId),
-      supabase.from("patient_forfait").select("id,lpp_code,date_debut,date_fin,actif,lpp:lpp_code(libelle,prix_ttc,periodicite)").eq("patient_id", patientId).eq("actif", true),
+      supabase.from("facture_previsionnelle").select("montant_base,montant_ht,statut,source").eq("patient_id", patientId),
+      supabase.from("patient_forfait").select("id,lpp_code,date_debut,date_fin,actif,lpp:lpp_code(libelle,prix_ttc,periodicite,taux_tva)").eq("patient_id", patientId).eq("actif", true),
       supabase.from("patient").select("date_operation,duree_prise_en_charge").eq("id", patientId).maybeSingle(),
     ]);
-    const fl = ((facts ?? []) as { montant_base: number; statut: string; source: string }[]).filter((f) => f.statut !== "annulee");
+    const fl = ((facts ?? []) as { montant_base: number; montant_ht: number; statut: string; source: string }[]).filter((f) => f.statut !== "annulee");
+    const su = (pred: (f: typeof fl[number]) => boolean, key: "montant_base" | "montant_ht") => fl.filter(pred).reduce((a, f) => a + Number(f[key]), 0);
     setGen({
-      unit: fl.filter((f) => f.source !== "forfait").reduce((a, f) => a + Number(f.montant_base), 0),
-      forfait: fl.filter((f) => f.source === "forfait").reduce((a, f) => a + Number(f.montant_base), 0),
+      unit: su((f) => f.source !== "forfait", "montant_base"),
+      forfait: su((f) => f.source === "forfait", "montant_base"),
+      unitHt: su((f) => f.source !== "forfait", "montant_ht"),
+      forfaitHt: su((f) => f.source === "forfait", "montant_ht"),
     });
     setForfaits((ff ?? []) as unknown as Forfait[]);
     const p = pat as { date_operation?: string | null; duree_prise_en_charge?: number | null } | null;
@@ -91,14 +95,19 @@ export function FacturationPatient({ patientId }: { patientId: string }) {
 
   if (!peut || !pret) return null;
 
-  // Total des forfaits sur toute la PEC (stable, indépendant du jour).
-  const totalForfaits = forfaits.reduce((a, f) => {
-    const lp = un(f.lpp); if (!lp?.prix_ttc) return a;
-    return a + lp.prix_ttc * nbPeriodes(lp.periodicite, f.date_debut, f.date_fin);
-  }, 0);
-  const genere = gen.unit + gen.forfait;                      // déjà facturé (unité + forfaits)
+  // Total des forfaits sur toute la PEC (stable, indépendant du jour), TTC + HT.
+  let totalForfaits = 0, totalForfaitsHt = 0;
+  for (const f of forfaits) {
+    const lp = un(f.lpp); if (!lp?.prix_ttc) continue;
+    const n = nbPeriodes(lp.periodicite, f.date_debut, f.date_fin);
+    totalForfaits += lp.prix_ttc * n;
+    totalForfaitsHt += (lp.prix_ttc / (1 + (lp.taux_tva ?? 0.2))) * n;
+  }
+  const genere = gen.unit + gen.forfait;                      // déjà facturé TTC
+  const genereHt = gen.unitHt + gen.forfaitHt;                // déjà facturé HT
   const aVenir = Math.max(0, totalForfaits - gen.forfait);    // forfaits restant à facturer
-  const previsionnel = gen.unit + totalForfaits;              // total attendu en fin de PEC
+  const previsionnel = gen.unit + totalForfaits;              // total attendu en fin de PEC (TTC)
+  const previsionnelHt = gen.unitHt + totalForfaitsHt;        // total attendu en fin de PEC (HT)
 
   return (
     <section className="card grid gap-3">
@@ -107,11 +116,12 @@ export function FacturationPatient({ patientId }: { patientId: string }) {
         <div className="rounded-xl border border-rose-100 p-3">
           <p className="text-xs text-slate-400">CA déjà généré</p>
           <p className="mt-0.5 text-xl font-bold text-brand">{eur(genere)}</p>
+          <p className="text-[11px] text-slate-400">{eur(genereHt)} HT</p>
         </div>
         <div className="rounded-xl border border-rose-100 p-3">
           <p className="text-xs text-slate-400">CA prévisionnel fin de PEC</p>
           <p className="mt-0.5 text-xl font-bold text-slate-800">{eur(previsionnel)}</p>
-          {aVenir > 0 && <p className="text-[11px] text-slate-400">dont {eur(aVenir)} de forfaits à venir</p>}
+          <p className="text-[11px] text-slate-400">{eur(previsionnelHt)} HT{aVenir > 0 ? ` · dont ${eur(aVenir)} à venir` : ""}</p>
         </div>
       </div>
 
