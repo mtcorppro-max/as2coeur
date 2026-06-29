@@ -96,7 +96,7 @@ export default function LivraisonsPage() {
     setOuverts((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const [aRecup, setARecup] = useState<EquipRecup[]>([]);
-  const [signer, setSigner] = useState<Liv | null>(null);
+  const [signer, setSigner] = useState<{ l: Liv; suivi: boolean } | null>(null);
   const estLivreur = pro?.role === "livreur";
   const estCoord = estCoordOuManager(pro?.role);
   // Livreurs ET coordinatrices/managers peuvent effectuer des livraisons.
@@ -187,9 +187,11 @@ export default function LivraisonsPage() {
     charger();
   }
 
-  // Livraison avec signature du patient → statut livrée + bon de livraison signé.
+  // Validation de la livraison : signature obligatoire du patient → statut livrée
+  // + bon de livraison signé. Si « + suivi », on enchaîne sur le suivi clinique.
   async function confirmerLivraison(image: string, nom: string) {
-    const l = signer; if (!l) return;
+    const s = signer; if (!s) return;
+    const l = s.l;
     setBusy(l.id);
     const now = new Date();
     const { error } = await createClient()
@@ -199,31 +201,20 @@ export default function LivraisonsPage() {
     setBusy(null); setSigner(null);
     if (error) { alert("Échec : " + error.message); return; }
     await genererBonLivraison({ reference: refLiv(l) }, bonPatient(patientDe(l)), bonLignes(l), urlQR(l), { image, nom: nom || "—", date: now });
-    charger();
+    if (s.suivi) router.push(`/pro/patients/${l.patient_id}?suivi=1`);
+    else charger();
   }
 
-  // Coordinatrice : valide la livraison PUIS ouvre un suivi à remplir en direct.
-  async function livrerEtSuivre(l: Liv) {
-    setBusy(l.id);
-    const { error } = await createClient()
-      .from("livraison")
-      .update({ statut: "livree", updated_at: new Date().toISOString() })
-      .eq("id", l.id);
-    setBusy(null);
-    if (error) { alert("Échec : " + error.message); return; }
-    router.push(`/pro/patients/${l.patient_id}?suivi=1`);
-  }
-
-  // Clôture : le livreur fait signer le patient (bon de livraison signé) ;
-  // la coordinatrice peut aussi enchaîner sur un suivi clinique.
+  // Clôture : la livraison se valide en faisant signer le patient (bon de
+  // livraison signé). La coordinatrice peut enchaîner sur un suivi clinique.
   const boutonsFin = (l: Liv) =>
     estCoord ? (
       <>
-        <button onClick={() => setSigner(l)} disabled={busy === l.id} className="btn-secondary px-3 py-1.5 text-sm disabled:opacity-50">Bon de livraison</button>
-        <button onClick={() => livrerEtSuivre(l)} disabled={busy === l.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">{busy === l.id ? "…" : "Livré + suivi"}</button>
+        <button onClick={() => setSigner({ l, suivi: false })} disabled={busy === l.id} className="btn-secondary px-3 py-1.5 text-sm disabled:opacity-50">Livré</button>
+        <button onClick={() => setSigner({ l, suivi: true })} disabled={busy === l.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">Livré + suivi</button>
       </>
     ) : (
-      <button onClick={() => setSigner(l)} disabled={busy === l.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">Bon de livraison</button>
+      <button onClick={() => setSigner({ l, suivi: false })} disabled={busy === l.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">Livré</button>
     );
 
   if (pro && !peutLivrer) {
