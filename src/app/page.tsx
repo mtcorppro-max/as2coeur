@@ -112,8 +112,8 @@ export default function Landing() {
             <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {FEATURES.map((f) => (
                 <div key={f.titre} className="bord-anim flex flex-col gap-3 rounded-2xl bg-rose-900/50 p-5 transition hover:bg-rose-900/70">
-                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-white/20 text-xl text-white">
-                    {f.icon}
+                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-white/20 text-white">
+                    <FeatureIcon name={f.icon} className="h-6 w-6" />
                   </div>
                   <h3 className="font-bold text-white">{f.titre}</h3>
                   <p className="text-sm leading-relaxed text-rose-200">{f.description}</p>
@@ -255,67 +255,67 @@ export default function Landing() {
 
 const FEATURES = [
   {
-    icon: "∿",
+    icon: "pulse",
     titre: "Suivi des constantes",
     description:
       "Température, tension artérielle, saturation en oxygène, fréquence cardiaque et poids, avec courbes, ligne de seuil rouge et tableau simplifié.",
   },
   {
-    icon: "◎",
+    icon: "bell",
     titre: "Alertes automatiques",
     description:
       "Dès qu'une mesure franchit le seuil, un SMS est envoyé automatiquement au numéro 1. Sans réponse, le numéro 2 est contacté en escalade. Chaque action est tracée et horodatée.",
   },
   {
-    icon: "◇",
+    icon: "chat",
     titre: "Messagerie directe",
     description:
       "Canal de chat sécurisé entre le patient et la coordinatrice ou le chirurgien, en temps réel. Le délégué est exclu par design.",
   },
   {
-    icon: "◻",
+    icon: "camera",
     titre: "Photos de cicatrice",
     description:
       "Le patient envoie des photos depuis son téléphone (accès caméra direct). Stockage privé, URLs signées côté pro.",
   },
   {
-    icon: "▤",
+    icon: "document",
     titre: "Comptes rendus PDF",
     description:
       "Fiche de suivi structurée (état général, constantes, douleur, alimentation, cicatrisation…) générant un compte rendu PDF avec courbes de surveillance et photos de la cicatrice.",
   },
   {
-    icon: "◷",
+    icon: "calendar",
     titre: "Planification des suivis",
     description:
       "Durée de prise en charge par patient, suivi prévu à J1 et au dernier jour, et rappels d'actions à réaliser directement dans le tableau de bord.",
   },
   {
-    icon: "▦",
+    icon: "users",
     titre: "Organisation de l'équipe",
     description:
       "Calendrier des congés des soignants et gestion des astreintes (semaine / week-end), avec alerte si elles ne sont pas renseignées à l'avance.",
   },
   {
-    icon: "✦",
+    icon: "bulb",
     titre: "Conseils personnalisés",
     description:
       "Conseils hygiéno-diététiques quotidiens en rotation, avec alerte météo automatique (forte chaleur ≥ 30 °C, grand froid ≤ 2 °C).",
   },
   {
-    icon: "⌂",
+    icon: "dashboard",
     titre: "Cockpit coordinatrice",
     description:
       "Dashboard trié par criticité, fiche patient complète avec seuils ajustables, création de patient et génération de code.",
   },
   {
-    icon: "℞",
+    icon: "ordonnance",
     titre: "Ordonnances automatiques",
     description:
       "Protocole chirurgien → génération CERFA → signature électronique → envoi pharmacie. Zéro ressaisie, circuit tracé et horodaté.",
   },
   {
-    icon: "▣",
+    icon: "truck",
     titre: "Gestion des livraisons",
     description:
       "Pool de livraisons par agence, carte interactive, itinéraire optimisé. Le livreur voit sa tournée du jour sur son téléphone.",
@@ -363,6 +363,29 @@ const SECURITE = [
 ];
 
 // ── Composants ──────────────────────────────────────────────────────
+
+// Icônes des fonctionnalités (style ligne, cohérent avec la nav de l'app).
+function FeatureIcon({ name, className }: { name: string; className?: string }) {
+  const p = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  const paths: Record<string, React.ReactNode> = {
+    pulse: (<path d="M3 12h4l2.5-7 4 14 2.5-7H21" />),
+    bell: (<><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7 2.5 7H3.5S6 15 6 9Z" /><path d="M10.3 21a1.8 1.8 0 0 0 3.4 0" /></>),
+    chat: (<path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />),
+    camera: (<><path d="M4 7.5h3L8.5 5h7L17 7.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.5a1 1 0 0 1 1-1Z" /><circle cx="12" cy="13" r="3.3" /></>),
+    document: (<><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h6" /></>),
+    calendar: (<><rect x="3" y="4.5" width="18" height="17" rx="2" /><line x1="8" y1="2.5" x2="8" y2="6" /><line x1="16" y1="2.5" x2="16" y2="6" /><line x1="3" y1="9.5" x2="21" y2="9.5" /><path d="m8.5 14.5 2 2 3.5-3.5" /></>),
+    users: (<><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21" /><circle cx="9" cy="7" r="3.5" /><path d="M22 21v-1.5a4 4 0 0 0-3-3.85" /><path d="M16 3.6a3.5 3.5 0 0 1 0 6.8" /></>),
+    bulb: (<><path d="M9.5 18h5" /><path d="M10 21h4" /><path d="M12 3a6 6 0 0 0-3.8 10.6c.6.5 1 1.1 1.1 1.9h5.4c.1-.8.5-1.4 1.1-1.9A6 6 0 0 0 12 3Z" /></>),
+    dashboard: (<><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /></>),
+    ordonnance: (<><rect x="8" y="3" width="8" height="4" rx="1" /><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2" /><path d="M12 11v6M9 14h6" /></>),
+    truck: (<><path d="M3 6.5h11v9H3z" /><path d="M14 9.5h4l3 3v3h-7z" /><circle cx="7" cy="18" r="1.7" /><circle cx="17" cy="18" r="1.7" /></>),
+  };
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...p} aria-hidden="true">
+      {paths[name] ?? paths.document}
+    </svg>
+  );
+}
 
 function SectionTitle({ tag, title }: { tag: string; title: string }) {
   return (
