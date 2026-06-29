@@ -94,7 +94,9 @@ export default function FichePatient() {
 
   const modifiableSeuils = pro?.role === "coordinatrice";
   const modifiableInfos = true;
-  const peutSaisirMesure = pro?.role === "coordinatrice" || pro?.role === "infirmiere_liberale";
+  // Saisie des constantes : réservée à l'infirmière libérale (et au patient, côté patient).
+  // La coordinatrice ne saisit pas de constantes.
+  const peutSaisirMesure = pro?.role === "infirmiere_liberale";
 
   // Dernières valeurs par type
   const dernieres = new Map<string, number>();
@@ -195,7 +197,7 @@ export default function FichePatient() {
         </div>
       </section>
 
-      {/* ── Saisie de constantes (infirmière libérale / coordinatrice) ── */}
+      {/* ── Saisie de constantes (infirmière libérale uniquement) ── */}
       {peutSaisirMesure && (
         <section className="grid gap-3">
           <h2 className="text-sm font-semibold text-slate-600">Saisir une constante</h2>

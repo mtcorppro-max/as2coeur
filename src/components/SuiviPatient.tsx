@@ -34,6 +34,9 @@ export function SuiviPatient({
   constantes?: ConstantesInit;
 }) {
   const pro = useProSession();
+  // Les constantes ne sont saisies que par l'infirmière libérale (ou le patient,
+  // côté patient) ; la coordinatrice voit les dernières valeurs en lecture seule.
+  const peutConstantes = pro?.role === "infirmiere_liberale";
   const [suivis, setSuivis] = useState<Suivi[]>([]);
   const [galerie, setGalerie] = useState<GalPhoto[]>([]);
   const [photosParSuivi, setPhotosParSuivi] = useState<Record<string, PhotoSuivi[]>>({});
@@ -208,12 +211,12 @@ export function SuiviPatient({
           </Bloc>
 
           <div>
-            <p className="label mb-1">Constantes</p>
+            <p className="label mb-1">Constantes{!peutConstantes && <span className="font-normal text-slate-400"> (dernières connues — saisies par le patient ou l&apos;infirmière libérale)</span>}</p>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Mini label="TA" value={form.ta} onChange={set("ta")} placeholder="12/8" />
-              <Mini label="Pouls" value={form.pouls} onChange={set("pouls")} placeholder="bpm" />
-              <Mini label="T°" value={form.temperature} onChange={set("temperature")} placeholder="°C" />
-              <Mini label="SpO2" value={form.spo2} onChange={set("spo2")} placeholder="%" />
+              <Mini label="TA" value={form.ta} onChange={set("ta")} placeholder="12/8" readOnly={!peutConstantes} />
+              <Mini label="Pouls" value={form.pouls} onChange={set("pouls")} placeholder="bpm" readOnly={!peutConstantes} />
+              <Mini label="T°" value={form.temperature} onChange={set("temperature")} placeholder="°C" readOnly={!peutConstantes} />
+              <Mini label="SpO2" value={form.spo2} onChange={set("spo2")} placeholder="%" readOnly={!peutConstantes} />
             </div>
           </div>
 
@@ -359,16 +362,18 @@ function Mini({
   value,
   onChange,
   placeholder,
+  readOnly,
 }: {
   label: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
+  readOnly?: boolean;
 }) {
   return (
     <div>
       <span className="text-[11px] text-slate-400">{label}</span>
-      <input className="input mt-0.5" value={value} onChange={onChange} placeholder={placeholder} />
+      <input className={`input mt-0.5 ${readOnly ? "cursor-not-allowed bg-slate-50 text-slate-500" : ""}`} value={value} onChange={onChange} placeholder={placeholder} readOnly={readOnly} />
     </div>
   );
 }
