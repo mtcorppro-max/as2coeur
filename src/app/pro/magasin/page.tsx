@@ -38,6 +38,10 @@ export default function MagasinPage() {
   const [stockBas, setStockBas] = useState(false);
   const [locOnly, setLocOnly] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
+  // Sélection d'articles (par code) pour impression groupée des QR codes.
+  const [selection, setSelection] = useState<Set<string>>(new Set());
+  const toggleSel = (code: string) =>
+    setSelection((s) => { const n = new Set(s); n.has(code) ? n.delete(code) : n.add(code); return n; });
 
   const peutAcceder = pro?.role === "magasinier" || pro?.role === "coordinatrice" || pro?.role === "livreur" || pro?.niveau === 0;
   // Seul le magasinier (ou la plateforme) modifie le stock ; les autres consultent.
@@ -139,6 +143,13 @@ export default function MagasinPage() {
   const affichees = filtrees.slice(0, AFFICHAGE_MAX);
   const total = lignes.reduce((s, l) => s + l.quantite, 0);
 
+  const selObjets = lignes.filter((l) => selection.has(l.code));
+  const imprimerSelection = () => {
+    if (selObjets.length) genererEtiquettes(selObjets.map((l) => ({ code: l.code, designation: l.designation })));
+  };
+  const selectionnerAffichees = () =>
+    setSelection((s) => { const n = new Set(s); affichees.forEach((l) => n.add(l.code)); return n; });
+
   return (
     <div className="grid grid-cols-1 gap-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -176,6 +187,25 @@ export default function MagasinPage() {
         )}
       </div>
 
+      {pret && lignes.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-rose-200 bg-rose-50/60 px-3 py-2 text-sm">
+          {selection.size > 0 ? (
+            <>
+              <span className="font-medium text-slate-600">{selection.size} article(s) sélectionné(s)</span>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setSelection(new Set())} className="text-slate-500 hover:underline">Tout désélectionner</button>
+                <button onClick={imprimerSelection} className="btn-primary inline-flex items-center gap-1.5 px-3 py-1.5 text-sm"><IconeTag /> Imprimer la sélection ({selection.size})</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="text-slate-500">Cochez des articles pour imprimer plusieurs QR codes d&apos;un coup.</span>
+              <button onClick={selectionnerAffichees} className="font-medium text-brand hover:underline">Tout sélectionner{affichees.length < filtrees.length ? ` (${affichees.length} affichés)` : ""}</button>
+            </>
+          )}
+        </div>
+      )}
+
       {!pret ? (
         <p className="text-sm text-slate-400">Chargement…</p>
       ) : lignes.length === 0 ? (
@@ -185,25 +215,34 @@ export default function MagasinPage() {
           {affichees.map((l) => {
             const bas = !l.location && l.quantite <= l.seuil;
             return (
-              <div key={l.id} className={`card grid gap-3 py-3 sm:grid-cols-[1fr_auto] sm:items-center ${bas ? "border-amber-200 bg-amber-50/40" : ""}`}>
-                <div className="min-w-0">
-                  <p className="break-words font-medium text-slate-700">
-                    {l.designation}
-                    {l.location && <span className="ml-2 badge bg-sky-100 text-sky-700">Location</span>}
-                    {!l.location && bas && <span className="ml-2 badge bg-amber-100 text-attention">Stock bas</span>}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    Réf. {l.code}
-                    {l.en_commande > 0 && <span className="ml-2 text-sky-600">· {l.en_commande} en commande</span>}
-                    {l.reserve > 0 && <span className="ml-2 text-rose-500">· {l.reserve} réservé(s)</span>}
-                  </p>
-                  <button
-                    onClick={() => genererEtiquettes([{ code: l.code, designation: l.designation }])}
-                    className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-brand hover:underline"
-                    title="Imprimer l'étiquette QR de cet article"
-                  >
-                    <IconeTag /> Imprimer QRCODE
-                  </button>
+              <div key={l.id} className={`card grid gap-3 py-3 sm:grid-cols-[1fr_auto] sm:items-center ${selection.has(l.code) ? "border-brand bg-rose-50/40" : bas ? "border-amber-200 bg-amber-50/40" : ""}`}>
+                <div className="flex min-w-0 items-start gap-2.5">
+                  <input
+                    type="checkbox"
+                    checked={selection.has(l.code)}
+                    onChange={() => toggleSel(l.code)}
+                    className="mt-1 h-4 w-4 shrink-0 accent-brand"
+                    title="Sélectionner pour impression QR"
+                  />
+                  <div className="min-w-0">
+                    <p className="break-words font-medium text-slate-700">
+                      {l.designation}
+                      {l.location && <span className="ml-2 badge bg-sky-100 text-sky-700">Location</span>}
+                      {!l.location && bas && <span className="ml-2 badge bg-amber-100 text-attention">Stock bas</span>}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Réf. {l.code}
+                      {l.en_commande > 0 && <span className="ml-2 text-sky-600">· {l.en_commande} en commande</span>}
+                      {l.reserve > 0 && <span className="ml-2 text-rose-500">· {l.reserve} réservé(s)</span>}
+                    </p>
+                    <button
+                      onClick={() => genererEtiquettes([{ code: l.code, designation: l.designation }])}
+                      className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-brand hover:underline"
+                      title="Imprimer l'étiquette QR de cet article"
+                    >
+                      <IconeTag /> Imprimer QRCODE
+                    </button>
+                  </div>
                 </div>
                 {peutEditer ? (
                   l.location ? (
