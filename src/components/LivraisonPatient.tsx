@@ -5,9 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { estCoordOuManager } from "@/lib/roles";
 import { Select } from "@/components/Select";
+import { genererBonLivraison, type BonLigne, type BonPatient } from "@/lib/genererBons";
 
 type Pro = { nom: string; prenom: string | null; titre: string | null };
-type Livraison = { id: string; livreur_id: string | null; statut: string; date_prevue: string | null; created_at: string; livreur: Pro | Pro[] | null };
+type Livraison = {
+  id: string; livreur_id: string | null; statut: string; date_prevue: string | null; created_at: string;
+  signature: string | null; signataire: string | null; livree_le: string | null;
+  livreur: Pro | Pro[] | null;
+};
 
 function fmt(iso: string | null): string {
   if (!iso) return "";
@@ -39,7 +44,7 @@ export function LivraisonPatient({ patientId, prestataireId }: { patientId: stri
   const charger = useCallback(async () => {
     const { data } = await createClient()
       .from("livraison")
-      .select("id,livreur_id,statut,date_prevue,created_at,livreur:livreur_id(nom,prenom,titre)")
+      .select("id,livreur_id,statut,date_prevue,created_at,signature,signataire,livree_le,livreur:livreur_id(nom,prenom,titre)")
       .eq("patient_id", patientId)
       .order("created_at", { ascending: false });
     setLivraisons((data ?? []) as Livraison[]);
@@ -97,6 +102,23 @@ export function LivraisonPatient({ patientId, prestataireId }: { patientId: stri
     }
     return base;
   };
+  // Régénère le bon de livraison (avec le détail de la commande + la signature
+  // du patient stockée) — pour retrouver/réimprimer un bon déjà signé.
+  async function telechargerBon(l: Livraison) {
+    const supabase = createClient();
+    const [{ data: lignesData }, { data: pat }] = await Promise.all([
+      supabase.from("livraison_ligne").select("article_code,quantite,article:article_code(designation)").eq("livraison_id", l.id),
+      supabase.from("patient").select("nom,adresse,code_postal,ville,telephone").eq("id", patientId).maybeSingle(),
+    ]);
+    const lignes: BonLigne[] = ((lignesData ?? []) as unknown as { article_code: string; quantite: number; article: { designation: string } | { designation: string }[] | null }[])
+      .map((x) => ({ code: x.article_code, designation: (Array.isArray(x.article) ? x.article[0]?.designation : x.article?.designation) ?? "", quantite: x.quantite }));
+    const p = pat as { nom?: string; adresse?: string | null; code_postal?: string | null; ville?: string | null; telephone?: string | null } | null;
+    const bonP: BonPatient = { nom: p?.nom ?? "Patient", adresse: p?.adresse ?? null, code_postal: p?.code_postal ?? null, ville: p?.ville ?? null, telephone: p?.telephone ?? null };
+    const url = `${typeof window !== "undefined" ? window.location.origin : ""}/pro/preparations?l=${l.id}`;
+    const sig = l.signature ? { image: l.signature, nom: l.signataire || "—", date: l.livree_le ? new Date(l.livree_le) : new Date() } : null;
+    await genererBonLivraison({ reference: l.id.slice(0, 8).toUpperCase() }, bonP, lignes, url, sig);
+  }
+
   async function supprimer(id: string) {
     if (!confirm("Supprimer cette livraison à programmer ?")) return;
     const { error } = await createClient().from("livraison").delete().eq("id", id);
@@ -171,6 +193,9 @@ export function LivraisonPatient({ patientId, prestataireId }: { patientId: stri
               </div>
               {peutGerer && l.statut === "a_programmer" && (
                 <button onClick={() => supprimer(l.id)} className="rounded-lg border border-rose-200 px-2 py-1 text-xs text-critique hover:bg-red-50">Supprimer</button>
+              )}
+              {l.statut === "livree" && (
+                <button onClick={() => telechargerBon(l)} className="rounded-lg border border-rose-200 px-2 py-1 text-xs font-medium text-brand hover:bg-rose-50">Bon de livraison (PDF)</button>
               )}
               </div>
               {peutGerer && <LignesLivraison livraisonId={l.id} editable={peutPanier && l.statut !== "livree"} />}
