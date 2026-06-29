@@ -35,12 +35,16 @@ type Liv = {
   id: string;
   patient_id: string;
   livreur_id: string | null;
-  statut: "a_programmer" | "a_planifier" | "planifiee" | "livree";
+  statut: "a_programmer" | "a_planifier" | "planifiee" | "preparee" | "livree";
   date_prevue: string | null;
   patient: PatientLite | PatientLite[] | null;
 };
 
 const patientDe = (l: Liv): PatientLite | null => (Array.isArray(l.patient) ? l.patient[0] : l.patient) ?? null;
+
+type EquipRecup = { id: string; numero_serie: string; article: { designation: string } | { designation: string }[] | null; patient: { nom: string } | { nom: string }[] | null };
+const nomDe = (v: { nom: string } | { nom: string }[] | null) => (Array.isArray(v) ? v[0]?.nom : v?.nom) ?? "";
+const desigDe = (v: { designation: string } | { designation: string }[] | null) => (Array.isArray(v) ? v[0]?.designation : v?.designation) ?? "Équipement";
 
 function todayIso(): string {
   const d = new Date();
@@ -81,20 +85,32 @@ export default function LivraisonsPage() {
   const toggleDetails = (id: string) =>
     setOuverts((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
+  const [aRecup, setARecup] = useState<EquipRecup[]>([]);
   const estLivreur = pro?.role === "livreur";
   const estCoord = estCoordOuManager(pro?.role);
   // Livreurs ET coordinatrices/managers peuvent effectuer des livraisons.
   const peutLivrer = estLivreur || estCoord;
+  // La récupération de matériel chez le patient (→ en transit) est l'action du livreur.
+  const peutRecup = estLivreur || pro?.niveau === 0;
 
   const charger = useCallback(async () => {
     if (!pro?.id || !peutLivrer) return;
-    const { data } = await createClient()
+    const supabase = createClient();
+    const { data } = await supabase
       .from("livraison")
       .select(`id,patient_id,livreur_id,statut,date_prevue,patient:patient_id(${PATIENT_COLS})`)
       .order("date_prevue", { ascending: true });
     setLivs((data ?? []) as unknown as Liv[]);
+    // Matériel de location actuellement chez les patients (cloisonné agence par RLS).
+    if (peutRecup) {
+      const { data: eq } = await supabase
+        .from("equipement")
+        .select("id,numero_serie,article:article_code(designation),patient:patient_actuel_id(nom)")
+        .eq("statut", "chez_patient");
+      setARecup((eq ?? []) as unknown as EquipRecup[]);
+    }
     setPret(true);
-  }, [pro?.id, peutLivrer]);
+  }, [pro?.id, peutLivrer, peutRecup]);
   useEffect(() => { charger(); }, [charger]);
 
   // Pool : livraisons à programmer non prises. Cloisonné à l'agence du compte
@@ -102,7 +118,8 @@ export default function LivraisonsPage() {
   const dansMonAgence = (l: Liv) => !pro?.agence_id || patientDe(l)?.agence_id === pro.agence_id;
   const pool = livs.filter((l) => l.statut === "a_programmer" && !l.livreur_id && dansMonAgence(l));
   const miennes = livs.filter((l) => l.livreur_id === pro?.id && l.statut !== "a_programmer");
-  const planifiees = miennes.filter((l) => l.statut === "planifiee" || l.statut === "a_planifier");
+  // « préparée » par le magasinier = prête à livrer → reste dans la liste active du livreur.
+  const planifiees = miennes.filter((l) => l.statut === "planifiee" || l.statut === "a_planifier" || l.statut === "preparee");
   const livrees = miennes.filter((l) => l.statut === "livree");
 
   // Étapes du jour (mes livraisons planifiées datées ce jour) — pour la carte.
@@ -148,6 +165,16 @@ export default function LivraisonsPage() {
   }
   // Prendre en charge une livraison du pool.
   const prendre = (id: string) => maj(id, { livreur_id: pro?.id ?? null, statut: "planifiee" });
+
+  // Récupération du matériel chez le patient → statut « en transit » (le magasinier
+  // validera ensuite le retour à l'agence pour le remettre en stock).
+  async function recuperer(eq: EquipRecup) {
+    const etat = window.prompt("État au retour (ex. bon / à vérifier) :", "bon");
+    if (etat === null) return;
+    const { error } = await createClient().rpc("equipement_recuperer", { p_equipement: eq.id, p_etat: etat || null });
+    if (error) { alert("Échec : " + error.message); return; }
+    charger();
+  }
 
   // Coordinatrice : valide la livraison PUIS ouvre un suivi à remplir en direct.
   async function livrerEtSuivre(l: Liv) {
@@ -306,6 +333,22 @@ export default function LivraisonsPage() {
               </div>
             );
           })}
+        </section>
+      )}
+
+      {/* ── Matériel à récupérer chez les patients ── */}
+      {peutRecup && aRecup.length > 0 && (
+        <section className="grid grid-cols-1 gap-3">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Matériel à récupérer ({aRecup.length})</h2>
+          {aRecup.map((eq) => (
+            <div key={eq.id} className="card flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium text-slate-700">{desigDe(eq.article)} · <span className="font-mono text-sm text-slate-500">{eq.numero_serie}</span></p>
+                <p className="text-xs text-slate-400">Chez {nomDe(eq.patient) || "—"}</p>
+              </div>
+              <button onClick={() => recuperer(eq)} disabled={busy === eq.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">Récupérer</button>
+            </div>
+          ))}
         </section>
       )}
     </div>

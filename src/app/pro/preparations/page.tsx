@@ -40,8 +40,6 @@ function bip(ok: boolean) {
   } catch { /* audio non dispo */ }
 }
 
-type EquipRecup = { id: string; numero_serie: string; article: { designation: string } | { designation: string }[] | null; patient: { nom: string } | { nom: string }[] | null };
-const nomDe = (v: { nom: string } | { nom: string }[] | null) => (Array.isArray(v) ? v[0]?.nom : v?.nom) ?? "";
 const estLoc = (a: ArtEmbed | ArtEmbed[] | null) => !!(Array.isArray(a) ? a[0]?.est_location : a?.est_location);
 const serie = (v: { numero_serie: string } | { numero_serie: string }[] | null) => (Array.isArray(v) ? v[0]?.numero_serie : v?.numero_serie) ?? "";
 
@@ -65,15 +63,13 @@ export default function PreparationsPage() {
   const [scanArticle, setScanArticle] = useState<Liv | null>(null);
   const [scanBon, setScanBon] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [aRecup, setARecup] = useState<EquipRecup[]>([]);
   const [dispos, setDispos] = useState<Dispo[]>([]);
-  const peutRecup = pro?.role === "livreur" || pro?.role === "magasinier" || pro?.niveau === 0;
   const [feedback, setFeedback] = useState<{ type: "ok" | "info" | "erreur"; msg: string } | null>(null);
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const peutAcceder = pro?.role === "magasinier" || pro?.role === "coordinatrice" || pro?.role === "livreur" || pro?.niveau === 0;
-  // Seul le magasinier prépare (picking + validation) ; les autres consultent / livrent.
-  const estMag = pro?.role === "magasinier" || pro?.niveau === 0;
+  // Préparation de commande réservée au magasinier (la livraison se fait depuis la Tournée).
+  const peutAcceder = pro?.role === "magasinier" || pro?.niveau === 0;
+  const estMag = peutAcceder;
 
   const charger = useCallback(async () => {
     const supabase = createClient();
@@ -86,12 +82,6 @@ export default function PreparationsPage() {
     // Cloisonnement agence (la coordinatrice voit le prestataire ; on filtre).
     if (pro?.agence_id) arr = arr.filter((l) => patientDe(l)?.agence_id === pro.agence_id);
     setLivs(arr.filter((l) => l.lignes.length > 0)); // livraisons avec panier
-    // Matériel de location chez les patients (à récupérer).
-    const { data: eq } = await supabase
-      .from("equipement")
-      .select("id,numero_serie,article:article_code(designation),patient:patient_actuel_id(nom)")
-      .eq("statut", "chez_patient");
-    setARecup((eq ?? []) as unknown as EquipRecup[]);
     // Appareils disponibles (affectation par le magasinier).
     if (pro?.role === "magasinier" || pro?.niveau === 0) {
       const { data: d } = await supabase.from("equipement").select("id,numero_serie,article_code").eq("statut", "disponible");
@@ -209,17 +199,8 @@ export default function PreparationsPage() {
     if (el) setTimeout(() => el.scrollIntoView({ behavior: "smooth", block: "center" }), 120);
   }, [openId, pret]);
 
-  // Récupération chez le patient (livreur/magasinier) → en_transit.
-  async function recuperer(eq: EquipRecup) {
-    const etat = window.prompt("État au retour (ex. bon / à vérifier) :", "bon");
-    if (etat === null) return;
-    const { error } = await createClient().rpc("equipement_recuperer", { p_equipement: eq.id, p_etat: etat || null });
-    if (error) { alert("Échec : " + error.message); return; }
-    charger();
-  }
-
   if (pro && !peutAcceder) {
-    return <div className="card text-sm text-slate-500">La préparation de commande est réservée au magasinier, aux coordinatrices et aux livreurs.</div>;
+    return <div className="card text-sm text-slate-500">La préparation de commande est réservée au magasinier.</div>;
   }
 
   const aPreparer = livs.filter((l) => l.statut === "planifiee");
@@ -318,23 +299,6 @@ export default function PreparationsPage() {
           <Section titre={`Prêtes à livrer (${pretes.length})`} vide="">{pretes.map(carte)}</Section>
           {livrees.length > 0 && <Section titre={`Livrées (${livrees.length})`} vide="">{livrees.map(carte)}</Section>}
         </>
-      )}
-
-      {pret && aRecup.length > 0 && (
-        <section className="grid grid-cols-1 gap-3">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Matériel à récupérer ({aRecup.length})</h2>
-          {aRecup.map((eq) => (
-            <div key={eq.id} className="card flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="font-medium text-slate-700">{(Array.isArray(eq.article) ? eq.article[0]?.designation : eq.article?.designation) ?? "Équipement"} · <span className="font-mono text-sm text-slate-500">{eq.numero_serie}</span></p>
-                <p className="text-xs text-slate-400">Chez {nomDe(eq.patient) || "—"}</p>
-              </div>
-              {peutRecup && (
-                <button onClick={() => recuperer(eq)} className="btn-primary px-3 py-1.5 text-sm">Récupérer</button>
-              )}
-            </div>
-          ))}
-        </section>
       )}
 
       {signer && <SignaturePad onValider={confirmerLivraison} onAnnuler={() => setSigner(null)} />}
