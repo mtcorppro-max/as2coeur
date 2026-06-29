@@ -10,7 +10,7 @@ import { genererPdfFactures, type FactureExport } from "@/lib/pdfFactures";
 type Facture = {
   id: string; patient_id: string; agence_id: string | null; medecin_id: string | null; medecin_nom: string | null;
   montant_base: number; part_secu: number; part_mutuelle: number; part_patient: number;
-  statut: string; ref_externe: string | null; periode_debut: string | null; envoyee_le: string | null; payee_le: string | null;
+  statut: string; source: string; ref_externe: string | null; periode_debut: string | null; envoyee_le: string | null; payee_le: string | null;
   patient: { nom: string } | { nom: string }[] | null;
   agence: { nom: string } | { nom: string }[] | null;
 };
@@ -77,7 +77,7 @@ export default function FacturationPage() {
     await supabase.rpc("generer_factures_previsionnelles"); // génération auto (idempotente)
     const { data } = await supabase
       .from("facture_previsionnelle")
-      .select("id,patient_id,agence_id,medecin_id,medecin_nom,montant_base,part_secu,part_mutuelle,part_patient,statut,ref_externe,periode_debut,envoyee_le,payee_le,patient:patient_id(nom),agence:agence_id(nom)")
+      .select("id,patient_id,agence_id,medecin_id,medecin_nom,montant_base,part_secu,part_mutuelle,part_patient,statut,source,ref_externe,periode_debut,envoyee_le,payee_le,patient:patient_id(nom),agence:agence_id(nom)")
       .order("periode_debut", { ascending: false });
     setFactures((data ?? []) as unknown as Facture[]);
     // Forfaits actifs → projection du CA prévisionnel (périodes à venir).
@@ -94,7 +94,7 @@ export default function FacturationPage() {
   const s = useMemo(() => {
     const now = new Date();
     const moisCle = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    let aFacturerMois = 0, dejaFacture = 0, paye = 0, attenteSecu = 0, aFacturerTotal = 0;
+    let aFacturerMois = 0, dejaFacture = 0, paye = 0, attenteSecu = 0, aFacturerTotal = 0, unitCeMois = 0, genereForfait = 0;
     const patientsMois = new Set<string>();
     let delaiSum = 0, delaiN = 0;
     for (const f of factures) {
@@ -103,6 +103,8 @@ export default function FacturationPage() {
       if (f.statut === "envoyee" || f.statut === "payee") dejaFacture += f.montant_base;
       if (f.statut === "payee") paye += f.montant_base;
       if (f.statut === "envoyee") attenteSecu += f.montant_base;
+      if (f.statut !== "annulee" && f.source === "forfait") genereForfait += f.montant_base;
+      if (f.statut !== "annulee" && f.source !== "forfait" && m === moisCle) { unitCeMois += f.montant_base; patientsMois.add(f.patient_id); }
       if (f.envoyee_le && f.periode_debut) { const j = (new Date(f.envoyee_le).getTime() - new Date(f.periode_debut).getTime()) / 86_400_000; if (j >= 0) { delaiSum += j; delaiN += 1; } }
     }
     const serie: { label: string; total: number }[] = [];
@@ -111,27 +113,28 @@ export default function FacturationPage() {
       const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       serie.push({ label: moisCourt(d), total: factures.filter((f) => mkey(f.periode_debut) === k && f.statut !== "annulee").reduce((a, f) => a + f.montant_base, 0) });
     }
-    return { aFacturerMois, dejaFacture, paye, attenteSecu, aFacturerTotal, patientsMoisSet: patientsMois, delaiMoyen: delaiN ? Math.round(delaiSum / delaiN) : null, serie };
+    return { aFacturerMois, dejaFacture, paye, attenteSecu, aFacturerTotal, unitCeMois, genereForfait, patientsMoisSet: patientsMois, delaiMoyen: delaiN ? Math.round(delaiSum / delaiN) : null, serie };
   }, [factures]);
 
-  // ── Projection prévisionnelle (forfaits à venir, non encore facturés) ──
+  // ── Projection des forfaits (sur toute la PEC, indépendante du jour) ──
   const proj = useMemo(() => {
-    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const now = new Date();
     const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    let aVenir = 0, ceMois = 0;
+    let total = 0, ceMois = 0;
     const pats = new Set<string>();
     for (const f of forfaits) {
       const lp = un(f.lpp); if (!lp?.prix_ttc) continue;
-      const futurs = periodStarts(lp.periodicite, f.date_debut, f.date_fin).filter((d) => d > now);
-      if (futurs.length) pats.add(f.patient_id);
-      aVenir += lp.prix_ttc * futurs.length;
-      ceMois += lp.prix_ttc * futurs.filter((d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` === ym).length;
+      const starts = periodStarts(lp.periodicite, f.date_debut, f.date_fin);
+      if (starts.length) pats.add(f.patient_id);
+      total += lp.prix_ttc * starts.length;
+      ceMois += lp.prix_ttc * starts.filter((d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` === ym).length;
     }
-    return { aVenir, ceMois, patients: pats };
+    return { total, ceMois, patients: pats };
   }, [forfaits]);
 
   const patientsActifs = useMemo(() => new Set([...s.patientsMoisSet, ...proj.patients]).size, [s.patientsMoisSet, proj.patients]);
-  const genereCeMois = s.aFacturerMois + proj.ceMois;
+  const genereCeMois = s.unitCeMois + proj.ceMois;            // CA attendu ce mois (unité réelle + forfaits planifiés)
+  const aVenir = Math.max(0, proj.total - s.genereForfait);   // forfaits restant à facturer
 
   // ── Options de filtres ──
   const agences = useMemo(() => [...new Map(factures.map((f) => [f.agence_id, un(f.agence)?.nom]).filter(([id]) => id) as [string, string][]).entries()].map(([value, label]) => ({ value, label })), [factures]);
@@ -213,7 +216,7 @@ export default function FacturationPage() {
             </div>
             <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
               <p className="text-sm text-slate-500">CA prévisionnel à venir</p>
-              <p className="mt-1 text-xl font-bold text-brand">{eur(proj.aVenir)}</p>
+              <p className="mt-1 text-xl font-bold text-brand">{eur(aVenir)}</p>
               <p className="text-sm text-slate-500">forfaits non encore facturés</p>
             </div>
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">

@@ -17,18 +17,19 @@ const eur = (n: number) => n.toLocaleString("fr-FR", { style: "currency", curren
 const un = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? v[0] : v) ?? null;
 const PER: Record<string, string> = { installation: "installation", journalier: "/ jour", hebdomadaire: "/ semaine", mensuel: "/ mois", unitaire: "" };
 
-// Nb de périodes restantes (après aujourd'hui) jusqu'à la fin de PEC.
-function periodesRestantes(periodicite: string, dDebut: string, dFin: string): number {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+// Nb total de périodes d'un forfait sur toute la PEC (indépendant de « aujourd'hui »).
+function nbPeriodes(periodicite: string, dDebut: string, dFin: string): number {
   const fin = new Date(dFin); fin.setHours(0, 0, 0, 0);
-  if (periodicite === "installation") return new Date(dDebut) > today ? 1 : 0;
+  const debut = new Date(dDebut); debut.setHours(0, 0, 0, 0);
+  if (debut > fin) return 0;
+  if (periodicite === "installation" || periodicite === "unitaire") return 1;
   const incr = periodicite === "journalier" ? 1 : periodicite === "hebdomadaire" ? 7 : 0;
   let count = 0;
   for (let k = 0; k < 6000; k++) {
     const d = new Date(dDebut); d.setHours(0, 0, 0, 0);
     if (periodicite === "mensuel") d.setMonth(d.getMonth() + k); else d.setDate(d.getDate() + k * incr);
     if (d > fin) break;
-    if (d > today) count++;
+    count++;
     if (incr === 0 && periodicite !== "mensuel") break;
   }
   return count;
@@ -36,7 +37,7 @@ function periodesRestantes(periodicite: string, dDebut: string, dFin: string): n
 
 export function FacturationPatient({ patientId }: { patientId: string }) {
   const pro = useProSession();
-  const [genere, setGenere] = useState(0);
+  const [gen, setGen] = useState<{ unit: number; forfait: number }>({ unit: 0, forfait: 0 });
   const [forfaits, setForfaits] = useState<Forfait[]>([]);
   const [lppF, setLppF] = useState<LppF[]>([]);
   const [pec, setPec] = useState<{ debut: string | null; fin: string | null }>({ debut: null, fin: null });
@@ -50,11 +51,15 @@ export function FacturationPatient({ patientId }: { patientId: string }) {
     const supabase = createClient();
     await supabase.rpc("generer_factures_previsionnelles");
     const [{ data: facts }, { data: ff }, { data: pat }] = await Promise.all([
-      supabase.from("facture_previsionnelle").select("montant_base,statut").eq("patient_id", patientId),
+      supabase.from("facture_previsionnelle").select("montant_base,statut,source").eq("patient_id", patientId),
       supabase.from("patient_forfait").select("id,lpp_code,date_debut,date_fin,actif,lpp:lpp_code(libelle,prix_ttc,periodicite)").eq("patient_id", patientId).eq("actif", true),
       supabase.from("patient").select("date_operation,duree_prise_en_charge").eq("id", patientId).maybeSingle(),
     ]);
-    setGenere(((facts ?? []) as { montant_base: number; statut: string }[]).filter((f) => f.statut !== "annulee").reduce((a, f) => a + Number(f.montant_base), 0));
+    const fl = ((facts ?? []) as { montant_base: number; statut: string; source: string }[]).filter((f) => f.statut !== "annulee");
+    setGen({
+      unit: fl.filter((f) => f.source !== "forfait").reduce((a, f) => a + Number(f.montant_base), 0),
+      forfait: fl.filter((f) => f.source === "forfait").reduce((a, f) => a + Number(f.montant_base), 0),
+    });
     setForfaits((ff ?? []) as unknown as Forfait[]);
     const p = pat as { date_operation?: string | null; duree_prise_en_charge?: number | null } | null;
     const debut = p?.date_operation ?? null;
@@ -86,11 +91,14 @@ export function FacturationPatient({ patientId }: { patientId: string }) {
 
   if (!peut || !pret) return null;
 
-  const futur = forfaits.reduce((a, f) => {
+  // Total des forfaits sur toute la PEC (stable, indépendant du jour).
+  const totalForfaits = forfaits.reduce((a, f) => {
     const lp = un(f.lpp); if (!lp?.prix_ttc) return a;
-    return a + lp.prix_ttc * periodesRestantes(lp.periodicite, f.date_debut, f.date_fin);
+    return a + lp.prix_ttc * nbPeriodes(lp.periodicite, f.date_debut, f.date_fin);
   }, 0);
-  const previsionnel = genere + futur;
+  const genere = gen.unit + gen.forfait;                      // déjà facturé (unité + forfaits)
+  const aVenir = Math.max(0, totalForfaits - gen.forfait);    // forfaits restant à facturer
+  const previsionnel = gen.unit + totalForfaits;              // total attendu en fin de PEC
 
   return (
     <section className="card grid gap-3">
@@ -103,7 +111,7 @@ export function FacturationPatient({ patientId }: { patientId: string }) {
         <div className="rounded-xl border border-rose-100 p-3">
           <p className="text-xs text-slate-400">CA prévisionnel fin de PEC</p>
           <p className="mt-0.5 text-xl font-bold text-slate-800">{eur(previsionnel)}</p>
-          {futur > 0 && <p className="text-[11px] text-slate-400">dont {eur(futur)} de forfaits à venir</p>}
+          {aVenir > 0 && <p className="text-[11px] text-slate-400">dont {eur(aVenir)} de forfaits à venir</p>}
         </div>
       </div>
 
