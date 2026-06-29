@@ -125,9 +125,9 @@ export default function MagasinPage() {
         />
         <button
           onClick={() => setStockBas((v) => !v)}
-          className={`shrink-0 rounded-xl border px-3 py-2 text-sm font-medium transition ${stockBas ? "border-amber-300 bg-amber-100 text-attention" : "border-rose-200 bg-white text-slate-600 hover:bg-rose-50"}`}
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-medium transition ${stockBas ? "border-amber-300 bg-amber-100 text-attention" : "border-rose-200 bg-white text-slate-600 hover:bg-rose-50"}`}
         >
-          ⚠️ Stock bas{nbBas > 0 ? ` (${nbBas})` : ""}
+          <IconeAlerte /> Stock bas{nbBas > 0 ? ` (${nbBas})` : ""}
         </button>
         <button
           onClick={() => {
@@ -135,10 +135,10 @@ export default function MagasinPage() {
             if (filtrees.length > 200 && !confirm(`${filtrees.length} articles filtrés. Générer les étiquettes des 200 premiers ? (affinez la recherche pour cibler)`)) return;
             genererEtiquettes(sel.map((l) => ({ code: l.code, designation: l.designation })));
           }}
-          className="shrink-0 rounded-xl border border-rose-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-rose-50"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-rose-50"
           title="Planche d'étiquettes QR (une par article) à imprimer"
         >
-          🏷️ Étiquettes QR
+          <IconeTag /> Étiquettes QR
         </button>
       </div>
 
@@ -196,5 +196,22 @@ export default function MagasinPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function IconeAlerte() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+      <path d="M10.3 4.2 2.5 18a1.6 1.6 0 0 0 1.4 2.4h16.2a1.6 1.6 0 0 0 1.4-2.4L13.7 4.2a1.6 1.6 0 0 0-3.4 0Z" />
+      <line x1="12" y1="10" x2="12" y2="14" /><line x1="12" y1="17.5" x2="12" y2="17.5" />
+    </svg>
+  );
+}
+function IconeTag() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+      <path d="M20.6 13.4 12 22l-9-9V4a1 1 0 0 1 1-1h9l7.6 7.6a2 2 0 0 1 0 2.8Z" />
+      <circle cx="7.5" cy="7.5" r="1.3" />
+    </svg>
   );
 }

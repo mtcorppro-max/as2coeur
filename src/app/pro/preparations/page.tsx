@@ -171,9 +171,9 @@ export default function PreparationsPage() {
             <p className="text-xs text-slate-400">Bon n° {ref(l)} · {l.lignes.length} article(s) · préparés {nbPrep}/{l.lignes.length}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {editable && <button onClick={() => setScanArticle(l)} className="btn-secondary px-3 py-1.5 text-sm">📷 Scanner</button>}
+            {editable && <button onClick={() => setScanArticle(l)} className="btn-secondary px-3 py-1.5 text-sm"><IconeCam /> Scanner</button>}
             <button onClick={() => apercu(() => genererBonCommande({ reference: ref(l) }, bonPatient(p), bonLignes(l), "bloburl"))} className="btn-secondary px-2.5 py-1.5 text-sm" title="Aperçu (sans télécharger)"><Oeil /></button>
-            <button onClick={() => genererBonCommande({ reference: ref(l) }, bonPatient(p), bonLignes(l))} className="btn-secondary px-3 py-1.5 text-sm">📄 Bon de commande</button>
+            <button onClick={() => genererBonCommande({ reference: ref(l) }, bonPatient(p), bonLignes(l))} className="btn-secondary px-3 py-1.5 text-sm"><IconeDoc /> Bon de commande</button>
           </div>
         </div>
 
@@ -200,7 +200,7 @@ export default function PreparationsPage() {
           {l.statut === "preparee" && (
             <>
               <button onClick={() => apercu(() => genererBonLivraison({ reference: ref(l) }, bonPatient(p), bonLignes(l), urlQR(l), null, "bloburl"))} className="btn-secondary px-2.5 py-1.5 text-sm" title="Aperçu (sans télécharger)"><Oeil /></button>
-              <button onClick={() => genererBonLivraison({ reference: ref(l) }, bonPatient(p), bonLignes(l), urlQR(l))} className="btn-secondary px-3 py-1.5 text-sm">📄 Bon de livraison</button>
+              <button onClick={() => genererBonLivraison({ reference: ref(l) }, bonPatient(p), bonLignes(l), urlQR(l))} className="btn-secondary px-3 py-1.5 text-sm"><IconeDoc /> Bon de livraison</button>
               <button onClick={() => setSigner(l)} disabled={busy === l.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">Livrer (signature)</button>
             </>
           )}
@@ -219,7 +219,7 @@ export default function PreparationsPage() {
           <h1 className="text-2xl font-bold text-slate-800">Préparation de commande</h1>
           <p className="mt-1 text-sm text-slate-500">Préparez le panier, validez (bon de livraison), livrez avec signature.</p>
         </div>
-        <button onClick={() => setScanBon(true)} className="btn-secondary text-sm">📷 Scanner un bon</button>
+        <button onClick={() => setScanBon(true)} className="btn-secondary text-sm"><IconeCam /> Scanner un bon</button>
       </div>
 
       {!pret ? (
@@ -257,6 +257,22 @@ function Oeil() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4" aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
       <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+function IconeCam() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+      <path d="M4 7.5h3L8.5 5h7L17 7.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.5a1 1 0 0 1 1-1Z" />
+      <circle cx="12" cy="13" r="3.3" />
+    </svg>
+  );
+}
+function IconeDoc() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+      <path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+      <path d="M14 3v5h5" /><path d="M9 13h6M9 17h6" />
     </svg>
   );
 }
