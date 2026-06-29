@@ -210,7 +210,7 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ── Huit rôles ──────────────────────────────────────── */}
+        {/* ── Huit rôles + accès ───────────────────────────────── */}
         <section className="bg-white py-20">
           <div className="mx-auto max-w-3xl px-6 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Une plateforme, tous les métiers</p>
@@ -222,18 +222,6 @@ export default function Landing() {
               Chacun a sa vue, ses droits, ses outils. Cloisonnement strict des
               données par région et par agence — sécurité jusqu&apos;à la base de
               données.
-            </p>
-          </div>
-        </section>
-
-        {/* ── CTA final ───────────────────────────────────────── */}
-        <section className="relative overflow-hidden bg-white py-24 text-center">
-          <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-rose-50" />
-          <div className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-rose-50" />
-          <div className="relative mx-auto max-w-2xl px-6">
-            <h2 className="text-3xl font-bold text-slate-800 md:text-4xl">Prêt à commencer ?</h2>
-            <p className="mt-3 text-slate-500">
-              Accédez à votre espace en quelques secondes.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Link
