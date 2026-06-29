@@ -1,7 +1,5 @@
--- SEED — Référentiel LPP + mappage article -> LPP
--- Généré depuis « Liste produits et code lpp tarifs.xlsx ».
--- À exécuter APRÈS la migration 0081. Périodicité = 'unitaire' (produits).
--- Les lignes a_verifier = true sont à contrôler (code non 7 chiffres ou prix manquant).
+-- SEED — Référentiel LPP + mappage article -> LPP (régénéré, échappement corrigé)
+-- À exécuter APRÈS 0081.
 
 insert into public.lpp (code, libelle, prix_ttc, periodicite, a_verifier) values
   ('1102814', 'SONDALIS 2KCAL HP 1000ML', 8.86, 'unitaire', false),
@@ -485,9 +483,8 @@ insert into public.lpp (code, libelle, prix_ttc, periodicite, a_verifier) values
   ('7168263', 'ATTELLE CRYO GENOUX', 102.29, 'unitaire', false),
   ('7182487', 'ATTELLE IGLOO GENOU RENFORT LATERAL', 102.29, 'unitaire', false),
   ('7183162', 'ATTELLE PIED/CHEVILLE + PACK FROID', 76.22, 'unitaire', false)
-on conflict (code) do update set libelle = excluded.libelle, prix_ttc = excluded.prix_ttc, a_verifier = excluded.a_verifier;
+on conflict (code) do update set libelle=excluded.libelle, prix_ttc=excluded.prix_ttc, a_verifier=excluded.a_verifier;
 
--- Mappage des articles vers leur code LPP
 update public.article a set lpp_code = m.code from (values
   ('10000702', '6135244'),
   ('10000703', '6135244'),
