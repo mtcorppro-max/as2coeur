@@ -65,19 +65,21 @@ function tableArticles(doc: jsPDF, lignes: BonLigne[], y: number) {
   return y + 8;
 }
 
-// Bon de commande (panier de préparation).
-export function genererBonCommande(info: BonInfo, patient: BonPatient, lignes: BonLigne[]) {
+// Bon de commande (panier de préparation). mode "bloburl" → aperçu sans téléchargement.
+export function genererBonCommande(info: BonInfo, patient: BonPatient, lignes: BonLigne[], mode: "save" | "bloburl" = "save") {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   entete(doc, "BON DE COMMANDE", info);
   const y = blocPatient(doc, patient, 52);
   tableArticles(doc, lignes, y + 4);
+  if (mode === "bloburl") return doc.output("bloburl") as unknown as string;
   doc.save(`bon-commande-${info.reference}.pdf`);
 }
 
 // Bon de livraison avec QR (+ signature si fournie).
 export async function genererBonLivraison(
   info: BonInfo, patient: BonPatient, lignes: BonLigne[], urlQR: string,
-  signature?: { image: string; nom: string; date: Date } | null
+  signature?: { image: string; nom: string; date: Date } | null,
+  mode: "save" | "bloburl" = "save"
 ) {
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   entete(doc, "BON DE LIVRAISON", info);
@@ -104,6 +106,7 @@ export async function genererBonLivraison(
     doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...NOIR);
     doc.text(`Signé par ${signature.nom} le ${fmtDate(signature.date)}`, M, yy + 36);
   }
+  if (mode === "bloburl") return doc.output("bloburl") as unknown as string;
   doc.save(`bon-livraison-${info.reference}${signature ? "-signe" : ""}.pdf`);
 }
 

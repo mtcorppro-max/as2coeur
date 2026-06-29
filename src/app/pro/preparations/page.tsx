@@ -61,6 +61,15 @@ export default function PreparationsPage() {
 
   const urlQR = (l: Liv) => `${typeof window !== "undefined" ? window.location.origin : ""}/pro/preparations?l=${l.id}`;
 
+  // Aperçu d'un PDF dans un onglet (sans téléchargement). Onglet ouvert sur le
+  // clic pour éviter le blocage popup, puis chargé une fois le PDF prêt.
+  async function apercu(gen: () => string | void | Promise<string | void>) {
+    const win = window.open("", "_blank");
+    const url = await gen();
+    if (typeof url === "string" && win) win.location.href = url;
+    else win?.close();
+  }
+
   async function validerPrep(l: Liv) {
     const restants = l.lignes.filter((x) => !x.prepare).length;
     if (restants > 0 && !confirm(`${restants} article(s) non coché(s). Valider la préparation quand même ?`)) return;
@@ -133,6 +142,7 @@ export default function PreparationsPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {editable && <button onClick={() => setScanArticle(l)} className="btn-secondary px-3 py-1.5 text-sm">📷 Scanner</button>}
+            <button onClick={() => apercu(() => genererBonCommande({ reference: ref(l) }, bonPatient(p), bonLignes(l), "bloburl"))} className="btn-secondary px-2.5 py-1.5 text-sm" title="Aperçu (sans télécharger)"><Oeil /></button>
             <button onClick={() => genererBonCommande({ reference: ref(l) }, bonPatient(p), bonLignes(l))} className="btn-secondary px-3 py-1.5 text-sm">📄 Bon de commande</button>
           </div>
         </div>
@@ -159,6 +169,7 @@ export default function PreparationsPage() {
           )}
           {l.statut === "preparee" && (
             <>
+              <button onClick={() => apercu(() => genererBonLivraison({ reference: ref(l) }, bonPatient(p), bonLignes(l), urlQR(l), null, "bloburl"))} className="btn-secondary px-2.5 py-1.5 text-sm" title="Aperçu (sans télécharger)"><Oeil /></button>
               <button onClick={() => genererBonLivraison({ reference: ref(l) }, bonPatient(p), bonLignes(l), urlQR(l))} className="btn-secondary px-3 py-1.5 text-sm">📄 Bon de livraison</button>
               <button onClick={() => setSigner(l)} disabled={busy === l.id} className="btn-primary px-3 py-1.5 text-sm disabled:opacity-50">Livrer (signature)</button>
             </>
@@ -197,6 +208,15 @@ export default function PreparationsPage() {
       {scanArticle && <Scanner continu titre="Scanner les articles" onScan={scanArticleScan} onClose={() => setScanArticle(null)} />}
       {scanBon && <Scanner titre="Scanner un bon de livraison" onScan={scanBonScan} onClose={() => setScanBon(false)} />}
     </div>
+  );
+}
+
+function Oeil() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
   );
 }
 
