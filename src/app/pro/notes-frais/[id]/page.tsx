@@ -23,6 +23,7 @@ type Ligne = {
   dmos_regime: string | null; decision: string | null;
 };
 type Benef = { value: string; label: string; nom: string; rpps: string | null; specialite: string | null };
+type BaremeRow = { type_avantage: string; seuil_declaration: number | null; seuil_autorisation: number | null; seuil_max: number | null; date_effet: string };
 const REGIME_DMOS: Record<string, { label: string; cls: string }> = {
   declaration: { label: "À déclarer", cls: "bg-sky-100 text-sky-700" },
   autorisation: { label: "Autorisation requise", cls: "bg-amber-100 text-attention" },
@@ -45,6 +46,7 @@ export default function NoteFraisDetail() {
   const [emailCompta, setEmailCompta] = useState<string>("");
   const [realProId, setRealProId] = useState<string | null>(null);
   const [realNom, setRealNom] = useState<string>("");
+  const [baremes, setBaremes] = useState<Map<string, BaremeRow>>(new Map());
   const [pret, setPret] = useState(false);
   const [busy, setBusy] = useState(false);
   const supabase = createClient();
@@ -106,6 +108,16 @@ export default function NoteFraisDetail() {
       .then(({ data }) => setEmailCompta((data?.email_comptabilite as string) ?? ""));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pro?.prestataire_id]);
+  // Barème DMOS (dernière version active par type) → seuils & plafonds affichés.
+  useEffect(() => {
+    supabase.from("dmos_bareme").select("type_avantage,seuil_declaration,seuil_autorisation,seuil_max,actif,date_effet").eq("actif", true)
+      .then(({ data }) => {
+        const m = new Map<string, BaremeRow>();
+        ((data ?? []) as BaremeRow[]).forEach((b) => { const cur = m.get(b.type_avantage); if (!cur || b.date_effet > cur.date_effet) m.set(b.type_avantage, b); });
+        setBaremes(m);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (pret && !note) return <div className="card text-sm text-slate-500">Note introuvable ou inaccessible.</div>;
   if (!note || !pro) return <p className="text-sm text-slate-400">Chargement…</p>;
@@ -118,6 +130,10 @@ export default function NoteFraisDetail() {
   const s = STATUTS_NDF[note.statut] ?? STATUTS_NDF.brouillon;
   // Avantage dépassant le seuil DMOS (régime « autorisation ») non encore autorisé → bloque la validation.
   const bloqueDmos = lignes.some((l) => l.est_avantage_ps && l.dmos_regime === "autorisation" && !["autorise", "tacite"].includes(l.decision ?? ""));
+  // Plafond (seuil_max) dépassé → bloque (et empêche la soumission).
+  const plafondDe = (type: string) => baremes.get(type)?.seuil_max ?? null;
+  const depasseCap = (l: Ligne) => { const m = l.est_avantage_ps ? plafondDe(l.type) : null; return m != null && Number(l.montant_ttc) > m; };
+  const bloqueCap = lignes.some(depasseCap);
 
   // ── Actions note ──
   const majNote = async (patch: Partial<Note>) => { setNote((n) => (n ? { ...n, ...patch } : n)); await supabase.from("note_de_frais").update(patch).eq("id", id); };
@@ -172,6 +188,7 @@ export default function NoteFraisDetail() {
   async function soumettre() {
     if (!lignes.length || lignes.every((l) => Number(l.montant_ttc) <= 0)) { alert("Ajoutez au moins une ligne avec un montant."); return; }
     if (!note?.titre.trim()) { alert("Donnez un titre à la note."); return; }
+    if (bloqueCap) { alert("Soumission impossible : un montant dépasse le plafond autorisé pour ce type de dépense (DMOS). Corrigez la ligne concernée."); return; }
     setBusy(true);
     await supabase.from("note_de_frais").update({ statut: "soumise" }).eq("id", id);
     setBusy(false);
@@ -196,6 +213,7 @@ export default function NoteFraisDetail() {
   }
 
   async function valider() {
+    if (bloqueCap) { alert("Validation impossible : un montant dépasse le plafond autorisé pour ce type de dépense (DMOS)."); return; }
     if (bloqueDmos) { alert("Validation impossible : un avantage dépasse le seuil DMOS et nécessite une autorisation préalable (voir Suivi DMOS)."); return; }
     setBusy(true);
     await supabase.from("note_de_frais").update({ statut: "validee", valide_par: proId, valide_le: new Date().toISOString() }).eq("id", id);
@@ -267,7 +285,10 @@ export default function NoteFraisDetail() {
           Vous êtes connecté en tant que <b>{realNom || "—"}</b>. Cette note appartient à <b>{nomDe(note.emetteur) || "un autre compte"}</b> : seul son émetteur (ou un administrateur) peut la modifier ou la supprimer.
         </p>
       )}
-      {bloqueDmos && note.statut !== "remboursee" && (
+      {bloqueCap && note.statut !== "remboursee" && (
+        <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-critique"><b>Plafond dépassé :</b> un montant dépasse le <b>plafond autorisé</b> pour ce type de dépense. La note ne peut pas être soumise ni validée — corrigez la ligne en rouge.</p>
+      )}
+      {bloqueDmos && !bloqueCap && note.statut !== "remboursee" && (
         <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-sm text-attention"><b>DMOS :</b> un avantage dépasse le seuil et nécessite une <b>autorisation préalable</b>. La validation est bloquée tant que l&apos;autorisation n&apos;est pas enregistrée (Suivi DMOS).</p>
       )}
 
@@ -308,7 +329,16 @@ export default function NoteFraisDetail() {
                   {l.est_avantage_ps && (
                     <div className="mt-2 grid gap-2">
                       <Select value={benefValue(l)} onChange={(v) => setBenef(l.id, v)} placeholder="— Bénéficiaire (PS) —" options={[{ value: "", label: "— Bénéficiaire (PS) —" }, ...benefs]} />
-                      {l.dmos_regime && <span className={`badge w-fit ${REGIME_DMOS[l.dmos_regime].cls}`}>{REGIME_DMOS[l.dmos_regime].label}</span>}
+                      {(() => { const b = baremes.get(l.type); if (!b) return null; return (
+                        <p className="text-[11px] text-slate-400">
+                          {b.seuil_max != null ? <>Plafond&nbsp;: <b className="text-slate-500">{eurNdf(b.seuil_max)}</b> (à ne pas dépasser)</> : "Aucun plafond défini"}
+                          {b.seuil_autorisation != null ? ` · autorisation ≥ ${eurNdf(b.seuil_autorisation)}` : ""}
+                        </p>
+                      ); })()}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {l.dmos_regime && <span className={`badge ${REGIME_DMOS[l.dmos_regime].cls}`}>{REGIME_DMOS[l.dmos_regime].label}</span>}
+                        {depasseCap(l) && <span className="badge bg-red-100 text-critique">Plafond dépassé</span>}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -376,7 +406,7 @@ export default function NoteFraisDetail() {
           <button onClick={supprimerNote} className="btn-secondary text-critique">Supprimer</button>
         </>)}
         {peutValider && (<>
-          <button onClick={valider} disabled={busy || bloqueDmos} className="btn-primary flex-1 disabled:opacity-50">Valider</button>
+          <button onClick={valider} disabled={busy || bloqueDmos || bloqueCap} className="btn-primary flex-1 disabled:opacity-50">Valider</button>
           <button onClick={rejeter} disabled={busy} className="btn-secondary">Rejeter</button>
         </>)}
         {peutRembourser && <button onClick={rembourser} disabled={busy} className="btn-primary flex-1">Marquer remboursée</button>}

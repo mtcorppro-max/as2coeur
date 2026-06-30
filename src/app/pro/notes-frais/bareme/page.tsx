@@ -9,7 +9,7 @@ import { libDepense } from "@/lib/notesFrais";
 
 type Bareme = {
   id: string; type_avantage: string; seuil_declaration: number | null; seuil_autorisation: number | null;
-  periode: string; actif: boolean;
+  seuil_max: number | null; periode: string; actif: boolean;
 };
 const PERIODES = [
   { value: "par_manifestation", label: "Par manifestation" },
@@ -24,7 +24,7 @@ export default function BaremeDmosPage() {
   const [pret, setPret] = useState(false);
 
   const [emailCompta, setEmailCompta] = useState("");
-  const charger = () => createClient().from("dmos_bareme").select("id,type_avantage,seuil_declaration,seuil_autorisation,periode,actif").order("type_avantage").then(({ data }) => { setRows((data ?? []) as Bareme[]); setPret(true); });
+  const charger = () => createClient().from("dmos_bareme").select("id,type_avantage,seuil_declaration,seuil_autorisation,seuil_max,periode,actif").order("type_avantage").then(({ data }) => { setRows((data ?? []) as Bareme[]); setPret(true); });
   useEffect(() => { charger(); }, []);
   useEffect(() => {
     if (!pro?.prestataire_id) return;
@@ -70,6 +70,11 @@ export default function BaremeDmosPage() {
                   <input type="checkbox" checked={r.actif} onChange={(e) => { maj(r.id, { actif: e.target.checked }); persist(r.id, { actif: e.target.checked }); }} className="accent-brand" />
                   Actif
                 </label>
+              </div>
+              <div>
+                <label className="label">Plafond à ne pas dépasser (€)</label>
+                <input className="input" type="number" step="0.01" inputMode="decimal" value={r.seuil_max ?? ""} onChange={(e) => maj(r.id, { seuil_max: e.target.value === "" ? null : Number(e.target.value) })} onBlur={(e) => persist(r.id, { seuil_max: e.target.value === "" ? null : Number(e.target.value) })} placeholder="Aucun plafond" />
+                <p className="mt-1 text-xs text-slate-400">Au-delà, la note ne peut pas être validée.</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div>
