@@ -126,6 +126,11 @@ export interface Patient {
   livreur_nom: string | null;
   // Compte pharmacie rattaché (accès portail) (cf. migration 0057)
   pharmacie_compte_nom: string | null;
+  // Onboarding + consentement RGPD (cf. migration 0115)
+  onboarding_fait_le: string | null;
+  rgpd_signe_le: string | null;
+  rgpd_nom_signature: string | null;
+  rgpd_version: string | null;
   created_at: string;
 }
 
