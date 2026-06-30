@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { usePatientSession } from "@/lib/hooks/useSession";
@@ -11,29 +11,42 @@ export function RappelBilanPatient() {
   const patient = usePatientSession();
   const [etat, setEtat] = useState<"rien" | "bilan" | "alerte" | "envoye" | "lu">("rien");
 
-  useEffect(() => {
+  const charger = useCallback(async () => {
     if (!patient?.id) return;
     const supabase = createClient();
     const debutJour = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
-    (async () => {
-      const [{ data: p }, { data: bilans }, { data: al }] = await Promise.all([
-        supabase.from("patient").select("date_operation,jours_suivi,statut").eq("id", patient.id).maybeSingle(),
-        supabase.from("bilan_etat").select("id,lu_le").eq("patient_id", patient.id).gte("created_at", debutJour.toISOString()).order("created_at", { ascending: false }),
-        supabase.from("alerte").select("id").eq("patient_id", patient.id).in("statut", ["declenchee", "escaladee"]),
-      ]);
-      // Alerte active → pas de bilan auto (suivi en direct par l'infirmière).
-      if (al && al.length > 0) { setEtat("alerte"); return; }
-      // Bilan du jour déjà rempli → transmis, voire lu par l'infirmière.
-      const bilanJour = (bilans ?? [])[0] as { lu_le: string | null } | undefined;
-      if (bilanJour) { setEtat(bilanJour.lu_le ? "lu" : "envoye"); return; }
-      const pp = p as { date_operation: string | null; jours_suivi: number[] | null; statut: string } | null;
-      if (!pp?.date_operation || pp.statut !== "active") { setEtat("rien"); return; }
-      const base = new Date(pp.date_operation); base.setHours(0, 0, 0, 0);
-      const dayNum = Math.round((debutJour.getTime() - base.getTime()) / 86_400_000);
-      const jours = new Set<number>([2, ...((pp.jours_suivi ?? []))]); // J2 = après la 1re nuit + protocole
-      setEtat(jours.has(dayNum) ? "bilan" : "rien");
-    })();
+    const [{ data: p }, { data: bilans }, { data: al }] = await Promise.all([
+      supabase.from("patient").select("date_operation,jours_suivi,statut").eq("id", patient.id).maybeSingle(),
+      supabase.from("bilan_etat").select("id,lu_le").eq("patient_id", patient.id).gte("created_at", debutJour.toISOString()).order("created_at", { ascending: false }),
+      supabase.from("alerte").select("id").eq("patient_id", patient.id).in("statut", ["declenchee", "escaladee"]),
+    ]);
+    // Alerte active → pas de bilan auto (suivi en direct par l'infirmière).
+    if (al && al.length > 0) { setEtat("alerte"); return; }
+    // Bilan du jour déjà rempli → transmis, voire lu par l'infirmière.
+    const bilanJour = (bilans ?? [])[0] as { lu_le: string | null } | undefined;
+    if (bilanJour) { setEtat(bilanJour.lu_le ? "lu" : "envoye"); return; }
+    const pp = p as { date_operation: string | null; jours_suivi: number[] | null; statut: string } | null;
+    if (!pp?.date_operation || pp.statut !== "active") { setEtat("rien"); return; }
+    const base = new Date(pp.date_operation); base.setHours(0, 0, 0, 0);
+    const dayNum = Math.round((debutJour.getTime() - base.getTime()) / 86_400_000);
+    const jours = new Set<number>([2, ...((pp.jours_suivi ?? []))]); // J2 = après la 1re nuit + protocole
+    setEtat(jours.has(dayNum) ? "bilan" : "rien");
   }, [patient?.id]);
+
+  useEffect(() => { charger(); }, [charger]);
+
+  // Temps réel : le passage en « reçu et lu » (ou une alerte) met à jour la
+  // bannière sans recharger la page.
+  useEffect(() => {
+    if (!patient?.id) return;
+    const supabase = createClient();
+    const ch = supabase
+      .channel(`bilan-patient-${patient.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "bilan_etat", filter: `patient_id=eq.${patient.id}` }, () => charger())
+      .on("postgres_changes", { event: "*", schema: "public", table: "alerte", filter: `patient_id=eq.${patient.id}` }, () => charger())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [patient?.id, charger]);
 
   if (etat === "lu") {
     return (

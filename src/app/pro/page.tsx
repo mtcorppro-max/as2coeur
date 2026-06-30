@@ -21,6 +21,7 @@ type DashData = {
   messages: Map<string, number>; // patient_id -> nb de messages patient en attente de réponse
   actions: Map<string, ActionItem[]>; // patient_id -> suivis J1/dernier jour à réaliser
   livraisons: Map<string, number>; // patient_id -> nb de livraisons à attribuer (sans livreur)
+  bilans: Map<string, number>; // patient_id -> nb de bilans « état général » non lus
 };
 
 // "YYYY-MM-DD" (heure locale) du jour
@@ -46,13 +47,14 @@ function libelleAction(a: ActionItem): string {
 
 async function fetchDashboard(): Promise<DashData> {
   const supabase = createClient();
-  const [{ data: pts }, { data: als }, { data: msgs }, { data: svs }, { data: rps }, { data: livs }] = await Promise.all([
+  const [{ data: pts }, { data: als }, { data: msgs }, { data: svs }, { data: rps }, { data: livs }, { data: bils }] = await Promise.all([
     supabase.from("patient").select("id,nom,statut,code_postal,prestataire_id,user_id,date_operation,duree_prise_en_charge,jours_suivi").order("nom"),
     supabase.from("alerte").select("id,patient_id,statut").in("statut", ["declenchee", "escaladee", "acquittee"]),
     supabase.from("message").select("patient_id,auteur_user_id,horodatage").order("horodatage", { ascending: true }).limit(2000),
     supabase.from("suivi").select("patient_id,created_at"),
     supabase.from("rappel_suivi_valide").select("patient_id,type,echeance"),
     supabase.from("livraison").select("patient_id,statut,livreur_id").eq("statut", "a_programmer").is("livreur_id", null),
+    supabase.from("bilan_etat").select("patient_id,lu_le").is("lu_le", null),
   ]);
   const parPatient = new Map<string, AlerteInfo>();
   (als ?? []).forEach((a) => {
@@ -110,22 +112,43 @@ async function fetchDashboard(): Promise<DashData> {
     livraisons.set(id, (livraisons.get(id) ?? 0) + 1);
   });
 
+  // Bilans « état général » non lus — par patient (notification coordinatrice).
+  const bilans = new Map<string, number>();
+  (bils ?? []).forEach((b) => {
+    const id = (b as { patient_id: string }).patient_id;
+    bilans.set(id, (bilans.get(id) ?? 0) + 1);
+  });
+
   const score = (p: Patient) =>
     (parPatient.get(p.id)?.active ?? 0) * 100 +
     (actions.get(p.id)?.length ?? 0) * 20 +
+    (bilans.get(p.id) ?? 0) * 12 +
     (messages.get(p.id) ?? 0) * 10 +
     (livraisons.get(p.id) ?? 0) * 15 +
     (parPatient.get(p.id)?.acquittees ?? 0);
   const patients = [...patientsRaw].sort((a, b) => score(b) - score(a));
   const totalActives = [...parPatient.values()].reduce((s, e) => s + e.active, 0);
-  return { patients, parPatient, totalActives, messages, actions, livraisons };
+  return { patients, parPatient, totalActives, messages, actions, livraisons, bilans };
 }
 
 export default function Dashboard() {
   const pro = useProSession();
   const router = useRouter();
-  const data = useData<DashData>("pro:dashboard", fetchDashboard);
+  const [bilanTick, setBilanTick] = useState(0);
+  const data = useData<DashData>("pro:dashboard", fetchDashboard, [bilanTick]);
   const [validesLocal, setValidesLocal] = useState<Set<string>>(new Set());
+
+  // Temps réel : un nouveau bilan déposé par un patient rafraîchit le tableau de
+  // bord (badge « bilan ») sans recharger la page. RLS appliquée côté Realtime.
+  useEffect(() => {
+    if (!pro?.id) return;
+    const supabase = createClient();
+    const ch = supabase
+      .channel(`dash-bilan-${pro.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "bilan_etat" }, () => { invalidate("pro:dashboard"); setBilanTick((t) => t + 1); })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [pro?.id]);
   // Un médecin / chirurgien ne reçoit les alertes patients que s'il l'a demandé.
   // Les comptes service (livreur/pharmacie) ne reçoivent pas d'alertes.
   const estMedecin = pro?.role === "chirurgien";
@@ -172,7 +195,7 @@ export default function Dashboard() {
     else if (pro?.role === "personnel") router.replace("/pro/messagerie");
   }, [pro?.role, router]);
 
-  const { patients, parPatient, totalActives, messages, actions, livraisons } = useMemo<DashData>(() => (
+  const { patients, parPatient, totalActives, messages, actions, livraisons, bilans } = useMemo<DashData>(() => (
     data ?? {
       patients: [],
       parPatient: new Map<string, AlerteInfo>(),
@@ -180,6 +203,7 @@ export default function Dashboard() {
       messages: new Map<string, number>(),
       actions: new Map<string, ActionItem[]>(),
       livraisons: new Map<string, number>(),
+      bilans: new Map<string, number>(),
     }
   ), [data]);
 
@@ -245,7 +269,8 @@ export default function Dashboard() {
               const nbLiv = peutVoirLivraisons ? (livraisons.get(p.id) ?? 0) : 0;
               const nbOrdo = ordoParPatient.get(p.id) ?? 0;
               const nbMsg = messages.get(p.id) ?? 0;
-              const aBadge = critique || (e?.acquittees ?? 0) > 0 || (estMedecin ? nbOrdo > 0 : (nbMsg > 0 || acts.length > 0 || nbLiv > 0));
+              const nbBilan = bilans.get(p.id) ?? 0;
+              const aBadge = critique || (e?.acquittees ?? 0) > 0 || (estMedecin ? nbOrdo > 0 : (nbMsg > 0 || acts.length > 0 || nbLiv > 0 || nbBilan > 0));
               return (
                 <Link
                   key={p.id}
@@ -286,6 +311,11 @@ export default function Dashboard() {
                           {nbMsg > 0 && (
                             <span className="badge bg-rose-800 text-white">
                               {nbMsg} message{nbMsg > 1 ? "s" : ""}
+                            </span>
+                          )}
+                          {nbBilan > 0 && (
+                            <span className="badge bg-indigo-100 text-indigo-700" title="Bilan(s) état général en attente de lecture">
+                              {nbBilan} bilan{nbBilan > 1 ? "s" : ""}
                             </span>
                           )}
                           {acts.length > 0 && (
@@ -346,6 +376,7 @@ export default function Dashboard() {
                   const critique = (e?.active ?? 0) > 0;
                   const acts = actionsDe(p.id);
                   const nbLiv = peutVoirLivraisons ? (livraisons.get(p.id) ?? 0) : 0;
+                  const nbBilan = bilans.get(p.id) ?? 0;
                   return (
                     <tr
                       key={p.id}
@@ -417,12 +448,17 @@ export default function Dashboard() {
                                   </button>
                                 </span>
                               )}
+                              {nbBilan > 0 && (
+                                <span className="badge bg-indigo-100 text-indigo-700" title="Bilan(s) état général en attente de lecture">
+                                  {nbBilan} bilan{nbBilan > 1 ? "s" : ""}
+                                </span>
+                              )}
                               {nbLiv > 0 && (
                                 <span className="badge bg-amber-100 text-attention" title="Livraison programmée sans livreur — indiquez qui livre">
                                   {nbLiv} livraison · attribuer
                                 </span>
                               )}
-                              {acts.length === 0 && nbLiv === 0 && (
+                              {acts.length === 0 && nbLiv === 0 && nbBilan === 0 && (
                                 <span className="text-slate-300">—</span>
                               )}
                             </span>
