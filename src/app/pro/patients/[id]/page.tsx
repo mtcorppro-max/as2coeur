@@ -100,7 +100,7 @@ export default function FichePatient() {
   // La coordinatrice ne saisit pas de constantes.
   const peutSaisirMesure = pro?.role === "infirmiere_liberale";
   // Rubriques en onglets (boutons en haut) : suivis / ordonnances / livraisons / facturation.
-  const [onglet, setOnglet] = useState<"suivis" | "ordonnances" | "livraisons" | "facturation" | null>(null);
+  const [onglet, setOnglet] = useState<"suivis" | "ordonnances" | "livraisons" | "facturation" | "messagerie" | null>(null);
   const peutFacturation = !!pro && (pro.niveau <= 1 || ["dirigeant", "coordinatrice"].includes(pro.role));
   const peutStatut = !!pro && (pro.niveau <= 1 || pro.role === "coordinatrice");
 
@@ -156,11 +156,12 @@ export default function FichePatient() {
           </div>
           <StatutPatient patientId={patient.id} statut={patient.statut} modifiable={peutStatut} />
         </div>
-        <div className="flex flex-wrap gap-2">
-          <OngletBtn label="Suivis" actif={onglet === "suivis"} onClick={() => setOnglet((o) => (o === "suivis" ? null : "suivis"))} />
-          <OngletBtn label="Ordonnances" actif={onglet === "ordonnances"} onClick={() => setOnglet((o) => (o === "ordonnances" ? null : "ordonnances"))} />
-          <OngletBtn label="Livraison" actif={onglet === "livraisons"} onClick={() => setOnglet((o) => (o === "livraisons" ? null : "livraisons"))} />
-          {peutFacturation && <OngletBtn label="Facturation" actif={onglet === "facturation"} onClick={() => setOnglet((o) => (o === "facturation" ? null : "facturation"))} />}
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+          <OngletBtn label="Suivis" icon={<ICal />} actif={onglet === "suivis"} onClick={() => setOnglet((o) => (o === "suivis" ? null : "suivis"))} />
+          <OngletBtn label="Ordonnances" icon={<IDoc />} actif={onglet === "ordonnances"} onClick={() => setOnglet((o) => (o === "ordonnances" ? null : "ordonnances"))} />
+          <OngletBtn label="Livraison" icon={<ITruck />} actif={onglet === "livraisons"} onClick={() => setOnglet((o) => (o === "livraisons" ? null : "livraisons"))} />
+          <OngletBtn label="Messagerie" icon={<IChat />} actif={onglet === "messagerie"} onClick={() => setOnglet((o) => (o === "messagerie" ? null : "messagerie"))} />
+          {peutFacturation && <OngletBtn label="Facturation" icon={<IEuro />} actif={onglet === "facturation"} onClick={() => setOnglet((o) => (o === "facturation" ? null : "facturation"))} />}
         </div>
       </div>
 
@@ -187,6 +188,16 @@ export default function FichePatient() {
         </>
       )}
       {onglet === "facturation" && <FacturationPatient patientId={patient.id} />}
+      {onglet === "messagerie" && (
+        <section>
+          <h2 className="mb-3 text-sm font-semibold text-slate-600">Messagerie avec {patient.nom}</h2>
+          {!messages || !pro ? (
+            <SkeletonChat />
+          ) : (
+            <ChatBox patientId={patient.id} currentUserId={pro.user_id} otherLabel={patient.nom} initialMessages={messages} />
+          )}
+        </section>
+      )}
 
       <MarquerVisite patientId={patient.id} />
 
@@ -239,21 +250,6 @@ export default function FichePatient() {
         </section>
       )}
 
-      {/* ── Messagerie ── */}
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-slate-600">Messagerie avec {patient.nom}</h2>
-        {!messages || !pro ? (
-          <SkeletonChat />
-        ) : (
-          <ChatBox
-            patientId={patient.id}
-            currentUserId={pro.user_id}
-            otherLabel={patient.nom}
-            initialMessages={messages}
-          />
-        )}
-      </section>
-
       {/* ── Photos ── */}
       <section>
         <h2 className="mb-2 text-sm font-semibold text-slate-600">Photos de cicatrice</h2>
@@ -291,16 +287,29 @@ export default function FichePatient() {
 
 // ── Skeletons ───────────────────────────────────────────────────────
 
-function OngletBtn({ label, actif, onClick }: { label: string; actif: boolean; onClick: () => void }) {
+function OngletBtn({ label, icon, actif, onClick }: { label: string; icon: React.ReactNode; actif: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${actif ? "border-brand bg-brand text-white" : "border-rose-200 bg-white text-brand hover:bg-rose-50"}`}
+      title={label}
+      aria-label={label}
+      className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${actif ? "border-brand bg-brand text-white" : "border-rose-200 bg-white text-brand hover:bg-rose-50"}`}
     >
-      {label}
+      {icon}
+      <span className="hidden sm:inline">{label}</span>
     </button>
   );
 }
+
+// Icônes (style ligne, couleur héritée).
+const svg = (children: React.ReactNode) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0" aria-hidden="true">{children}</svg>
+);
+const ICal = () => svg(<><rect x="3" y="4.5" width="18" height="16" rx="2" /><line x1="3" y1="9.5" x2="21" y2="9.5" /><line x1="8" y1="2.5" x2="8" y2="6" /><line x1="16" y1="2.5" x2="16" y2="6" /><path d="M8.5 14l2.2 2.2 4.3-4.3" /></>);
+const IDoc = () => svg(<><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><line x1="8.5" y1="13" x2="15.5" y2="13" /><line x1="8.5" y1="16.5" x2="13" y2="16.5" /></>);
+const ITruck = () => svg(<><path d="M3 6.5h11v9H3z" /><path d="M14 9.5h3.8l3.2 3.2v2.8H14z" /><circle cx="7" cy="17.7" r="1.6" /><circle cx="17.3" cy="17.7" r="1.6" /></>);
+const IChat = () => svg(<path d="M21 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19.5l1.3-3.9A7.5 7.5 0 1 1 21 11.5Z" />);
+const IEuro = () => svg(<><path d="M16.5 7.2a5.5 5.5 0 1 0 0 9.6" /><line x1="4.5" y1="10.8" x2="13" y2="10.8" /><line x1="4.5" y1="13.4" x2="12" y2="13.4" /></>);
 
 function SkeletonCourbes() {
   return (
