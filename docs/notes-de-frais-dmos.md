@@ -194,8 +194,8 @@ menu + lien depuis Marketing pour la partie DMOS) :
 - **Interne** : CSV/PDF (récap par période, par émetteur, par PS, par événement).
 - **Export comptable par email** : à la validation (ou au passage « remboursée »),
   envoi automatique d'un email à l'adresse **comptabilité** (paramétrable) avec le
-  **récap dans le corps du mail** (émetteur, lignes, total TTC/HT, période) et les
-  **justificatifs en pièces jointes**.
+  **récap dans le corps du mail** (émetteur, lignes, total TTC/HT, période), un
+  **PDF récap joint**, et les **justificatifs en pièces jointes**.
 
 ## 10. Intégrations avec l'app existante
 
@@ -243,6 +243,9 @@ menu + lien depuis Marketing pour la partie DMOS) :
 3. **Export comptable par email** (récap dans le corps + justificatifs en PJ) ;
    adresse comptabilité **paramétrable**.
 
-### Reste à préciser au moment du build
-- **Adresse(s) email** de la comptabilité (et émetteur d'envoi / service mail).
-- Faut‑il aussi joindre un **PDF récap** à l'email (en plus du corps) ?
+4. **PDF récap joint** à l'email comptable : **oui** (en plus du corps + PJ
+   justificatifs).
+
+### Reste à fournir au moment du build
+- **Adresse(s) email** de la comptabilité (à communiquer plus tard) — champ
+  **paramétrable** côté admin en attendant.
