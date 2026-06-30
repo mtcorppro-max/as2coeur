@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { Avatar } from "@/components/Avatar";
-import { LIBELLE_ROLE } from "@/lib/roles";
+import { LIBELLE_ROLE, peutGererPersonnel } from "@/lib/roles";
 
 type Pro = {
   id: string;
@@ -12,6 +12,7 @@ type Pro = {
   prenom: string | null;
   titre: string | null;
   role: string;
+  poste: string | null;
   email: string | null;
   telephone: string | null;
   photo_url: string | null;
@@ -21,10 +22,10 @@ type Pro = {
 type Region = { id: string; nom: string };
 type Agence = { id: string; nom: string; region_id: string };
 
+const COLS = "id,nom,prenom,titre,role,poste,email,telephone,photo_url,agence_id,region_id";
 const nomComplet = (p: Pro) => [p.titre, p.prenom, p.nom].filter(Boolean).join(" ") || p.nom;
 const libRole = (r: string) => LIBELLE_ROLE[r as keyof typeof LIBELLE_ROLE] ?? r;
 
-// Groupe = un en-tête (région · agence, ou « Direction & support ») + ses membres.
 type Groupe = { cle: string; titre: string; sousTitre?: string; membres: Pro[] };
 
 export default function AnnuairePage() {
@@ -35,10 +36,32 @@ export default function AnnuairePage() {
   const [pret, setPret] = useState(false);
   const [q, setQ] = useState("");
 
+  // Édition inline du poste.
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editVal, setEditVal] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  // Création d'un compte « personnel ».
+  const [formOuvert, setFormOuvert] = useState(false);
+  const VIDE = { nom: "", prenom: "", poste: "", email: "", telephone: "", motDePasse: "" };
+  const [cForm, setCForm] = useState({ ...VIDE });
+  const [cBusy, setCBusy] = useState(false);
+  const [cErr, setCErr] = useState<string | null>(null);
+  const [cCree, setCCree] = useState<{ email: string; motDePasse: string } | null>(null);
+
+  const gestion = !!pro && peutGererPersonnel(pro.role, pro.niveau);
+
+  const recharger = () => {
+    createClient().from("professionnel").select(COLS).order("nom").then(({ data }) => {
+      setPros((data ?? []) as Pro[]);
+      setPret(true);
+    });
+  };
+
   useEffect(() => {
     const supabase = createClient();
     Promise.all([
-      supabase.from("professionnel").select("id,nom,prenom,titre,role,email,telephone,photo_url,agence_id,region_id").order("nom"),
+      supabase.from("professionnel").select(COLS).order("nom"),
       supabase.from("region").select("id,nom").order("nom"),
       supabase.from("agence").select("id,nom,region_id").order("nom"),
     ]).then(([{ data: ps }, { data: rs }, { data: ags }]) => {
@@ -52,56 +75,116 @@ export default function AnnuairePage() {
   const groupes = useMemo<Groupe[]>(() => {
     const f = q.trim().toLowerCase();
     const visibles = f
-      ? pros.filter((p) => nomComplet(p).toLowerCase().includes(f) || libRole(p.role).toLowerCase().includes(f) || (p.email ?? "").toLowerCase().includes(f))
+      ? pros.filter((p) => nomComplet(p).toLowerCase().includes(f) || libRole(p.role).toLowerCase().includes(f) || (p.poste ?? "").toLowerCase().includes(f) || (p.email ?? "").toLowerCase().includes(f))
       : pros;
-
-    const nomRegion = new Map(regions.map((r) => [r.id, r.nom]));
     const out: Groupe[] = [];
-
-    // Région par région, puis agence par agence.
     for (const r of regions) {
-      const regionAgences = agences.filter((a) => a.region_id === r.id);
-      // Membres rattachés à la région (sans agence) — typiquement les managers.
       const regionaux = visibles.filter((p) => p.region_id === r.id && !p.agence_id);
       if (regionaux.length) out.push({ cle: `r-${r.id}`, titre: r.nom, sousTitre: "Équipe régionale", membres: regionaux });
-      for (const a of regionAgences) {
+      for (const a of agences.filter((a) => a.region_id === r.id)) {
         const m = visibles.filter((p) => p.agence_id === a.id);
         if (m.length) out.push({ cle: `a-${a.id}`, titre: a.nom, sousTitre: r.nom, membres: m });
       }
     }
-
-    // Direction & support : ni agence ni région (dirigeants, RH, administration…).
     const support = visibles.filter((p) => !p.agence_id && !p.region_id);
     if (support.length) out.push({ cle: "support", titre: "Direction & support", sousTitre: "Hors agence", membres: support });
-
-    // Sécurité : membres avec une agence introuvable (orphelins).
     const idsClasses = new Set(out.flatMap((g) => g.membres.map((m) => m.id)));
     const autres = visibles.filter((p) => !idsClasses.has(p.id));
     if (autres.length) out.push({ cle: "autres", titre: "Autres", membres: autres });
-
-    // Annoter l'agence orpheline avec sa région si connue (cosmétique).
-    void nomRegion;
     return out;
   }, [pros, regions, agences, q]);
 
-  // Réservé au RH et à l'administration (niveau 0).
-  if (pro && pro.role !== "rh" && pro.niveau !== 0) {
-    return <div className="card text-sm text-slate-500">Cette page est réservée aux ressources humaines.</div>;
+  async function enregistrerPoste(id: string) {
+    setBusyId(id);
+    const res = await fetch(`/api/soignants/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ poste: editVal }),
+    });
+    setBusyId(null);
+    if (res.ok) {
+      setPros((prev) => prev.map((p) => (p.id === id ? { ...p, poste: editVal.trim() || null } : p)));
+      setEditId(null);
+    } else {
+      const j = await res.json().catch(() => ({}));
+      alert("Échec : " + (j.message ?? "erreur"));
+    }
+  }
+
+  async function creerPersonnel(e: React.FormEvent) {
+    e.preventDefault();
+    setCErr(null); setCBusy(true);
+    try {
+      const res = await fetch("/api/soignants", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "personnel", niveau: "5", ...cForm }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.message ?? "Erreur.");
+      setCCree({ email: j.email, motDePasse: j.motDePasse });
+      setCForm({ ...VIDE });
+      recharger();
+    } catch (err) {
+      setCErr(err instanceof Error ? err.message : "Erreur.");
+    } finally {
+      setCBusy(false);
+    }
+  }
+
+  // Réservé à RH / dirigeant / manager / administration (niveau 0).
+  if (pro && !peutGererPersonnel(pro.role, pro.niveau)) {
+    return <div className="card text-sm text-slate-500">Cette page est réservée aux ressources humaines et à l&apos;encadrement.</div>;
   }
 
   const total = pros.length;
 
   return (
     <div className="mx-auto max-w-4xl">
-      <h1 className="mb-1 text-2xl font-bold text-slate-800">Annuaire des équipes</h1>
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-slate-800">Annuaire des équipes</h1>
+        {gestion && (
+          <button onClick={() => { setFormOuvert((v) => !v); setCCree(null); }} className="btn-primary px-4 py-2 text-sm">
+            {formOuvert ? "Fermer" : "+ Membre du personnel"}
+          </button>
+        )}
+      </div>
       <p className="mb-4 text-sm text-slate-500">Tout le personnel interne de la société — {total} compte{total > 1 ? "s" : ""}.</p>
 
-      <input
-        className="input mb-5"
-        placeholder="Rechercher un nom, un rôle, un email…"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-      />
+      {/* ── Création d'un compte « personnel » ── */}
+      {gestion && formOuvert && (
+        <div className="card mb-5 grid gap-4">
+          {cCree ? (
+            <div className="grid gap-3 text-center">
+              <p className="text-sm text-slate-500">Compte personnel créé ✓ — identifiants de connexion :</p>
+              <div className="grid gap-2 rounded-xl bg-rose-50 p-4 text-left">
+                <p className="text-sm"><span className="text-slate-400">Email : </span><span className="font-mono font-semibold text-brand">{cCree.email}</span></p>
+                <p className="text-sm"><span className="text-slate-400">Mot de passe : </span><span className="font-mono font-semibold text-brand">{cCree.motDePasse}</span></p>
+              </div>
+              <p className="text-xs text-slate-400">À transmettre au membre du personnel.</p>
+              <button onClick={() => setCCree(null)} className="btn-secondary">Créer un autre compte</button>
+            </div>
+          ) : (
+            <form onSubmit={creerPersonnel} className="grid gap-4">
+              <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Nouveau membre du personnel</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div><label className="label">Prénom *</label><input className="input" value={cForm.prenom} onChange={(e) => setCForm((f) => ({ ...f, prenom: e.target.value }))} placeholder="Marie" required /></div>
+                <div><label className="label">Nom *</label><input className="input" value={cForm.nom} onChange={(e) => setCForm((f) => ({ ...f, nom: e.target.value }))} placeholder="DUPONT" required /></div>
+              </div>
+              <div><label className="label">Poste / fonction</label><input className="input" value={cForm.poste} onChange={(e) => setCForm((f) => ({ ...f, poste: e.target.value }))} placeholder="Secrétaire, Comptable, Technicien…" /></div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div><label className="label">Email de connexion *</label><input className="input" type="email" value={cForm.email} onChange={(e) => setCForm((f) => ({ ...f, email: e.target.value }))} placeholder="nom@email.fr" inputMode="email" required /></div>
+                <div><label className="label">Téléphone</label><input className="input" value={cForm.telephone} onChange={(e) => setCForm((f) => ({ ...f, telephone: e.target.value }))} placeholder="0…" inputMode="tel" /></div>
+              </div>
+              <div><label className="label">Mot de passe</label><input className="input" value={cForm.motDePasse} onChange={(e) => setCForm((f) => ({ ...f, motDePasse: e.target.value }))} placeholder="Laisser vide pour générer" /></div>
+              {cErr && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-critique">{cErr}</p>}
+              <button className="btn-primary py-3" disabled={cBusy}>{cBusy ? "Création…" : "Créer le compte personnel"}</button>
+            </form>
+          )}
+        </div>
+      )}
+
+      <input className="input mb-5" placeholder="Rechercher un nom, un poste, un rôle…" value={q} onChange={(e) => setQ(e.target.value)} />
 
       {!pret ? (
         <p className="text-sm text-slate-400">Chargement…</p>
@@ -125,9 +208,29 @@ export default function AnnuairePage() {
                         <span className="badge bg-rose-100 text-brand">{libRole(m.role)}</span>
                         {m.id === pro?.id && <span className="badge bg-slate-100 text-slate-500">Vous</span>}
                       </div>
-                      <p className="truncate text-xs text-slate-400">
-                        {[m.email, m.telephone].filter(Boolean).join(" · ") || "—"}
-                      </p>
+                      {/* Poste (dénomination) */}
+                      {editId === m.id ? (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          <input
+                            className="input h-8 w-56 py-1 text-sm"
+                            value={editVal}
+                            onChange={(e) => setEditVal(e.target.value)}
+                            placeholder="Poste / fonction"
+                            autoFocus
+                            onKeyDown={(e) => { if (e.key === "Enter") enregistrerPoste(m.id); if (e.key === "Escape") setEditId(null); }}
+                          />
+                          <button onClick={() => enregistrerPoste(m.id)} disabled={busyId === m.id} className="btn-primary px-3 py-1 text-xs">{busyId === m.id ? "…" : "Enregistrer"}</button>
+                          <button onClick={() => setEditId(null)} className="btn-secondary px-3 py-1 text-xs">Annuler</button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500">
+                          {m.poste ? <span className="italic">{m.poste}</span> : <span className="text-slate-300">Poste non renseigné</span>}
+                          {gestion && (
+                            <button onClick={() => { setEditId(m.id); setEditVal(m.poste ?? ""); }} className="ml-2 font-medium text-brand hover:underline">modifier</button>
+                          )}
+                        </p>
+                      )}
+                      <p className="truncate text-xs text-slate-400">{[m.email, m.telephone].filter(Boolean).join(" · ") || "—"}</p>
                     </div>
                     <div className="flex shrink-0 gap-1.5">
                       {m.email && <a href={`mailto:${m.email}`} className="btn-secondary px-3 py-1.5 text-xs" title="Envoyer un email">Email</a>}

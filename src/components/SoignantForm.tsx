@@ -44,6 +44,7 @@ const VIDE = {
   role: "chirurgien",
   niveau: "3",
   prestataire_id: "",
+  poste: "",
   telephone: "",
   specialite: "",
   rpps: "",
@@ -144,9 +145,9 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
     const estPharma = form.role === "pharmacie";
     const estDelegue = form.role === "delegue";
     const estDir = form.role === "dirigeant";
-    const estRhForm = form.role === "rh";
+    const estHorsHierarchie = form.role === "rh" || form.role === "personnel";
     const niveau23 = form.niveau === "2" || form.niveau === "3";
-    const sansAgence = estInfLib || estPharma || estDir || estRhForm; // pas de rattachement à une agence
+    const sansAgence = estInfLib || estPharma || estDir || estHorsHierarchie; // pas de rattachement à une agence
     if (estInfLib && !form.zone_exercice.trim()) {
       setErreur("Indiquez la zone d'exercice de l'infirmière libérale.");
       return;
@@ -214,7 +215,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
           <label className="label">Rôle *</label>
           <Select
             value={form.role}
-            onChange={(v) => setForm((f) => ({ ...f, role: v, niveau: v === "manager" ? "1" : v === "livreur" ? "2" : v === "rh" ? "5" : (v === "infirmiere_liberale" || v === "pharmacie" || v === "chirurgien" || v === "dirigeant" || v === "magasinier") ? "3" : f.niveau }))}
+            onChange={(v) => setForm((f) => ({ ...f, role: v, niveau: v === "manager" ? "1" : v === "livreur" ? "2" : (v === "rh" || v === "personnel") ? "5" : (v === "infirmiere_liberale" || v === "pharmacie" || v === "chirurgien" || v === "dirigeant" || v === "magasinier") ? "3" : f.niveau }))}
             options={[
               { value: "chirurgien", label: "Chirurgien / Médecin" },
               { value: "coordinatrice", label: "Infirmière coordinatrice" },
@@ -224,6 +225,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
               { value: "livreur", label: "Livreur" },
               { value: "magasinier", label: "Magasinier" },
               { value: "pharmacie", label: "Pharmacie" },
+              { value: "personnel", label: "Personnel (autre fonction)" },
               ...(niveauCreateur === 0 ? [{ value: "dirigeant", label: "Dirigeant" }] : []),
               ...(niveauCreateur === 0 ? [{ value: "rh", label: "RH (ressources humaines)" }] : []),
             ]}
@@ -299,6 +301,13 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
               placeholder="ex. Montpellier / Hérault"
             />
             <p className="mt-1 text-xs text-slate-400">Lieu géographique où elle intervient (pas d&apos;agence).</p>
+          </div>
+        )}
+        {form.role === "personnel" && (
+          <div>
+            <label className="label">Poste / fonction</label>
+            <input className="input" value={form.poste} onChange={set("poste")} placeholder="Secrétaire, Comptable, Technicien…" />
+            <p className="mt-1 text-xs text-slate-400">Compte interne sans accès patient (modifiable par RH / dirigeant / manager).</p>
           </div>
         )}
         {estChirurgien && (

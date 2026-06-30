@@ -84,7 +84,7 @@ export async function PATCH(
 
   const { data: moi } = await supabase
     .from("professionnel")
-    .select("id, niveau, prestataire_id, agence_id, region_id")
+    .select("id, niveau, prestataire_id, agence_id, region_id, role")
     .eq("user_id", user.id)
     .maybeSingle();
   const admin_ = estEmailAdmin(user.email);
@@ -136,6 +136,11 @@ export async function PATCH(
       maj.agence_id = valides[0] ?? null;
     }
   }
+
+  // Dénomination de poste : soi-même, admin, ou RH / dirigeant / manager du
+  // même prestataire (le périmètre prestataire est déjà vérifié plus haut).
+  const peutPoste = admin_ || estSelf || (moi?.role === "rh" || moi?.role === "dirigeant" || moi?.role === "manager");
+  if (peutPoste && body.poste !== undefined) maj.poste = t(body.poste);
 
   // Niveau / agence / région : réservés aux niveaux 0/1, cibles de niveau ≥ 2, hors soi-même.
   const peutAcces = (admin_ || niveauMoi <= 1) && !estSelf && cible.niveau >= 2;

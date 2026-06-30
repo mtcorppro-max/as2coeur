@@ -4,8 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { estEmailAdmin } from "@/lib/admin";
 import { peutOctroyer } from "@/lib/niveaux";
 
-type RolePro = "coordinatrice" | "chirurgien" | "delegue" | "manager" | "infirmiere_liberale" | "livreur" | "pharmacie" | "dirigeant" | "magasinier" | "rh";
-const ROLES: RolePro[] = ["coordinatrice", "chirurgien", "delegue", "manager", "infirmiere_liberale", "livreur", "pharmacie", "dirigeant", "magasinier", "rh"];
+type RolePro = "coordinatrice" | "chirurgien" | "delegue" | "manager" | "infirmiere_liberale" | "livreur" | "pharmacie" | "dirigeant" | "magasinier" | "rh" | "personnel";
+const ROLES: RolePro[] = ["coordinatrice", "chirurgien", "delegue", "manager", "infirmiere_liberale", "livreur", "pharmacie", "dirigeant", "magasinier", "rh", "personnel"];
 // Comptes service : ne peuvent pas créer d'autres comptes.
 const estRoleService = (r: string | null | undefined) => r === "livreur" || r === "pharmacie" || r === "magasinier";
 
@@ -58,6 +58,9 @@ export async function POST(request: Request) {
     }
   } else if (pro && (pro.niveau === 0 || (pro.niveau <= 2 && pro.role !== "chirurgien" && !estRoleService(pro.role)))) {
     prestataireId = pro.prestataire_id;
+  } else if (pro && role === "personnel" && (pro.role === "rh" || pro.role === "dirigeant" || pro.role === "manager")) {
+    // RH / dirigeant / manager peuvent créer un compte « personnel » (générique).
+    prestataireId = pro.prestataire_id;
   } else {
     return NextResponse.json(
       { message: "Vous n'avez pas les droits pour créer un compte soignant." },
@@ -73,7 +76,7 @@ export async function POST(request: Request) {
   // (le plus restrictif) ; sa vue PEC nationale passe par son rôle (RLS 0064).
   const niveauDemande = role === "manager" ? 1
     : role === "livreur" ? 2
-    : role === "rh" ? 5 // RH : hors hiérarchie (aucun accès patient)
+    : (role === "rh" || role === "personnel") ? 5 // hors hiérarchie (aucun accès patient)
     : (role === "infirmiere_liberale" || role === "pharmacie" || role === "chirurgien" || role === "dirigeant" || role === "magasinier") ? 3
     : ([0, 1, 2, 3].includes(Number(body.niveau)) ? Number(body.niveau) : 3);
   if (!peutOctroyer(niveauCreateur, niveauDemande)) {
@@ -141,6 +144,7 @@ export async function POST(request: Request) {
           telephone: texteOuNull(body.telephone),
           zone_exercice: role === "infirmiere_liberale" ? texteOuNull(body.zone_exercice) : null,
           cabinets: role === "pharmacie" ? texteOuNull(body.cabinets) : null,
+          poste: texteOuNull(body.poste),
         };
 
   // Rattachement : infirmière libérale & pharmacie -> aucune agence ;

@@ -27,6 +27,10 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   const estMagasinier = pro?.role === "magasinier" && !estN0;
   // Le RH : hors hiérarchie, aucun accès patient ; annuaire de toutes les équipes.
   const estRh = pro?.role === "rh" && !estN0;
+  // Le personnel : compte interne générique, hors hiérarchie (messagerie seule).
+  const estPersonnel = pro?.role === "personnel" && !estN0;
+  // Annuaire des équipes (+ gestion des postes) : RH, dirigeant, manager, admin.
+  const peutAnnuaire = estN0 || pro?.role === "manager";
   // Gérer/créer des comptes & l'équipe : niveau 0, 1 ou 2 (hors chirurgien et
   // hors comptes service livreur/pharmacie)
   const peutGerer = estN0 || (!!pro && pro.niveau <= 2 && pro.role !== "chirurgien" && !estRoleService(pro.role));
@@ -193,6 +197,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
     : estDirigeant
     ? [
         { href: "/pro/pec", icon: "chart", label: "PEC" },
+        { href: "/pro/annuaire", icon: "users", label: "Annuaire" },
         { href: "/pro/equipe-dirigeante", icon: "users", label: "Équipe dirigeante" },
       ]
     : estMagasinier
@@ -206,6 +211,10 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         { href: "/pro/annuaire", icon: "users", label: "Annuaire" },
         { href: "/pro/messagerie", icon: "message", label: "Messages", badge: nbMessages },
       ]
+    : estPersonnel
+    ? [
+        { href: "/pro/messagerie", icon: "message", label: "Messages", badge: nbMessages },
+      ]
     : [
         { href: "/pro", icon: "dashboard", label: "Tableau" },
         ...(estCoord ? [{ href: "/pro/suivis", icon: "calendar", label: "Suivis", badge: nbSuivis }] : []),
@@ -215,6 +224,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         ...(estChir ? [{ href: "/pro/a-signer", icon: "document", label: "À signer", badge: nbASigner }] : []),
         { href: "/pro/messagerie", icon: "message", label: "Messages", badge: nbMessages },
         ...(peutGerer ? [{ href: "/pro/equipe", icon: "users", label: "Équipe" }] : []),
+        ...(peutAnnuaire ? [{ href: "/pro/annuaire", icon: "users", label: "Annuaire" }] : []),
         ...(estCoord || estChir || peutGerer ? [{ href: "/pro/nouveau", icon: "plus", label: "Nouveau" }] : []),
         ...(peutPec ? [{ href: "/pro/pec", icon: "chart", label: "PEC" }] : []),
       ];
@@ -242,6 +252,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               ) : estDirigeant ? (
                 <>
                   <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />
+                  <Onglet href="/pro/annuaire" icon="users" label="Annuaire des équipes" pathname={pathname} />
                   <Onglet href="/pro/equipe-dirigeante" icon="users" label="Équipe dirigeante" pathname={pathname} />
                 </>
               ) : estMagasinier ? (
@@ -255,6 +266,8 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                   <Onglet href="/pro/annuaire" icon="users" label="Annuaire des équipes" pathname={pathname} />
                   <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
                 </>
+              ) : estPersonnel ? (
+                <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
               ) : (
                 <>
                   <Onglet href="/pro" icon="dashboard" label="Tableau de bord" pathname={pathname} exact />
@@ -264,6 +277,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                   {(pro?.role === "coordinatrice" || estN0) && <Onglet href="/pro/magasin" icon="box" label="Magasin" pathname={pathname} />}
                   {estChir && <Onglet href="/pro/a-signer" icon="document" label="À signer" pathname={pathname} badge={nbASigner} />}
                   {peutGerer && <Onglet href="/pro/equipe" icon="users" label="Équipe soignante" pathname={pathname} />}
+                  {peutAnnuaire && <Onglet href="/pro/annuaire" icon="users" label="Annuaire des équipes" pathname={pathname} />}
                   <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
                   {peutPec && <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />}
                 </>
