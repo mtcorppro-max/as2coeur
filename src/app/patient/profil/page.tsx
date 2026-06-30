@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePatientSession } from "@/lib/hooks/useSession";
 import { AdresseAutocomplete } from "@/components/AdresseAutocomplete";
+import { ChangerMotDePasse } from "@/components/ChangerMotDePasse";
 
 type Form = { telephone: string; email: string; adresse: string; code_postal: string; ville: string; proche_nom: string; proche_tel: string };
 const VIDE: Form = { telephone: "", email: "", adresse: "", code_postal: "", ville: "", proche_nom: "", proche_tel: "" };
@@ -77,6 +78,8 @@ export default function ProfilPatient() {
 
           <DocumentCarte titre="Carte Vitale" type="carte_vitale" url={chemins.carte_vitale_chemin ? urls[chemins.carte_vitale_chemin] : undefined} onUploaded={() => patient && charger(patient.id)} />
           <DocumentCarte titre="Mutuelle" type="mutuelle" url={chemins.mutuelle_chemin ? urls[chemins.mutuelle_chemin] : undefined} onUploaded={() => patient && charger(patient.id)} />
+
+          <ChangerMotDePasse />
         </>
       )}
     </div>

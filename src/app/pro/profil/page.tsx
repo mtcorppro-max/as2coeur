@@ -8,6 +8,7 @@ import { LIBELLE_ROLE } from "@/lib/roles";
 import { peutNotesFrais } from "@/lib/notesFrais";
 import { Avatar } from "@/components/Avatar";
 import { DateField } from "@/components/DateField";
+import { ChangerMotDePasse } from "@/components/ChangerMotDePasse";
 
 type Form = {
   prenom: string; nom: string; date_naissance: string;
@@ -236,6 +237,9 @@ export default function MonProfil() {
               ))}
             </div>
           )}
+
+          {/* ── Sécurité : mot de passe (tous rôles) ── */}
+          <ChangerMotDePasse />
         </div>
       )}
     </div>

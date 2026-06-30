@@ -10,7 +10,6 @@ import { usePatientSession } from "@/lib/hooks/useSession";
 
 const NAV = [
   { href: "/patient",          label: "Accueil",    icon: "home" },
-  { href: "/patient/bilan",    label: "Bilan",      icon: "bilan" },
   { href: "/patient/chat",     label: "Infirmière", icon: "chat" },
   { href: "/patient/conseils", label: "Conseils",   icon: "bulb" },
   { href: "/patient/profil",   label: "Profil",     icon: "user" },

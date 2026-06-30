@@ -37,33 +37,37 @@ export function RappelBilanPatient() {
 
   if (etat === "lu") {
     return (
-      <div className="mb-4 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-slate-700">
-        ✅ Votre rapport d&apos;aujourd&apos;hui a bien été <b>reçu et lu par votre infirmière</b>.
+      <div className="mb-4 flex items-center gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 shrink-0 text-ok"><circle cx="12" cy="12" r="9" /><path d="m8.5 12 2.2 2.2 4.8-4.8" /></svg>
+        <p className="text-sm text-slate-700">Votre rapport d&apos;aujourd&apos;hui a bien été <b>reçu et lu par votre infirmière</b>.</p>
       </div>
     );
   }
   if (etat === "envoye") {
     return (
-      <div className="mb-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-slate-700">
-        ✓ Votre bilan du jour a bien été <b>transmis à votre équipe de soins</b>.
+      <div className="mb-4 flex items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 shrink-0 text-sky-600"><path d="m5 12 5 5L20 7" /></svg>
+        <p className="text-sm text-slate-700">Votre bilan du jour a bien été <b>transmis à votre équipe de soins</b>.</p>
       </div>
     );
   }
   if (etat === "alerte") {
     return (
-      <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-attention">
-        ⚠️ Une alerte a été détectée sur vos dernières mesures. <b>Votre infirmière coordinatrice va vous contacter</b> pour un suivi. En cas d&apos;urgence, appelez le 15.
+      <div className="mb-4 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 shrink-0 text-attention"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4M12 17h.01" /></svg>
+        <p className="text-sm text-attention">Une alerte a été détectée sur vos dernières mesures. <b>Votre infirmière coordinatrice va vous contacter</b> pour un suivi. En cas d&apos;urgence, appelez le 15.</p>
       </div>
     );
   }
   if (etat === "bilan") {
     return (
-      <Link href="/patient/bilan" prefetch className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-gradient-to-br from-rose-100 to-rose-50 px-4 py-4 transition hover:shadow-md">
-        <div className="min-w-0">
-          <p className="font-bold text-slate-800">📝 C&apos;est l&apos;heure de votre bilan du jour</p>
-          <p className="text-sm text-slate-600">Quelques questions rapides sur votre état général.</p>
+      <Link href="/patient/bilan" prefetch className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 transition hover:border-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 shrink-0 text-brand"><rect x="8" y="3" width="8" height="4" rx="1" /><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2" /><path d="m9 13 2 2 4-4" /></svg>
+        <div className="text-sm">
+          <p className="font-semibold text-slate-800">Le bilan du jour est disponible</p>
+          <p className="text-slate-600">Quelques questions rapides sur votre état général.</p>
         </div>
-        <span className="shrink-0 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white">Commencer</span>
+        <span className="ml-auto text-brand">→</span>
       </Link>
     );
   }
