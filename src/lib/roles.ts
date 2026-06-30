@@ -10,7 +10,12 @@ export const LIBELLE_ROLE: Record<RolePro, string> = {
   pharmacie: "Pharmacie",
   dirigeant: "Dirigeant",
   magasinier: "Magasinier",
+  rh: "Ressources humaines",
 };
+
+// RH : compte « hors niveau d'accès ». Aucun accès patient, mais lecture de tout
+// le personnel interne (annuaire des équipes). Créé seulement par un admin.
+export const estRh = (r: string | undefined | null) => r === "rh";
 
 // Magasinier : gère le stock et la préparation des commandes (pas de patient).
 export const estMagasinier = (r: string | undefined | null) => r === "magasinier";

@@ -25,6 +25,8 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   const estDirigeant = pro?.role === "dirigeant" && !estN0;
   // Le magasinier : gère le stock et prépare les commandes (Magasin + Préparations).
   const estMagasinier = pro?.role === "magasinier" && !estN0;
+  // Le RH : hors hiérarchie, aucun accès patient ; annuaire de toutes les équipes.
+  const estRh = pro?.role === "rh" && !estN0;
   // Gérer/créer des comptes & l'équipe : niveau 0, 1 ou 2 (hors chirurgien et
   // hors comptes service livreur/pharmacie)
   const peutGerer = estN0 || (!!pro && pro.niveau <= 2 && pro.role !== "chirurgien" && !estRoleService(pro.role));
@@ -199,6 +201,11 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         { href: "/pro/preparations", icon: "prep", label: "Préparations" },
         { href: "/pro/parc", icon: "parc", label: "Parc", badge: nbParc },
       ]
+    : estRh
+    ? [
+        { href: "/pro/annuaire", icon: "users", label: "Annuaire" },
+        { href: "/pro/messagerie", icon: "message", label: "Messages", badge: nbMessages },
+      ]
     : [
         { href: "/pro", icon: "dashboard", label: "Tableau" },
         ...(estCoord ? [{ href: "/pro/suivis", icon: "calendar", label: "Suivis", badge: nbSuivis }] : []),
@@ -242,6 +249,11 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                   <Onglet href="/pro/magasin" icon="box" label="Magasin" pathname={pathname} />
                   <Onglet href="/pro/preparations" icon="prep" label="Préparations" pathname={pathname} />
                   <Onglet href="/pro/parc" icon="parc" label="Parc" pathname={pathname} badge={nbParc} />
+                </>
+              ) : estRh ? (
+                <>
+                  <Onglet href="/pro/annuaire" icon="users" label="Annuaire des équipes" pathname={pathname} />
+                  <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
                 </>
               ) : (
                 <>

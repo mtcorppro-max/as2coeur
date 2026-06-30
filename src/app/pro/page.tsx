@@ -139,6 +139,7 @@ export default function Dashboard() {
     else if (pro?.role === "livreur") router.replace("/pro/livraisons");
     else if (pro?.role === "dirigeant") router.replace("/pro/pec");
     else if (pro?.role === "magasinier") router.replace("/pro/magasin");
+    else if (pro?.role === "rh") router.replace("/pro/annuaire");
   }, [pro?.role, router]);
 
   const { patients, parPatient, totalActives, messages, actions, livraisons } = useMemo<DashData>(() => (
@@ -173,7 +174,7 @@ export default function Dashboard() {
     invalidate("pro:dashboard");
   }
 
-  if (pro?.role === "pharmacie" || pro?.role === "livreur" || pro?.role === "dirigeant" || pro?.role === "magasinier") return null; // redirigés vers leur espace
+  if (pro?.role === "pharmacie" || pro?.role === "livreur" || pro?.role === "dirigeant" || pro?.role === "magasinier" || pro?.role === "rh") return null; // redirigés vers leur espace
 
   return (
     <div className="grid grid-cols-1 gap-5">

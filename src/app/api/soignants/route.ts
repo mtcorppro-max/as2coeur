@@ -4,8 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { estEmailAdmin } from "@/lib/admin";
 import { peutOctroyer } from "@/lib/niveaux";
 
-type RolePro = "coordinatrice" | "chirurgien" | "delegue" | "manager" | "infirmiere_liberale" | "livreur" | "pharmacie" | "dirigeant" | "magasinier";
-const ROLES: RolePro[] = ["coordinatrice", "chirurgien", "delegue", "manager", "infirmiere_liberale", "livreur", "pharmacie", "dirigeant", "magasinier"];
+type RolePro = "coordinatrice" | "chirurgien" | "delegue" | "manager" | "infirmiere_liberale" | "livreur" | "pharmacie" | "dirigeant" | "magasinier" | "rh";
+const ROLES: RolePro[] = ["coordinatrice", "chirurgien", "delegue", "manager", "infirmiere_liberale", "livreur", "pharmacie", "dirigeant", "magasinier", "rh"];
 // Comptes service : ne peuvent pas créer d'autres comptes.
 const estRoleService = (r: string | null | undefined) => r === "livreur" || r === "pharmacie" || r === "magasinier";
 
@@ -73,6 +73,7 @@ export async function POST(request: Request) {
   // (le plus restrictif) ; sa vue PEC nationale passe par son rôle (RLS 0064).
   const niveauDemande = role === "manager" ? 1
     : role === "livreur" ? 2
+    : role === "rh" ? 5 // RH : hors hiérarchie (aucun accès patient)
     : (role === "infirmiere_liberale" || role === "pharmacie" || role === "chirurgien" || role === "dirigeant" || role === "magasinier") ? 3
     : ([0, 1, 2, 3].includes(Number(body.niveau)) ? Number(body.niveau) : 3);
   if (!peutOctroyer(niveauCreateur, niveauDemande)) {
@@ -85,9 +86,12 @@ export async function POST(request: Request) {
   if (!nom) return NextResponse.json({ message: "Nom requis." }, { status: 400 });
   if (!email) return NextResponse.json({ message: "Email requis." }, { status: 400 });
   if (!ROLES.includes(role)) return NextResponse.json({ message: "Rôle invalide." }, { status: 400 });
-  // Le compte dirigeant n'est créable que par un administrateur (niveau 0).
+  // Les comptes dirigeant et RH ne sont créables que par un administrateur (niveau 0).
   if (role === "dirigeant" && niveauCreateur !== 0) {
     return NextResponse.json({ message: "Seul un administrateur peut créer un compte dirigeant." }, { status: 403 });
+  }
+  if (role === "rh" && niveauCreateur !== 0) {
+    return NextResponse.json({ message: "Seul un administrateur peut créer un compte RH." }, { status: 403 });
   }
 
   const motDePasse = texteOuNull(body.motDePasse) ?? genererMotDePasse();
