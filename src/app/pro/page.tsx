@@ -243,17 +243,20 @@ export default function Dashboard() {
               const critique = (e?.active ?? 0) > 0;
               const acts = actionsDe(p.id);
               const nbLiv = peutVoirLivraisons ? (livraisons.get(p.id) ?? 0) : 0;
+              const nbOrdo = ordoParPatient.get(p.id) ?? 0;
+              const nbMsg = messages.get(p.id) ?? 0;
+              const aBadge = critique || (e?.acquittees ?? 0) > 0 || (estMedecin ? nbOrdo > 0 : (nbMsg > 0 || acts.length > 0 || nbLiv > 0));
               return (
                 <Link
                   key={p.id}
                   href={`/pro/patients/${p.id}`}
-                  className={`flex items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-4 transition hover:shadow-md ${critique ? "border-red-200 bg-red-50/40" : "border-rose-100"}`}
+                  className={`flex flex-col gap-2.5 rounded-2xl border bg-white px-4 py-4 transition hover:shadow-md ${critique ? "border-red-200 bg-red-50/40" : "border-rose-100"}`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-3">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-100 text-sm font-bold text-brand">
                       {p.nom.charAt(0)}
                     </span>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate font-semibold text-slate-700">{p.nom}</p>
                       <StatutSuivi statut={p.statut} />
                       {estMedecin && coordParPatient.get(p.id) && (
@@ -263,49 +266,46 @@ export default function Dashboard() {
                         </p>
                       )}
                     </div>
+                    <span className="shrink-0 text-brand">→</span>
                   </div>
-                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-                    {critique ? (
-                      <span className="badge bg-critique text-white">{e?.active} alerte(s)</span>
-                    ) : (e?.acquittees ?? 0) > 0 ? (
-                      <span className="badge bg-amber-100 text-attention">{e?.acquittees} traitée(s)</span>
-                    ) : null}
-                    {estMedecin ? (
-                      (ordoParPatient.get(p.id) ?? 0) > 0 ? (
-                        <span className="badge bg-amber-100 text-attention" title="Ordonnance(s) en attente de votre signature">
-                          {ordoParPatient.get(p.id)} ordo · à signer
-                        </span>
-                      ) : !critique && (e?.acquittees ?? 0) === 0 ? (
-                        <span className="text-slate-300 text-sm">—</span>
-                      ) : null
-                    ) : (
-                      <>
-                        {(messages.get(p.id) ?? 0) > 0 && (
-                          <span className="badge bg-rose-800 text-white">
-                            {messages.get(p.id)} message{(messages.get(p.id) ?? 0) > 1 ? "s" : ""}
+                  {aBadge && (
+                    <div className="flex flex-wrap items-center gap-2 pl-[3.25rem]">
+                      {critique ? (
+                        <span className="badge bg-critique text-white">{e?.active} alerte(s)</span>
+                      ) : (e?.acquittees ?? 0) > 0 ? (
+                        <span className="badge bg-amber-100 text-attention">{e?.acquittees} traitée(s)</span>
+                      ) : null}
+                      {estMedecin ? (
+                        nbOrdo > 0 && (
+                          <span className="badge bg-amber-100 text-attention" title="Ordonnance(s) en attente de votre signature">
+                            {nbOrdo} ordo · à signer
                           </span>
-                        )}
-                        {acts.length > 0 && (
-                          <button
-                            onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); validerActions(p.id, acts); }}
-                            className="badge bg-rose-800 text-white"
-                            title={`${acts.map(libelleAction).join(", ")} — appuyer pour valider`}
-                          >
-                            {acts.length} action · valider
-                          </button>
-                        )}
-                        {nbLiv > 0 && (
-                          <span className="badge bg-amber-100 text-attention" title="Livraison programmée sans livreur — indiquez qui livre">
-                            {nbLiv} livraison · attribuer
-                          </span>
-                        )}
-                        {!critique && (e?.acquittees ?? 0) === 0 && (messages.get(p.id) ?? 0) === 0 && acts.length === 0 && nbLiv === 0 && (
-                          <span className="text-slate-300 text-sm">—</span>
-                        )}
-                      </>
-                    )}
-                    <span className="text-brand">→</span>
-                  </div>
+                        )
+                      ) : (
+                        <>
+                          {nbMsg > 0 && (
+                            <span className="badge bg-rose-800 text-white">
+                              {nbMsg} message{nbMsg > 1 ? "s" : ""}
+                            </span>
+                          )}
+                          {acts.length > 0 && (
+                            <button
+                              onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); validerActions(p.id, acts); }}
+                              className="badge bg-rose-800 text-white"
+                              title={`${acts.map(libelleAction).join(", ")} — appuyer pour valider`}
+                            >
+                              {acts.length} action · valider
+                            </button>
+                          )}
+                          {nbLiv > 0 && (
+                            <span className="badge bg-amber-100 text-attention" title="Livraison programmée sans livreur — indiquez qui livre">
+                              {nbLiv} livraison · attribuer
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
                 </Link>
               );
             })}
