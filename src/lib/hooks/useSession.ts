@@ -136,9 +136,10 @@ export function useProSession() {
       const cache = lsRead<SessionPro>(LS_PRO);
       if (cache) { memPro = cache.v; setPro(cache.v); }
     }
-    // Revalidation en arrière-plan si pas de session ou cache périmé (> TTL).
-    const cache = lsRead<SessionPro>(LS_PRO);
-    if (!memPro || !cache || Date.now() - cache.ts > TTL) revaliderPro();
+    // Revalidation systématique en arrière-plan : on affiche le cache tout de
+    // suite (pas de blanc), mais on resynchronise toujours l'identité réelle du
+    // compte connecté (le cache peut appartenir à un autre compte / être périmé).
+    revaliderPro();
     return () => { proListeners.delete(maj); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
