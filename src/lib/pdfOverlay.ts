@@ -2,13 +2,33 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 export type Pt = { x: number; y: number }; // y depuis le HAUT de la page
 
+// Charge un PDF modèle de façon robuste : un service worker périmé (surtout sur
+// Android/Samsung) peut renvoyer du HTML à la place du PDF. On valide l'en-tête
+// %PDF- ; si ça échoue, on réessaie en contournant le cache (query + reload).
+export async function chargerModelePdf(path: string): Promise<ArrayBuffer> {
+  const lire = async (url: string, init: RequestInit): Promise<ArrayBuffer> => {
+    const res = await fetch(url, init);
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    const buf = await res.arrayBuffer();
+    const tete = String.fromCharCode(...new Uint8Array(buf.slice(0, 5)));
+    if (tete !== "%PDF-") throw new Error("not-pdf");
+    return buf;
+  };
+  try {
+    return await lire(path, { cache: "no-store" });
+  } catch {
+    const bust = path + (path.includes("?") ? "&" : "?") + "swbust=" + Date.now();
+    try {
+      return await lire(bust, { cache: "reload" });
+    } catch {
+      throw new Error(`Le modèle « ${decodeURIComponent(path)} » n'a pas pu être chargé. Fermez puis rouvrez l'application (mise à jour du cache).`);
+    }
+  }
+}
+
 // Ouvre un PDF modèle (page 1) et fournit des helpers pour écrire par-dessus.
 export async function ouvrirTemplate(path: string) {
-  const res = await fetch(path, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Modèle d'ordonnance introuvable (${res.status}) : ${decodeURIComponent(path)}`);
-  const tplBytes = await res.arrayBuffer();
-  const tete = String.fromCharCode(...new Uint8Array(tplBytes.slice(0, 5)));
-  if (tete !== "%PDF-") throw new Error(`Le modèle « ${decodeURIComponent(path)} » n'a pas pu être chargé (réponse inattendue). Réessayez après avoir vidé le cache.`);
+  const tplBytes = await chargerModelePdf(path);
   const tpl = await PDFDocument.load(tplBytes);
   const out = await PDFDocument.create();
   const [page] = await out.copyPages(tpl, [0]);

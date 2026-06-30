@@ -23,7 +23,7 @@ export default withPWA({
     // service worker peut renvoyer le HTML de l'app au lieu du PDF, ce qui fait
     // planter pdf-lib (« No PDF header found ») sur certains mobiles.
     runtimeCaching: [
-      { urlPattern: /\.pdf$/i, handler: "NetworkOnly" },
+      { urlPattern: /\.pdf(\?.*)?$/i, handler: "NetworkOnly" },
     ],
   },
 })(nextConfig);
