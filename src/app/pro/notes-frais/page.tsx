@@ -66,7 +66,12 @@ export default function NotesFraisPage() {
     <div className="mx-auto max-w-3xl">
       <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-slate-800">Notes de frais</h1>
-        <button onClick={nouvelle} disabled={busy} className="btn-primary px-4 py-2 text-sm disabled:opacity-50">+ Nouvelle note</button>
+        <div className="flex items-center gap-3">
+          {pro && (pro.niveau === 0 || pro.role === "dirigeant" || pro.role === "manager") && (
+            <Link href="/pro/notes-frais/dmos" prefetch className="text-sm font-medium text-brand hover:underline">Suivi DMOS</Link>
+          )}
+          <button onClick={nouvelle} disabled={busy} className="btn-primary px-4 py-2 text-sm disabled:opacity-50">+ Nouvelle note</button>
+        </div>
       </div>
       <p className="mb-4 text-sm text-slate-500">Déposez vos frais professionnels ; ils sont validés selon votre rattachement.</p>
 

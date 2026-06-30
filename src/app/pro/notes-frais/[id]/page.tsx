@@ -14,7 +14,18 @@ type Note = {
   statut: string; valide_le: string | null; motif_rejet: string | null; total_ttc: number; total_ht: number;
   rembourse_le: string | null; emetteur?: { nom: string; prenom: string | null; titre: string | null } | null;
 };
-type Ligne = { id: string; type: string; montant_ttc: number; montant_ht: number | null; date_depense: string | null; description: string | null; evenement_id: string | null };
+type Ligne = {
+  id: string; type: string; montant_ttc: number; montant_ht: number | null; date_depense: string | null;
+  description: string | null; evenement_id: string | null;
+  est_avantage_ps: boolean; beneficiaire_pro_id: string | null; beneficiaire_externe_id: string | null;
+  beneficiaire_nom: string | null; beneficiaire_rpps: string | null; beneficiaire_specialite: string | null;
+  dmos_regime: string | null;
+};
+type Benef = { value: string; label: string; nom: string; rpps: string | null; specialite: string | null };
+const REGIME_DMOS: Record<string, { label: string; cls: string }> = {
+  declaration: { label: "À déclarer", cls: "bg-sky-100 text-sky-700" },
+  autorisation: { label: "Autorisation requise", cls: "bg-amber-100 text-attention" },
+};
 type Justif = { id: string; ligne_id: string | null; chemin_stockage: string; libelle: string | null; mime: string | null };
 type Evt = { id: string; nom: string };
 
@@ -29,6 +40,7 @@ export default function NoteFraisDetail() {
   const [justifs, setJustifs] = useState<Justif[]>([]);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [events, setEvents] = useState<Evt[]>([]);
+  const [benefs, setBenefs] = useState<Benef[]>([]);
   const [pret, setPret] = useState(false);
   const [busy, setBusy] = useState(false);
   const supabase = createClient();
@@ -40,13 +52,29 @@ export default function NoteFraisDetail() {
     if (!n) { setNote(null); setPret(true); return; }
     setNote(n as unknown as Note);
     const [{ data: l }, { data: j }, { data: ev }] = await Promise.all([
-      supabase.from("note_de_frais_ligne").select("id,type,montant_ttc,montant_ht,date_depense,description,evenement_id").eq("note_id", id).order("created_at"),
+      supabase.from("note_de_frais_ligne").select("id,type,montant_ttc,montant_ht,date_depense,description,evenement_id,est_avantage_ps,beneficiaire_pro_id,beneficiaire_externe_id,beneficiaire_nom,beneficiaire_rpps,beneficiaire_specialite,dmos_regime").eq("note_id", id).order("created_at"),
       supabase.from("note_de_frais_justificatif").select("id,ligne_id,chemin_stockage,libelle,mime").eq("note_id", id),
       supabase.from("evenement_marketing").select("id,nom").order("date_debut", { ascending: false }),
     ]);
     setLignes((l ?? []) as Ligne[]);
     setJustifs((j ?? []) as Justif[]);
     setEvents((ev ?? []) as Evt[]);
+    // Bénéficiaires possibles d'un avantage : PS externes (comptes) + soignants externes.
+    const [{ data: ps }, { data: ext }] = await Promise.all([
+      supabase.from("professionnel").select("id,nom,prenom,titre,role,rpps,specialite").in("role", ["chirurgien", "infirmiere_liberale", "pharmacie"]).order("nom"),
+      supabase.from("soignant_externe").select("id,nom,prenom,titre,specialite,rpps").order("nom"),
+    ]);
+    const opts: Benef[] = [
+      ...((ps ?? []) as { id: string; nom: string; prenom: string | null; titre: string | null; rpps: string | null; specialite: string | null }[]).map((p) => {
+        const nom = [p.titre, p.prenom, p.nom].filter(Boolean).join(" ");
+        return { value: `pro:${p.id}`, label: nom, nom, rpps: p.rpps, specialite: p.specialite };
+      }),
+      ...((ext ?? []) as { id: string; nom: string; prenom: string | null; titre: string | null; rpps: string | null; specialite: string | null }[]).map((e) => {
+        const nom = [e.titre, e.prenom, e.nom].filter(Boolean).join(" ");
+        return { value: `ext:${e.id}`, label: `${nom} · externe`, nom, rpps: e.rpps, specialite: e.specialite };
+      }),
+    ];
+    setBenefs(opts);
     const chemins = (j ?? []).map((x) => x.chemin_stockage);
     if (chemins.length) {
       const res = await fetch(`/api/notes-frais/justificatif?chemins=${encodeURIComponent(chemins.join(","))}`);
@@ -85,6 +113,24 @@ export default function NoteFraisDetail() {
     recalcTotal();
   }
   const recalcTotal = () => setNote((n) => (n ? { ...n, total_ttc: lignes.reduce((s2, l) => s2 + Number(l.montant_ttc || 0), 0) } : n));
+
+  // DMOS : marquer la ligne comme avantage à un PS + choix du bénéficiaire.
+  const benefValue = (l: Ligne) => (l.beneficiaire_pro_id ? `pro:${l.beneficiaire_pro_id}` : l.beneficiaire_externe_id ? `ext:${l.beneficiaire_externe_id}` : "");
+  async function setAvantage(lid: string, on: boolean) {
+    majLigne(lid, { est_avantage_ps: on });
+    await supabase.from("note_de_frais_ligne").update({ est_avantage_ps: on }).eq("id", lid);
+    charger();
+  }
+  async function setBenef(lid: string, v: string) {
+    const b = benefs.find((x) => x.value === v);
+    const patch: Partial<Ligne> = {
+      beneficiaire_pro_id: v.startsWith("pro:") ? v.slice(4) : null,
+      beneficiaire_externe_id: v.startsWith("ext:") ? v.slice(4) : null,
+      beneficiaire_nom: b?.nom ?? null, beneficiaire_rpps: b?.rpps ?? null, beneficiaire_specialite: b?.specialite ?? null,
+    };
+    majLigne(lid, patch);
+    await supabase.from("note_de_frais_ligne").update(patch).eq("id", lid);
+  }
 
   async function uploadJustif(lid: string, file: File) {
     setBusy(true);
@@ -187,12 +233,30 @@ export default function NoteFraisDetail() {
                     <Select value={l.evenement_id ?? ""} onChange={(v) => { majLigne(l.id, { evenement_id: v || null }); persistLigne(l.id, { evenement_id: v || null }); }} placeholder="— Aucun —" options={[{ value: "", label: "— Aucun —" }, ...events.map((e) => ({ value: e.id, label: e.nom }))]} />
                   </div>
                 )}
+                <div className="rounded-lg border border-rose-100 bg-rose-50/30 p-2.5">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+                    <input type="checkbox" checked={l.est_avantage_ps} onChange={(e) => setAvantage(l.id, e.target.checked)} className="accent-brand" />
+                    Avantage à un professionnel de santé (DMOS)
+                  </label>
+                  {l.est_avantage_ps && (
+                    <div className="mt-2 grid gap-2">
+                      <Select value={benefValue(l)} onChange={(v) => setBenef(l.id, v)} placeholder="— Bénéficiaire (PS) —" options={[{ value: "", label: "— Bénéficiaire (PS) —" }, ...benefs]} />
+                      {l.dmos_regime && <span className={`badge w-fit ${REGIME_DMOS[l.dmos_regime].cls}`}>{REGIME_DMOS[l.dmos_regime].label}</span>}
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-medium text-slate-700">{libDepense(l.type)}{l.description ? ` — ${l.description}` : ""}</p>
                   <p className="text-xs text-slate-400">{l.date_depense ? new Date(l.date_depense).toLocaleDateString("fr-FR") : ""}</p>
+                  {l.est_avantage_ps && (
+                    <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                      <span className="font-medium text-brand">Avantage PS{l.beneficiaire_nom ? ` · ${l.beneficiaire_nom}` : ""}</span>
+                      {l.dmos_regime && <span className={`badge ${REGIME_DMOS[l.dmos_regime].cls}`}>{REGIME_DMOS[l.dmos_regime].label}</span>}
+                    </p>
+                  )}
                 </div>
                 <span className="shrink-0 font-bold text-brand">{eurNdf(l.montant_ttc)}</span>
               </div>
