@@ -130,13 +130,22 @@ export default function MonProfil() {
       ) : (
         <>
         {peutNotesFrais(role) && (
-          <Link href="/pro/notes-frais" prefetch className="card mb-4 flex items-center justify-between gap-3 transition hover:bg-rose-50/40">
-            <div>
-              <p className="font-semibold text-slate-800">Mes notes de frais</p>
-              <p className="text-sm text-slate-500">Déposer et suivre mes frais professionnels.</p>
-            </div>
-            <span className="text-xl text-brand">→</span>
-          </Link>
+          <div className="mb-4 grid gap-2">
+            {[
+              { href: "/pro/notes-frais", titre: "Mes notes de frais", sous: "Déposer et suivre mes frais professionnels." },
+              { href: "/pro/espace-rh", titre: "Espace RH", sous: "Mes informations et documents RH." },
+              { href: "/pro/voiture", titre: "Espace voiture", sous: "Mon véhicule de fonction." },
+              { href: "/pro/formation", titre: "Espace formation", sous: "Mes formations et habilitations." },
+            ].map((e) => (
+              <Link key={e.href} href={e.href} prefetch className="card flex items-center justify-between gap-3 transition hover:bg-rose-50/40">
+                <div>
+                  <p className="font-semibold text-slate-800">{e.titre}</p>
+                  <p className="text-sm text-slate-500">{e.sous}</p>
+                </div>
+                <span className="text-xl text-brand">→</span>
+              </Link>
+            ))}
+          </div>
         )}
         <div className="card grid gap-4">
           {/* Photo de profil */}
