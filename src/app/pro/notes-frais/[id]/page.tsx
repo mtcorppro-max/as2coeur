@@ -20,10 +20,10 @@ type Ligne = {
   description: string | null; evenement_id: string | null;
   est_avantage_ps: boolean; beneficiaire_pro_id: string | null; beneficiaire_externe_id: string | null;
   beneficiaire_nom: string | null; beneficiaire_rpps: string | null; beneficiaire_specialite: string | null;
-  dmos_regime: string | null; decision: string | null;
+  dmos_regime: string | null; decision: string | null; usage_pedagogique: boolean;
 };
 type Benef = { value: string; label: string; nom: string; rpps: string | null; specialite: string | null };
-type BaremeRow = { type_avantage: string; seuil_declaration: number | null; seuil_autorisation: number | null; seuil_max: number | null; date_effet: string };
+type BaremeRow = { type_avantage: string; seuil_declaration: number | null; seuil_autorisation: number | null; seuil_max: number | null; limite_an_nb: number | null; limite_an_montant: number | null; date_effet: string };
 const REGIME_DMOS: Record<string, { label: string; cls: string }> = {
   declaration: { label: "À déclarer", cls: "bg-sky-100 text-sky-700" },
   autorisation: { label: "Autorisation requise", cls: "bg-amber-100 text-attention" },
@@ -58,7 +58,7 @@ export default function NoteFraisDetail() {
     if (!n) { setNote(null); setPret(true); return; }
     setNote(n as unknown as Note);
     const [{ data: l }, { data: j }, { data: ev }] = await Promise.all([
-      supabase.from("note_de_frais_ligne").select("id,type,montant_ttc,montant_ht,date_depense,description,evenement_id,est_avantage_ps,beneficiaire_pro_id,beneficiaire_externe_id,beneficiaire_nom,beneficiaire_rpps,beneficiaire_specialite,dmos_regime,decision").eq("note_id", id).order("created_at"),
+      supabase.from("note_de_frais_ligne").select("id,type,montant_ttc,montant_ht,date_depense,description,evenement_id,est_avantage_ps,beneficiaire_pro_id,beneficiaire_externe_id,beneficiaire_nom,beneficiaire_rpps,beneficiaire_specialite,dmos_regime,decision,usage_pedagogique").eq("note_id", id).order("created_at"),
       supabase.from("note_de_frais_justificatif").select("id,ligne_id,chemin_stockage,libelle,mime").eq("note_id", id),
       supabase.from("evenement_marketing").select("id,nom").order("date_debut", { ascending: false }),
     ]);
@@ -110,7 +110,7 @@ export default function NoteFraisDetail() {
   }, [pro?.prestataire_id]);
   // Barème DMOS (dernière version active par type) → seuils & plafonds affichés.
   useEffect(() => {
-    supabase.from("dmos_bareme").select("type_avantage,seuil_declaration,seuil_autorisation,seuil_max,actif,date_effet").eq("actif", true)
+    supabase.from("dmos_bareme").select("type_avantage,seuil_declaration,seuil_autorisation,seuil_max,limite_an_nb,limite_an_montant,actif,date_effet").eq("actif", true)
       .then(({ data }) => {
         const m = new Map<string, BaremeRow>();
         ((data ?? []) as BaremeRow[]).forEach((b) => { const cur = m.get(b.type_avantage); if (!cur || b.date_effet > cur.date_effet) m.set(b.type_avantage, b); });
@@ -132,7 +132,7 @@ export default function NoteFraisDetail() {
   const bloqueDmos = lignes.some((l) => l.est_avantage_ps && l.dmos_regime === "autorisation" && !["autorise", "tacite"].includes(l.decision ?? ""));
   // Plafond (seuil_max) dépassé → bloque (et empêche la soumission).
   const plafondDe = (type: string) => baremes.get(type)?.seuil_max ?? null;
-  const depasseCap = (l: Ligne) => { const m = l.est_avantage_ps ? plafondDe(l.type) : null; return m != null && Number(l.montant_ttc) > m; };
+  const depasseCap = (l: Ligne) => { const m = l.est_avantage_ps && !l.usage_pedagogique ? plafondDe(l.type) : null; return m != null && Number(l.montant_ttc) > m; };
   const bloqueCap = lignes.some(depasseCap);
 
   // ── Actions note ──
@@ -157,6 +157,11 @@ export default function NoteFraisDetail() {
   async function setAvantage(lid: string, on: boolean) {
     majLigne(lid, { est_avantage_ps: on });
     await supabase.from("note_de_frais_ligne").update({ est_avantage_ps: on }).eq("id", lid);
+    charger();
+  }
+  async function setPedago(lid: string, on: boolean) {
+    majLigne(lid, { usage_pedagogique: on });
+    await supabase.from("note_de_frais_ligne").update({ usage_pedagogique: on }).eq("id", lid);
     charger();
   }
   async function setBenef(lid: string, v: string) {
@@ -216,8 +221,10 @@ export default function NoteFraisDetail() {
     if (bloqueCap) { alert("Validation impossible : un montant dépasse le plafond autorisé pour ce type de dépense (DMOS)."); return; }
     if (bloqueDmos) { alert("Validation impossible : un avantage dépasse le seuil DMOS et nécessite une autorisation préalable (voir Suivi DMOS)."); return; }
     setBusy(true);
-    await supabase.from("note_de_frais").update({ statut: "validee", valide_par: proId, valide_le: new Date().toISOString() }).eq("id", id);
-    setBusy(false); router.push("/pro/notes-frais");
+    const { error } = await supabase.from("note_de_frais").update({ statut: "validee", valide_par: proId, valide_le: new Date().toISOString() }).eq("id", id).select("id");
+    setBusy(false);
+    if (error) { alert("Validation refusée : " + error.message); return; }
+    router.push("/pro/notes-frais");
   }
   async function rejeter() {
     const motif = prompt("Motif du rejet (visible par l'émetteur) :")?.trim();
@@ -228,8 +235,10 @@ export default function NoteFraisDetail() {
   }
   async function rembourser() {
     setBusy(true);
-    await supabase.from("note_de_frais").update({ statut: "remboursee", rembourse_le: new Date().toISOString() }).eq("id", id);
-    setBusy(false); router.push("/pro/notes-frais");
+    const { error } = await supabase.from("note_de_frais").update({ statut: "remboursee", rembourse_le: new Date().toISOString() }).eq("id", id).select("id");
+    setBusy(false);
+    if (error) { alert("Échec : " + error.message); return; }
+    router.push("/pro/notes-frais");
   }
 
   function telechargerPdf() {
@@ -329,15 +338,25 @@ export default function NoteFraisDetail() {
                   {l.est_avantage_ps && (
                     <div className="mt-2 grid gap-2">
                       <Select value={benefValue(l)} onChange={(v) => setBenef(l.id, v)} placeholder="— Bénéficiaire (PS) —" options={[{ value: "", label: "— Bénéficiaire (PS) —" }, ...benefs]} />
-                      {(() => { const b = baremes.get(l.type); if (!b) return null; return (
+                      <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-600">
+                        <input type="checkbox" checked={l.usage_pedagogique} onChange={(e) => setPedago(l.id, e.target.checked)} className="accent-brand" />
+                        Usage pédagogique / formation (sans limite)
+                      </label>
+                      {!l.usage_pedagogique && (() => { const b = baremes.get(l.type); if (!b) return null; return (
                         <p className="text-[11px] text-slate-400">
-                          {b.seuil_max != null ? <>Plafond&nbsp;: <b className="text-slate-500">{eurNdf(b.seuil_max)}</b> (à ne pas dépasser)</> : "Aucun plafond défini"}
+                          {b.seuil_max != null ? <>Plafond&nbsp;: <b className="text-slate-500">{eurNdf(b.seuil_max)}</b></> : "Aucun plafond"}
                           {b.seuil_autorisation != null ? ` · autorisation ≥ ${eurNdf(b.seuil_autorisation)}` : ""}
+                          {b.limite_an_nb != null ? ` · max ${b.limite_an_nb}/an/bénéf.` : ""}
+                          {b.limite_an_montant != null ? ` · max ${eurNdf(b.limite_an_montant)}/an/bénéf.` : ""}
                         </p>
                       ); })()}
                       <div className="flex flex-wrap items-center gap-2">
-                        {l.dmos_regime && <span className={`badge ${REGIME_DMOS[l.dmos_regime].cls}`}>{REGIME_DMOS[l.dmos_regime].label}</span>}
-                        {depasseCap(l) && <span className="badge bg-red-100 text-critique">Plafond dépassé</span>}
+                        {l.usage_pedagogique ? <span className="badge bg-green-100 text-ok">Pédagogique · sans limite</span> : (
+                          <>
+                            {l.dmos_regime && <span className={`badge ${REGIME_DMOS[l.dmos_regime].cls}`}>{REGIME_DMOS[l.dmos_regime].label}</span>}
+                            {depasseCap(l) && <span className="badge bg-red-100 text-critique">Plafond dépassé</span>}
+                          </>
+                        )}
                       </div>
                     </div>
                   )}

@@ -9,7 +9,7 @@ import { libDepense } from "@/lib/notesFrais";
 
 type Bareme = {
   id: string; type_avantage: string; seuil_declaration: number | null; seuil_autorisation: number | null;
-  seuil_max: number | null; periode: string; actif: boolean;
+  seuil_max: number | null; limite_an_nb: number | null; limite_an_montant: number | null; periode: string; actif: boolean;
 };
 const PERIODES = [
   { value: "par_manifestation", label: "Par manifestation" },
@@ -24,7 +24,7 @@ export default function BaremeDmosPage() {
   const [pret, setPret] = useState(false);
 
   const [emailCompta, setEmailCompta] = useState("");
-  const charger = () => createClient().from("dmos_bareme").select("id,type_avantage,seuil_declaration,seuil_autorisation,seuil_max,periode,actif").order("type_avantage").then(({ data }) => { setRows((data ?? []) as Bareme[]); setPret(true); });
+  const charger = () => createClient().from("dmos_bareme").select("id,type_avantage,seuil_declaration,seuil_autorisation,seuil_max,limite_an_nb,limite_an_montant,periode,actif").order("type_avantage").then(({ data }) => { setRows((data ?? []) as Bareme[]); setPret(true); });
   useEffect(() => { charger(); }, []);
   useEffect(() => {
     if (!pro?.prestataire_id) return;
@@ -88,6 +88,16 @@ export default function BaremeDmosPage() {
                 <div>
                   <label className="label">Période</label>
                   <Select value={r.periode} onChange={(v) => { maj(r.id, { periode: v }); persist(r.id, { periode: v }); }} options={PERIODES} />
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="label">Max / an / bénéficiaire (nombre)</label>
+                  <input className="input" type="number" step="1" inputMode="numeric" value={r.limite_an_nb ?? ""} onChange={(e) => maj(r.id, { limite_an_nb: e.target.value === "" ? null : Number(e.target.value) })} onBlur={(e) => persist(r.id, { limite_an_nb: e.target.value === "" ? null : Number(e.target.value) })} placeholder="Illimité" />
+                </div>
+                <div>
+                  <label className="label">Max / an / bénéficiaire (€)</label>
+                  <input className="input" type="number" step="0.01" inputMode="decimal" value={r.limite_an_montant ?? ""} onChange={(e) => maj(r.id, { limite_an_montant: e.target.value === "" ? null : Number(e.target.value) })} onBlur={(e) => persist(r.id, { limite_an_montant: e.target.value === "" ? null : Number(e.target.value) })} placeholder="Illimité" />
                 </div>
               </div>
             </div>
