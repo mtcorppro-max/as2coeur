@@ -9,6 +9,7 @@ import { MESURES, TYPES_MESURE } from "@/lib/constants";
 import { conseilDuJour, conseilMeteo, type ConseilMeteo } from "@/lib/conseils";
 import { ConseilCard } from "@/components/ConseilCard";
 import { RappelDocuments } from "@/components/RappelDocuments";
+import { RappelBilanPatient } from "@/components/RappelBilanPatient";
 import { CalendrierSuivi } from "@/components/CalendrierSuivi";
 import type { Mesure } from "@/lib/types";
 
@@ -58,6 +59,7 @@ export default function PatientAccueil() {
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
       <div className="grid gap-5">
+        <RappelBilanPatient />
         <RappelDocuments />
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
