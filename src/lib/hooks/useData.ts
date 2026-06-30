@@ -48,8 +48,19 @@ export function useData<T>(key: string, fetcher: Fetcher<T>, deps: unknown[] = [
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
-    fetchOnce(key, fetcher).then((d) => { if (alive) setData(d); });
-    return () => { alive = false; };
+    const charger = () => fetchOnce(key, fetcher).then((d) => { if (alive) setData(d); });
+    charger();
+    // Rafraîchit sans rechargement de page : au retour sur l'onglet (focus /
+    // visibilité) on revalide la donnée.
+    const revalider = () => { invalidate(key); charger(); };
+    const onVis = () => { if (document.visibilityState === "visible") revalider(); };
+    window.addEventListener("focus", revalider);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      alive = false;
+      window.removeEventListener("focus", revalider);
+      document.removeEventListener("visibilitychange", onVis);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, enabled]);
 

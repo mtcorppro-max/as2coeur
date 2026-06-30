@@ -32,6 +32,18 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   const peutPec = !!pro && pro.niveau <= 1;
 
   // Demandes de planning en attente dans le périmètre (badge Organisation).
+  // Rafraîchissement auto des compteurs/notifications (sans recharger la page) :
+  // toutes les 30 s + au retour sur l'onglet. « tick » est dans les deps des effets.
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const bump = () => setTick((t) => t + 1);
+    const onVis = () => { if (document.visibilityState === "visible") bump(); };
+    const id = setInterval(bump, 30_000);
+    window.addEventListener("focus", bump);
+    document.addEventListener("visibilitychange", onVis);
+    return () => { clearInterval(id); window.removeEventListener("focus", bump); document.removeEventListener("visibilitychange", onVis); };
+  }, []);
+
   const [nbDemandes, setNbDemandes] = useState(0);
   useEffect(() => {
     if (!pro || pro.niveau !== 1) return; // seul le manager valide
@@ -48,7 +60,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       }).length;
       setNbDemandes(n);
     });
-  }, [pro, pathname]);
+  }, [pro, pathname, tick]);
 
   // Suivis du jour + en retard attribués au compte connecté (badge Suivis).
   const [nbSuivis, setNbSuivis] = useState(0);
@@ -75,7 +87,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         });
         setNbSuivis(n);
       });
-  }, [pro, estCoord, pathname]);
+  }, [pro, estCoord, pathname, tick]);
 
   // Ordonnances en attente de signature pour le médecin connecté (badge À signer).
   const [nbASigner, setNbASigner] = useState(0);
@@ -87,7 +99,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       .eq("destinataire_id", pro.id)
       .eq("statut", "a_signer")
       .then(({ count }) => setNbASigner(count ?? 0));
-  }, [pro, estChir, pathname]);
+  }, [pro, estChir, pathname, tick]);
 
   // Ordonnances pharmacie signées reçues depuis la dernière visite (badge pharmacie).
   const [nbOrdoPharma, setNbOrdoPharma] = useState(0);
@@ -111,7 +123,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       }).length;
       setNbOrdoPharma(n);
     });
-  }, [pro, estPharmacie, pathname]);
+  }, [pro, estPharmacie, pathname, tick]);
 
   // Messages internes non lus (badge Messagerie).
   const [nbMessages, setNbMessages] = useState(0);
@@ -123,7 +135,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       .eq("destinataire_id", pro.id)
       .eq("lu", false)
       .then(({ count }) => setNbMessages(count ?? 0));
-  }, [pro, pathname]);
+  }, [pro, pathname, tick]);
 
   // Alertes parc matériel (maintenance en retard + location trop longue) — badge magasinier.
   const [nbParc, setNbParc] = useState(0);
@@ -144,7 +156,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         });
         setNbParc(n);
       });
-  }, [pro, estMagasinier, pathname]);
+  }, [pro, estMagasinier, pathname, tick]);
 
   // Menu « Plus » de la barre mobile (overflow au-delà de 5 entrées).
   const [menuOuvert, setMenuOuvert] = useState(false);
