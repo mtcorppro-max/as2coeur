@@ -45,11 +45,39 @@ function notifierPro() { proListeners.forEach((l) => l()); }
 
 // Revalidation en tâche de fond de la session pro. Ne vide JAMAIS la session
 // en cas d'échec (réseau, jeton momentanément invalide) — on garde l'existant.
+// Réessaie quelques fois si getSession() renvoie null : au démarrage à froid
+// (surtout mobile iOS/Android), la restauration du jeton est asynchrone et la
+// 1re tentative peut échouer — sans réessai, la navbar resterait bloquée.
 let proRevalEnCours = false;
 function revaliderPro() {
   if (proRevalEnCours) return;
   proRevalEnCours = true;
-  fetchPro().then((p) => { if (p) notifierPro(); }).finally(() => { proRevalEnCours = false; });
+  const tenter = (n: number) => {
+    fetchPro()
+      .then((p) => {
+        if (p) { proRevalEnCours = false; notifierPro(); return; }
+        if (n < 5) { setTimeout(() => tenter(n + 1), 700 * (n + 1)); return; }
+        proRevalEnCours = false; // pas de session après plusieurs essais (déconnecté)
+      })
+      .catch(() => {
+        if (n < 5) { setTimeout(() => tenter(n + 1), 700 * (n + 1)); return; }
+        proRevalEnCours = false;
+      });
+  };
+  tenter(0);
+}
+
+// Écoute unique des changements d'auth : dès que la session est restaurée /
+// rafraîchie (INITIAL_SESSION, TOKEN_REFRESHED, SIGNED_IN), on (re)charge le pro.
+let proAuthSub = false;
+function ensureProAuthSub() {
+  if (proAuthSub) return;
+  proAuthSub = true;
+  try {
+    createClient().auth.onAuthStateChange((_event, session) => {
+      if (session) revaliderPro();
+    });
+  } catch { /* */ }
 }
 
 // ── Patient ──────────────────────────────────────────────────────────
@@ -99,6 +127,7 @@ export function useProSession() {
     // les changements (photo de profil, opt-in alertes…) sans recharger la page.
     const maj = () => setPro(memPro);
     proListeners.add(maj);
+    ensureProAuthSub(); // recharge le pro dès que le jeton est restauré (mobile)
 
     // Affichage immédiat depuis le cache, même périmé (stale-while-revalidate) :
     // évite que la navbar retombe sur « Tableau + Messages » pendant un

@@ -241,7 +241,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-6">
             <Logo />
             <nav className="hidden items-center gap-0.5 sm:flex">
-              {estPharmacie ? (
+              {!pro ? null : estPharmacie ? (
                 <Onglet href="/pro/pharmacie" icon="clipboard" label="Mes patients" pathname={pathname} badge={nbOrdoPharma} />
               ) : estLivreur ? (
                 <>
@@ -344,6 +344,11 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       )}
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex border-t border-rose-100 bg-white sm:hidden">
+        {!pro ? (
+          // Session pas encore connue : squelette (jamais la navbar réduite « 2 entrées »).
+          <NavSkeleton />
+        ) : (
+        <>
         {entreesVisibles.map((e) => (
           <NavItem key={e.href} href={e.href} icon={e.icon} label={e.label} badge={e.badge} pathname={pathname} />
         ))}
@@ -362,8 +367,25 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
             <span className="text-[10px] font-medium">Plus</span>
           </button>
         )}
+        </>
+        )}
       </nav>
     </div>
+  );
+}
+
+// Squelette de la barre mobile pendant le chargement de la session (évite la
+// navbar réduite « Tableau + Messages » quand `pro` n'est pas encore connu).
+function NavSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="flex flex-1 flex-col items-center gap-1 py-2">
+          <span className="h-5 w-5 animate-pulse rounded-md bg-rose-100" />
+          <span className="h-2 w-8 animate-pulse rounded bg-rose-50" />
+        </div>
+      ))}
+    </>
   );
 }
 
