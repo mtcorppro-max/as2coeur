@@ -171,7 +171,12 @@ export default function NoteFraisDetail() {
     router.push("/pro/notes-frais");
   }
   async function rouvrir() { await supabase.from("note_de_frais").update({ statut: "brouillon", motif_rejet: null }).eq("id", id); charger(); }
-  async function rappeler() { await supabase.from("note_de_frais").update({ statut: "brouillon" }).eq("id", id); charger(); }
+  async function rappeler() {
+    const { data, error } = await supabase.from("note_de_frais").update({ statut: "brouillon" }).eq("id", id).select("id");
+    if (error) { alert("Échec : " + error.message); return; }
+    if (!data || data.length === 0) { alert("Modification refusée. Assurez-vous que la dernière migration (0102) est bien appliquée en base."); return; }
+    charger();
+  }
 
   async function valider() {
     if (bloqueDmos) { alert("Validation impossible : un avantage dépasse le seuil DMOS et nécessite une autorisation préalable (voir Suivi DMOS)."); return; }
