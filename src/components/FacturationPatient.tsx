@@ -113,14 +113,14 @@ export function FacturationPatient({ patientId }: { patientId: string }) {
     <section className="card grid gap-3">
       <h2 className="text-sm font-semibold text-slate-600">Facturation prévisionnelle Sécu</h2>
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border border-rose-100 p-3">
+        <div className="min-w-0 rounded-xl border border-rose-100 p-3">
           <p className="text-xs text-slate-400">CA déjà généré</p>
-          <p className="mt-0.5 text-xl font-bold text-brand">{eur(genere)}</p>
+          <p className="mt-0.5 text-lg font-bold text-brand sm:text-xl">{eur(genere)}</p>
           <p className="text-[11px] text-slate-400">{eur(genereHt)} HT</p>
         </div>
-        <div className="rounded-xl border border-rose-100 p-3">
+        <div className="min-w-0 rounded-xl border border-rose-100 p-3">
           <p className="text-xs text-slate-400">CA prévisionnel fin de PEC</p>
-          <p className="mt-0.5 text-xl font-bold text-slate-800">{eur(previsionnel)}</p>
+          <p className="mt-0.5 text-lg font-bold text-slate-800 sm:text-xl">{eur(previsionnel)}</p>
           <p className="text-[11px] text-slate-400">{eur(previsionnelHt)} HT{aVenir > 0 ? ` · dont ${eur(aVenir)} à venir` : ""}</p>
         </div>
       </div>
@@ -133,19 +133,19 @@ export function FacturationPatient({ patientId }: { patientId: string }) {
           const lp = un(f.lpp);
           return (
             <div key={f.id} className="flex items-center justify-between gap-2 rounded-lg border border-rose-100 px-3 py-1.5 text-xs">
-              <span className="min-w-0">
-                <span className="truncate text-slate-700">{lp?.libelle ?? f.lpp_code}</span>
-                <span className="ml-1 text-slate-400">· {lp?.prix_ttc ? eur(lp.prix_ttc) : "—"} {PER[lp?.periodicite ?? ""]}</span>
-              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-slate-700">{lp?.libelle ?? f.lpp_code}</p>
+                <p className="text-slate-400">{lp?.prix_ttc ? eur(lp.prix_ttc) : "—"} {PER[lp?.periodicite ?? ""]}</p>
+              </div>
               {peutGerer && <button onClick={() => retirer(f.id)} className="shrink-0 px-1 text-critique" title="Retirer">✕</button>}
             </div>
           );
         })}
         {peutGerer && (
           <div className="mt-1 flex flex-wrap items-end gap-2">
-            <div className="w-52"><Select value={fam} onChange={(v) => { setFam(v); setAjout(""); }} placeholder="Type de forfait…" options={[{ value: "", label: "Type de forfait…" }, ...FAMILLES]} /></div>
+            <div className="w-full sm:w-52"><Select value={fam} onChange={(v) => { setFam(v); setAjout(""); }} placeholder="Type de forfait…" options={[{ value: "", label: "Type de forfait…" }, ...FAMILLES]} /></div>
             {fam && (
-              <div className="w-72"><Select value={ajout} onChange={setAjout} placeholder="Choisir le forfait…" options={[{ value: "", label: "Choisir le forfait…" }, ...lppF.filter((l) => l.famille === fam).map((l) => ({ value: l.code, label: `${l.libelle.replace(/^[^—]*— /, "").slice(0, 55)} — ${l.prix_ttc ? eur(l.prix_ttc) : "?"} ${PER[l.periodicite]}` }))]} /></div>
+              <div className="w-full sm:w-72"><Select value={ajout} onChange={setAjout} placeholder="Choisir le forfait…" options={[{ value: "", label: "Choisir le forfait…" }, ...lppF.filter((l) => l.famille === fam).map((l) => ({ value: l.code, label: `${l.libelle.replace(/^[^—]*— /, "").slice(0, 55)} — ${l.prix_ttc ? eur(l.prix_ttc) : "?"} ${PER[l.periodicite]}` }))]} /></div>
             )}
             {fam && <button onClick={ajouter} disabled={!ajout} className="btn-primary px-3 py-2 text-sm disabled:opacity-50">Ajouter</button>}
           </div>
