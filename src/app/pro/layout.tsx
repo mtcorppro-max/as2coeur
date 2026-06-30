@@ -8,6 +8,7 @@ import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
 import { useProSession } from "@/lib/hooks/useSession";
 import { LIBELLE_ROLE, estCoordOuManager, estRoleService, peutMarketing } from "@/lib/roles";
+import { peutNotesFrais } from "@/lib/notesFrais";
 import { TYPES_ORDO_PHARMACIE, clePharmaVu } from "@/lib/ordonnances";
 import { RechercheSoignants } from "@/components/RechercheSoignants";
 import { Avatar } from "@/components/Avatar";
@@ -33,6 +34,8 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   const peutAnnuaire = estN0 || pro?.role === "manager";
   // Espace Marketing : dirigeant, RH, manager, délégué (+ admin).
   const peutMkt = peutMarketing(pro?.role, pro?.niveau);
+  // Notes de frais : tout le personnel interne (pas les partenaires externes).
+  const peutNdf = peutNotesFrais(pro?.role);
   // Gérer/créer des comptes & l'équipe : niveau 0, 1 ou 2 (hors chirurgien et
   // hors comptes service livreur/pharmacie)
   const peutGerer = estN0 || (!!pro && pro.niveau <= 2 && pro.role !== "chirurgien" && !estRoleService(pro.role));
@@ -195,12 +198,14 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         { href: "/pro/livraisons", icon: "truck", label: "Tournée" },
         { href: "/pro/calendrier", icon: "clipboard", label: "Organisation" },
         { href: "/pro/magasin", icon: "box", label: "Magasin" },
+        { href: "/pro/notes-frais", icon: "recu", label: "Notes de frais" },
       ]
     : estDirigeant
     ? [
         { href: "/pro/pec", icon: "chart", label: "PEC" },
         { href: "/pro/annuaire", icon: "users", label: "Annuaire" },
         { href: "/pro/marketing", icon: "megaphone", label: "Marketing" },
+        { href: "/pro/notes-frais", icon: "recu", label: "Notes de frais" },
         { href: "/pro/equipe-dirigeante", icon: "users", label: "Équipe dirigeante" },
       ]
     : estMagasinier
@@ -208,15 +213,18 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         { href: "/pro/magasin", icon: "box", label: "Magasin" },
         { href: "/pro/preparations", icon: "prep", label: "Préparations" },
         { href: "/pro/parc", icon: "parc", label: "Parc", badge: nbParc },
+        { href: "/pro/notes-frais", icon: "recu", label: "Notes de frais" },
       ]
     : estRh
     ? [
         { href: "/pro/annuaire", icon: "users", label: "Annuaire" },
         { href: "/pro/marketing", icon: "megaphone", label: "Marketing" },
+        { href: "/pro/notes-frais", icon: "recu", label: "Notes de frais" },
         { href: "/pro/messagerie", icon: "message", label: "Messages", badge: nbMessages },
       ]
     : estPersonnel
     ? [
+        { href: "/pro/notes-frais", icon: "recu", label: "Notes de frais" },
         { href: "/pro/messagerie", icon: "message", label: "Messages", badge: nbMessages },
       ]
     : [
@@ -230,6 +238,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         ...(peutGerer ? [{ href: "/pro/equipe", icon: "users", label: "Équipe" }] : []),
         ...(peutAnnuaire ? [{ href: "/pro/annuaire", icon: "users", label: "Annuaire" }] : []),
         ...(peutMkt ? [{ href: "/pro/marketing", icon: "megaphone", label: "Marketing" }] : []),
+        ...(peutNdf ? [{ href: "/pro/notes-frais", icon: "recu", label: "Notes de frais" }] : []),
         ...(peutPec ? [{ href: "/pro/pec", icon: "chart", label: "PEC" }] : []),
       ];
   // Au-delà de 5 entrées : 4 visibles + un bouton « Plus » qui ouvre le reste.
@@ -252,12 +261,14 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                   <Onglet href="/pro/livraisons" icon="truck" label="Tournée" pathname={pathname} />
                   <Onglet href="/pro/calendrier" icon="clipboard" label="Organisation" pathname={pathname} />
                   <Onglet href="/pro/magasin" icon="box" label="Magasin" pathname={pathname} />
+                  <Onglet href="/pro/notes-frais" icon="recu" label="Notes de frais" pathname={pathname} />
                 </>
               ) : estDirigeant ? (
                 <>
                   <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />
                   <Onglet href="/pro/annuaire" icon="users" label="Annuaire des équipes" pathname={pathname} />
                   <Onglet href="/pro/marketing" icon="megaphone" label="Marketing" pathname={pathname} />
+                  <Onglet href="/pro/notes-frais" icon="recu" label="Notes de frais" pathname={pathname} />
                   <Onglet href="/pro/equipe-dirigeante" icon="users" label="Équipe dirigeante" pathname={pathname} />
                 </>
               ) : estMagasinier ? (
@@ -265,15 +276,20 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                   <Onglet href="/pro/magasin" icon="box" label="Magasin" pathname={pathname} />
                   <Onglet href="/pro/preparations" icon="prep" label="Préparations" pathname={pathname} />
                   <Onglet href="/pro/parc" icon="parc" label="Parc" pathname={pathname} badge={nbParc} />
+                  <Onglet href="/pro/notes-frais" icon="recu" label="Notes de frais" pathname={pathname} />
                 </>
               ) : estRh ? (
                 <>
                   <Onglet href="/pro/annuaire" icon="users" label="Annuaire des équipes" pathname={pathname} />
                   <Onglet href="/pro/marketing" icon="megaphone" label="Marketing" pathname={pathname} />
+                  <Onglet href="/pro/notes-frais" icon="recu" label="Notes de frais" pathname={pathname} />
                   <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
                 </>
               ) : estPersonnel ? (
-                <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
+                <>
+                  <Onglet href="/pro/notes-frais" icon="recu" label="Notes de frais" pathname={pathname} />
+                  <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
+                </>
               ) : (
                 <>
                   <Onglet href="/pro" icon="dashboard" label="Tableau de bord" pathname={pathname} exact />
@@ -285,6 +301,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                   {peutGerer && <Onglet href="/pro/equipe" icon="users" label="Équipe soignante" pathname={pathname} />}
                   {peutAnnuaire && <Onglet href="/pro/annuaire" icon="users" label="Annuaire des équipes" pathname={pathname} />}
                   {peutMkt && <Onglet href="/pro/marketing" icon="megaphone" label="Marketing" pathname={pathname} />}
+                  {peutNdf && <Onglet href="/pro/notes-frais" icon="recu" label="Notes de frais" pathname={pathname} />}
                   <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
                   {peutPec && <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />}
                 </>
@@ -475,6 +492,7 @@ function IconeNav({ name, className }: { name: string; className?: string }) {
     prep: (<><rect x="8" y="3" width="8" height="4" rx="1" /><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></>),
     parc: (<><rect x="3" y="4.5" width="18" height="12" rx="2" /><line x1="8.5" y1="20" x2="15.5" y2="20" /><line x1="12" y1="16.5" x2="12" y2="20" /><path d="M7.5 10.5h2l1-2 1.5 4 1-2h3.5" /></>),
     megaphone: (<><path d="M4 10.5v3a1 1 0 0 0 1 1h2.5l6 3.5V6l-6 3.5H5a1 1 0 0 0-1 1Z" /><path d="M16.5 9.5a3.5 3.5 0 0 1 0 5" /><path d="M7.5 14.5 9 20" /></>),
+    recu: (<><path d="M6 3h12v18l-2.3-1.4L13.5 21 12 19.6 10.5 21 8.3 19.6 6 21z" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="9" y1="12" x2="15" y2="12" /></>),
   };
   return (
     <svg viewBox="0 0 24 24" className={className} {...p} aria-hidden="true">
