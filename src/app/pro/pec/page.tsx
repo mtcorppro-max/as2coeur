@@ -145,6 +145,7 @@ export default function PecPage() {
   const [coords, setCoords] = useState<Coord[]>([]);
   const [liaisons, setLiaisons] = useState<Liaison[]>([]);
   const [agenceNom, setAgenceNom] = useState<Map<string, string>>(new Map());
+  const [agenceRegion, setAgenceRegion] = useState<Map<string, string>>(new Map());
   const [pret, setPret] = useState(false);
   const [detail, setDetail] = useState<{ titre: string; patients: Patient[] } | null>(null);
 
@@ -154,12 +155,13 @@ export default function PecPage() {
       supabase.from("patient").select("id,nom,date_operation,duree_prise_en_charge,chirurgien,delegue_nom,agence_id,traitement,statut"),
       supabase.from("professionnel").select("id,nom,prenom,titre,agence_id,photo_url").eq("role", "coordinatrice"),
       supabase.from("patient_soignant").select("patient_id,professionnel_id"),
-      supabase.from("agence").select("id,nom"),
+      supabase.from("agence").select("id,nom,region_id"),
     ]).then(([{ data: pts }, { data: cs }, { data: ls }, { data: ags }]) => {
       setPatients((pts ?? []) as Patient[]);
       setCoords((cs ?? []) as Coord[]);
       setLiaisons((ls ?? []) as Liaison[]);
       setAgenceNom(new Map((ags ?? []).map((a) => [a.id as string, a.nom as string])));
+      setAgenceRegion(new Map((ags ?? []).map((a) => [a.id as string, a.region_id as string])));
       setPret(true);
     });
   }, []);
@@ -190,7 +192,12 @@ export default function PecPage() {
     const parTraitement = grouper((p) => p.traitement?.trim() || "Non renseigné");
 
     const patientsParId = new Map(patients.map((p) => [p.id, p]));
-    const parCoord = coords.map((c) => {
+    // Un manager (niveau 1) ne voit que les coordinatrices de SA région ;
+    // niveau 0 (admin) et dirigeant voient toutes les coordinatrices.
+    const coordsVisibles = (pro && pro.niveau === 1)
+      ? coords.filter((c) => c.agence_id && agenceRegion.get(c.agence_id) === pro.region_id)
+      : coords;
+    const parCoord = coordsVisibles.map((c) => {
       const ids = liaisons.filter((l) => l.professionnel_id === c.id).map((l) => l.patient_id);
       const pts = ids.map((id) => patientsParId.get(id)).filter((p): p is Patient => !!p);
       return { c, pts };
@@ -209,7 +216,7 @@ export default function PecPage() {
       parTraitement,
       parCoord,
     };
-  }, [patients, coords, liaisons, agenceNom]);
+  }, [patients, coords, liaisons, agenceNom, agenceRegion, pro]);
 
   const estDir = pro?.role === "dirigeant";
   if (pro && pro.niveau > 1 && !estDir) {
