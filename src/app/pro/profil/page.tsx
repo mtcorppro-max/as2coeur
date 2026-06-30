@@ -25,6 +25,7 @@ const ESPACES = [
   { href: "/pro/espace-rh", titre: "Espace RH", sous: "Mes démarches RH", icon: "rh" },
   { href: "/pro/voiture", titre: "Espace voiture", sous: "Véhicule & parc auto", icon: "voiture" },
   { href: "/pro/formation", titre: "Espace formation", sous: "Mes formations", icon: "formation" },
+  { href: "/pro/coffre-fort", titre: "Coffre-fort", sous: "Mes documents sécurisés", icon: "coffre" },
 ];
 
 export default function MonProfil() {
@@ -248,6 +249,7 @@ function IconeEspace({ name }: { name: string }) {
     rh: (<><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21" /><circle cx="9" cy="7" r="3.5" /><path d="M22 21v-1.5a4 4 0 0 0-3-3.85" /><path d="M16 3.6a3.5 3.5 0 0 1 0 6.8" /></>),
     voiture: (<><path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13" /><path d="M3.5 13h17v4a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1z" /></>),
     formation: (<><path d="M12 4 2 9l10 5 10-5z" /><path d="M6 11v4c0 1.2 2.7 2.5 6 2.5s6-1.3 6-2.5v-4" /></>),
+    coffre: (<><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="14" cy="12" r="3" /><path d="M14 9.5v.01M14 14.5v.01M11.5 12h.01M16.5 12h.01" /><path d="M7 8v8" /></>),
   };
   return <svg viewBox="0 0 24 24" className="h-6 w-6" {...p} aria-hidden="true">{paths[name] ?? paths.recu}</svg>;
 }
