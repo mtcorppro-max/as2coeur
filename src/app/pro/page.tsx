@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { estRoleService, estCoordOuManager } from "@/lib/roles";
+import { STATUT_PATIENT, estActifPatient } from "@/lib/statutPatient";
 import { useData, invalidate } from "@/lib/hooks/useData";
 import { AstreinteAlerte } from "@/components/AstreinteAlerte";
 import { CentreAlertes } from "@/components/CentreAlertes";
@@ -90,7 +91,7 @@ async function fetchDashboard(): Promise<DashData> {
   const valides = new Set((rps ?? []).map((r) => `${r.patient_id}|${r.echeance}`));
   const actions = new Map<string, ActionItem[]>();
   patientsRaw.forEach((p) => {
-    if (!p.date_operation || p.statut === "terminee") return;
+    if (!p.date_operation || !estActifPatient(p.statut)) return;
     const items: ActionItem[] = [];
     // Tous les jours de suivi programmés échus et non réalisés.
     (p.jours_suivi ?? []).forEach((j) => {
@@ -359,11 +360,6 @@ export default function Dashboard() {
 }
 
 function StatutSuivi({ statut }: { statut: Patient["statut"] }) {
-  const map = {
-    active: { c: "bg-green-100 text-ok", l: "Actif" },
-    suspendue: { c: "bg-amber-100 text-attention", l: "Suspendu" },
-    terminee: { c: "bg-slate-100 text-slate-500", l: "Terminé" },
-  } as const;
-  const s = map[statut];
-  return <span className={`badge ${s.c}`}>{s.l}</span>;
+  const s = STATUT_PATIENT[statut] ?? STATUT_PATIENT.active;
+  return <span className={`badge ${s.cls}`}>{s.label}</span>;
 }

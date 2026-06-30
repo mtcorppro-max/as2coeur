@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { TYPES_ORDO_PHARMACIE, clePharmaVu } from "@/lib/ordonnances";
+import { STATUT_PATIENT } from "@/lib/statutPatient";
 import { genererPdfOrdo, type OrdoPdf } from "@/lib/genererPdfOrdo";
 
 type PatientPharma = {
@@ -132,7 +133,7 @@ export default function PharmaciePage() {
             <section key={p.id} className="card grid gap-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-slate-800">{p.nom}</h2>
-                {p.statut !== "active" && <span className="badge bg-slate-100 text-slate-500">{p.statut === "terminee" ? "Terminé" : "Suspendu"}</span>}
+                {p.statut !== "active" && <span className={`badge ${(STATUT_PATIENT[p.statut] ?? STATUT_PATIENT.suspendue).cls}`}>{(STATUT_PATIENT[p.statut] ?? STATUT_PATIENT.suspendue).label}</span>}
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">

@@ -11,7 +11,7 @@ export type TypeMesure =
   | "poids";
 
 export type StatutAlerte = "declenchee" | "acquittee" | "escaladee" | "resolue";
-export type StatutSurveillance = "active" | "suspendue" | "terminee";
+export type StatutSurveillance = "active" | "suspendue" | "terminee" | "arret_perfusions" | "hospitalise" | "decede" | "annule";
 
 export interface Prestataire {
   id: string;

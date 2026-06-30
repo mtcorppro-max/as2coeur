@@ -88,7 +88,7 @@ export default function SuivisPage() {
   const groupes = useMemo(() => {
     const suivis: Suivi[] = [];
     patients.forEach((p) => {
-      if (!p.date_operation || p.statut === "terminee") return;
+      if (!p.date_operation || p.statut !== "active") return;
       if (filtreChir && p.chirurgien !== filtreChir) return;
       const base = new Date(p.date_operation);
       if (isNaN(base.getTime())) return;

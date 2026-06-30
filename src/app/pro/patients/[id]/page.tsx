@@ -14,6 +14,7 @@ import { LivraisonPatient } from "@/components/LivraisonPatient";
 import { EquipementsPatient } from "@/components/EquipementsPatient";
 import { OrdonnancesPatient } from "@/components/OrdonnancesPatient";
 import { FacturationPatient } from "@/components/FacturationPatient";
+import { StatutPatient } from "@/components/StatutPatient";
 import { MarquerVisite } from "@/components/MarquerVisite";
 import { AlertesPatient } from "@/components/AlertesPatient";
 import { SuiviPatient } from "@/components/SuiviPatient";
@@ -101,6 +102,7 @@ export default function FichePatient() {
   // Rubriques en onglets (boutons en haut) : suivis / ordonnances / livraisons / facturation.
   const [onglet, setOnglet] = useState<"suivis" | "ordonnances" | "livraisons" | "facturation" | null>(null);
   const peutFacturation = !!pro && (pro.niveau <= 1 || ["dirigeant", "coordinatrice"].includes(pro.role));
+  const peutStatut = !!pro && (pro.niveau <= 1 || pro.role === "coordinatrice");
 
   // Dernières valeurs par type
   const dernieres = new Map<string, number>();
@@ -141,15 +143,18 @@ export default function FichePatient() {
     <div className="grid grid-cols-1 gap-6">
       {/* ── En-tête + onglets de rubriques ── */}
       <div className="grid gap-3">
-        <div>
-          <Link href="/pro" className="text-sm text-slate-400 hover:text-brand" prefetch>
-            ← Tableau de bord
-          </Link>
-          <h1 className="mt-1 text-2xl font-bold text-slate-800">{patient.nom}</h1>
-          <p className="text-sm text-slate-500">
-            Code : <span className="font-mono font-semibold">{patient.code_unique}</span>
-            {patient.code_postal ? ` · ${patient.code_postal}` : ""}
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <Link href="/pro" className="text-sm text-slate-400 hover:text-brand" prefetch>
+              ← Tableau de bord
+            </Link>
+            <h1 className="mt-1 text-2xl font-bold text-slate-800">{patient.nom}</h1>
+            <p className="text-sm text-slate-500">
+              Code : <span className="font-mono font-semibold">{patient.code_unique}</span>
+              {patient.code_postal ? ` · ${patient.code_postal}` : ""}
+            </p>
+          </div>
+          <StatutPatient patientId={patient.id} statut={patient.statut} modifiable={peutStatut} />
         </div>
         <div className="flex flex-wrap gap-2">
           <OngletBtn label="Suivis" actif={onglet === "suivis"} onClick={() => setOnglet((o) => (o === "suivis" ? null : "suivis"))} />

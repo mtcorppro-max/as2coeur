@@ -90,7 +90,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         let n = 0;
         (data ?? []).forEach((p) => {
           const x = p as { statut: string; date_operation: string | null; jours_suivi: number[] | null };
-          if (!x.date_operation || x.statut === "terminee") return;
+          if (!x.date_operation || x.statut !== "active") return;
           const base = new Date(x.date_operation);
           if (isNaN(base.getTime())) return;
           (x.jours_suivi ?? []).forEach((j) => {

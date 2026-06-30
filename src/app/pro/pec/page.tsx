@@ -175,7 +175,7 @@ export default function PecPage() {
     const finPec = (p: Patient) => addJours(dOp(p), p.duree_prise_en_charge ?? 0);
     const periode = (debut: Date) => avecDate.filter((p) => dOp(p) >= debut && dOp(p) <= today);
 
-    const enCours = avecDate.filter((p) => p.statut !== "terminee" && dOp(p) <= today && finPec(p) >= today);
+    const enCours = avecDate.filter((p) => p.statut === "active" && dOp(p) <= today && finPec(p) >= today);
     const aVenir = avecDate.filter((p) => dOp(p) > today).sort((a, b) => dOp(a).getTime() - dOp(b).getTime());
 
     const grouper = (cle: (p: Patient) => string) => {
