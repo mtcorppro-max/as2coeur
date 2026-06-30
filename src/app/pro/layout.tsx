@@ -30,8 +30,6 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
   const estRh = pro?.role === "rh" && !estN0;
   // Le personnel : compte interne générique, hors hiérarchie (messagerie seule).
   const estPersonnel = pro?.role === "personnel" && !estN0;
-  // Annuaire des équipes (+ gestion des postes) : RH, dirigeant, manager, admin.
-  const peutAnnuaire = estN0 || pro?.role === "manager";
   // Espace Marketing : dirigeant, RH, manager, délégué (+ admin).
   const peutMkt = peutMarketing(pro?.role, pro?.niveau);
   // Notes de frais : tout le personnel interne (pas les partenaires externes).
@@ -203,7 +201,6 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
     : estDirigeant
     ? [
         { href: "/pro/pec", icon: "chart", label: "PEC" },
-        { href: "/pro/annuaire", icon: "users", label: "Annuaire" },
         { href: "/pro/marketing", icon: "megaphone", label: "Marketing" },
         { href: "/pro/notes-frais", icon: "recu", label: "Notes de frais" },
         { href: "/pro/equipe-dirigeante", icon: "users", label: "Équipe dirigeante" },
@@ -217,7 +214,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       ]
     : estRh
     ? [
-        { href: "/pro/annuaire", icon: "users", label: "Annuaire" },
+        { href: "/pro/annuaire", icon: "users", label: "Personnel" },
         { href: "/pro/marketing", icon: "megaphone", label: "Marketing" },
         { href: "/pro/notes-frais", icon: "recu", label: "Notes de frais" },
         { href: "/pro/messagerie", icon: "message", label: "Messages", badge: nbMessages },
@@ -235,7 +232,6 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         ...(estChir ? [{ href: "/pro/a-signer", icon: "document", label: "À signer", badge: nbASigner }] : []),
         { href: "/pro/messagerie", icon: "message", label: "Messages", badge: nbMessages },
         ...(peutGerer ? [{ href: "/pro/equipe", icon: "users", label: "Équipe" }] : []),
-        ...(peutAnnuaire ? [{ href: "/pro/annuaire", icon: "users", label: "Annuaire" }] : []),
         ...(peutMkt ? [{ href: "/pro/marketing", icon: "megaphone", label: "Marketing" }] : []),
         ...(peutNdf ? [{ href: "/pro/notes-frais", icon: "recu", label: "Notes de frais" }] : []),
         ...(peutPec ? [{ href: "/pro/pec", icon: "chart", label: "PEC" }] : []),
@@ -265,7 +261,6 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
               ) : estDirigeant ? (
                 <>
                   <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />
-                  <Onglet href="/pro/annuaire" icon="users" label="Annuaire des équipes" pathname={pathname} />
                   <Onglet href="/pro/marketing" icon="megaphone" label="Marketing" pathname={pathname} />
                   <Onglet href="/pro/notes-frais" icon="recu" label="Notes de frais" pathname={pathname} />
                   <Onglet href="/pro/equipe-dirigeante" icon="users" label="Équipe dirigeante" pathname={pathname} />
@@ -279,7 +274,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                 </>
               ) : estRh ? (
                 <>
-                  <Onglet href="/pro/annuaire" icon="users" label="Annuaire des équipes" pathname={pathname} />
+                  <Onglet href="/pro/annuaire" icon="users" label="Personnel" pathname={pathname} />
                   <Onglet href="/pro/marketing" icon="megaphone" label="Marketing" pathname={pathname} />
                   <Onglet href="/pro/notes-frais" icon="recu" label="Notes de frais" pathname={pathname} />
                   <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
@@ -297,7 +292,6 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                   {(pro?.role === "coordinatrice" || estN0) && <Onglet href="/pro/magasin" icon="box" label="Magasin" pathname={pathname} />}
                   {estChir && <Onglet href="/pro/a-signer" icon="document" label="À signer" pathname={pathname} badge={nbASigner} />}
                   {peutGerer && <Onglet href="/pro/equipe" icon="users" label="Équipe soignante" pathname={pathname} />}
-                  {peutAnnuaire && <Onglet href="/pro/annuaire" icon="users" label="Annuaire des équipes" pathname={pathname} />}
                   {peutMkt && <Onglet href="/pro/marketing" icon="megaphone" label="Marketing" pathname={pathname} />}
                   {peutNdf && <Onglet href="/pro/notes-frais" icon="recu" label="Notes de frais" pathname={pathname} />}
                   <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
@@ -307,7 +301,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
           <div className="flex items-center gap-3 text-right">
-            {peutGerer && <RechercheSoignants />}
+            {pro && <RechercheSoignants />}
             {(estCoord || estChir || peutGerer) && (
               <Link
                 href="/pro/nouveau"
