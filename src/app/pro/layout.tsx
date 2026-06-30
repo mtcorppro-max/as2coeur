@@ -44,6 +44,19 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
     return () => { clearInterval(id); window.removeEventListener("focus", bump); document.removeEventListener("visibilitychange", onVis); };
   }, []);
 
+  // Temps réel : ordonnance (À signer) + messagerie. Mise à jour instantanée du
+  // badge dès qu'une ligne me concernant change (RLS respectée côté Realtime).
+  useEffect(() => {
+    if (!pro?.id) return;
+    const supabase = createClient();
+    const ch = supabase
+      .channel(`notif-pro-${pro.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "ordonnance", filter: `destinataire_id=eq.${pro.id}` }, () => setTick((t) => t + 1))
+      .on("postgres_changes", { event: "*", schema: "public", table: "message_pro", filter: `destinataire_id=eq.${pro.id}` }, () => setTick((t) => t + 1))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [pro?.id]);
+
   const [nbDemandes, setNbDemandes] = useState(0);
   useEffect(() => {
     if (!pro || pro.niveau !== 1) return; // seul le manager valide
