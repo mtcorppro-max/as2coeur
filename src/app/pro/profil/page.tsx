@@ -21,8 +21,7 @@ const VIDE: Form = { prenom: "", nom: "", date_naissance: "", telephone: "", ema
 const fmtDate = (iso: string) => { if (!iso) return ""; const [a, m, j] = iso.split("-"); return j && m && a ? `${j}/${m}/${a}` : iso; };
 
 const ESPACES = [
-  { href: "/pro/notes-frais", titre: "Mes notes de frais", sous: "Déposer et suivre mes frais professionnels." },
-  { href: "/pro/financement", titre: "Demande de financement", sous: "Salon, congrès, formation…" },
+  { href: "/pro/notes-frais", titre: "Mes notes de frais", sous: "Notes de frais et demandes de financement." },
   { href: "/pro/espace-rh", titre: "Espace RH", sous: "Mes démarches RH." },
   { href: "/pro/voiture", titre: "Espace voiture", sous: "Mon véhicule et le parc auto." },
   { href: "/pro/formation", titre: "Espace formation", sous: "Mes formations." },

@@ -6,14 +6,14 @@ import { peutNotesFrais } from "@/lib/notesFrais";
 
 // Espace personnel (RH / voiture / formation) — réservé au personnel interne.
 // Contenu à venir (placeholder).
-export function EspacePlaceholder({ titre, sous, message }: { titre: string; sous: string; message: string }) {
+export function EspacePlaceholder({ titre, sous, message, retourHref = "/pro/profil", retourLabel = "Mon profil" }: { titre: string; sous: string; message: string; retourHref?: string; retourLabel?: string }) {
   const pro = useProSession();
   if (pro && !peutNotesFrais(pro.role)) {
     return <div className="card text-sm text-slate-500">Cet espace est réservé au personnel interne.</div>;
   }
   return (
     <div className="mx-auto max-w-4xl">
-      <Link href="/pro/profil" prefetch className="text-sm text-slate-400 hover:text-brand">← Mon profil</Link>
+      <Link href={retourHref} prefetch className="text-sm text-slate-400 hover:text-brand">← {retourLabel}</Link>
       <h1 className="mb-1 mt-1 text-2xl font-bold text-slate-800">{titre}</h1>
       <p className="mb-6 text-sm text-slate-500">{sous}</p>
       <div className="card grid place-items-center gap-2 py-16 text-center">

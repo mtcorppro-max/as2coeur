@@ -75,6 +75,14 @@ export default function NotesFraisPage() {
       </div>
       <p className="mb-4 text-sm text-slate-500">Déposez vos frais professionnels ; ils sont validés selon votre rattachement.</p>
 
+      <Link href="/pro/financement" prefetch className="card mb-4 flex items-center justify-between gap-3 transition hover:bg-rose-50/40">
+        <div>
+          <p className="font-semibold text-slate-800">Demande de financement</p>
+          <p className="text-sm text-slate-500">Salon, congrès, formation…</p>
+        </div>
+        <span className="text-xl text-brand">→</span>
+      </Link>
+
       <div className="mb-5 flex gap-2">
         <button onClick={() => setTab("mes")} className={`rounded-xl border px-4 py-2 text-sm font-semibold transition ${tab === "mes" ? "border-brand bg-brand text-white" : "border-rose-200 bg-white text-brand hover:bg-rose-50"}`}>Mes notes</button>
         <button onClick={() => setTab("valider")} className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition ${tab === "valider" ? "border-brand bg-brand text-white" : "border-rose-200 bg-white text-brand hover:bg-rose-50"}`}>
