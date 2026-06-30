@@ -139,6 +139,16 @@ export default function FichePatient() {
     );
   }
 
+  const rubriques = (
+    <>
+      <OngletBtn label="Suivis" icon={<ICal />} actif={onglet === "suivis"} onClick={() => setOnglet((o) => (o === "suivis" ? null : "suivis"))} />
+      <OngletBtn label="Ordonnances" icon={<IDoc />} actif={onglet === "ordonnances"} onClick={() => setOnglet((o) => (o === "ordonnances" ? null : "ordonnances"))} />
+      <OngletBtn label="Livraison" icon={<ITruck />} actif={onglet === "livraisons"} onClick={() => setOnglet((o) => (o === "livraisons" ? null : "livraisons"))} />
+      <OngletBtn label="Messagerie" icon={<IChat />} actif={onglet === "messagerie"} onClick={() => setOnglet((o) => (o === "messagerie" ? null : "messagerie"))} />
+      {peutFacturation && <OngletBtn label="Facturation" icon={<IEuro />} actif={onglet === "facturation"} onClick={() => setOnglet((o) => (o === "facturation" ? null : "facturation"))} />}
+    </>
+  );
+
   return (
     <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0">
       {/* ── En-tête : nom + icônes de rubriques + statut ── */}
@@ -148,19 +158,16 @@ export default function FichePatient() {
         </Link>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <h1 className="text-2xl font-bold text-slate-800">{patient.nom}</h1>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <OngletBtn label="Suivis" icon={<ICal />} actif={onglet === "suivis"} onClick={() => setOnglet((o) => (o === "suivis" ? null : "suivis"))} />
-            <OngletBtn label="Ordonnances" icon={<IDoc />} actif={onglet === "ordonnances"} onClick={() => setOnglet((o) => (o === "ordonnances" ? null : "ordonnances"))} />
-            <OngletBtn label="Livraison" icon={<ITruck />} actif={onglet === "livraisons"} onClick={() => setOnglet((o) => (o === "livraisons" ? null : "livraisons"))} />
-            <OngletBtn label="Messagerie" icon={<IChat />} actif={onglet === "messagerie"} onClick={() => setOnglet((o) => (o === "messagerie" ? null : "messagerie"))} />
-            {peutFacturation && <OngletBtn label="Facturation" icon={<IEuro />} actif={onglet === "facturation"} onClick={() => setOnglet((o) => (o === "facturation" ? null : "facturation"))} />}
-          </div>
+          {/* Desktop : icônes à côté du nom */}
+          <div className="hidden flex-wrap items-center gap-1.5 sm:flex">{rubriques}</div>
           <div className="ml-auto"><StatutPatient patientId={patient.id} statut={patient.statut} modifiable={peutStatut} /></div>
         </div>
         <p className="text-sm text-slate-500">
           Code : <span className="font-mono font-semibold">{patient.code_unique}</span>
           {patient.code_postal ? ` · ${patient.code_postal}` : ""}
         </p>
+        {/* Mobile : icônes sous la ligne « Code … » */}
+        <div className="flex flex-wrap items-center gap-1 sm:hidden">{rubriques}</div>
       </div>
 
       {/* ── Panneau de la rubrique ouverte ── */}
