@@ -8,6 +8,7 @@ import { useProSession } from "@/lib/hooks/useSession";
 import { Select } from "@/components/Select";
 import { DateField } from "@/components/DateField";
 import { TYPES_DEPENSE, libDepense, STATUTS_NDF, eurNdf } from "@/lib/notesFrais";
+import { genererPdfNoteFrais } from "@/lib/pdfNoteFrais";
 
 type Note = {
   id: string; emetteur_id: string; titre: string; periode_debut: string | null; periode_fin: string | null;
@@ -41,6 +42,7 @@ export default function NoteFraisDetail() {
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [events, setEvents] = useState<Evt[]>([]);
   const [benefs, setBenefs] = useState<Benef[]>([]);
+  const [emailCompta, setEmailCompta] = useState<string>("");
   const [pret, setPret] = useState(false);
   const [busy, setBusy] = useState(false);
   const supabase = createClient();
@@ -86,6 +88,12 @@ export default function NoteFraisDetail() {
   }, [id]);
 
   useEffect(() => { charger(); }, [charger]);
+  useEffect(() => {
+    if (!pro?.prestataire_id) return;
+    supabase.from("parametre_notes_frais").select("email_comptabilite").eq("prestataire_id", pro.prestataire_id).maybeSingle()
+      .then(({ data }) => setEmailCompta((data?.email_comptabilite as string) ?? ""));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pro?.prestataire_id]);
 
   if (pret && !note) return <div className="card text-sm text-slate-500">Note introuvable ou inaccessible.</div>;
   if (!note || !pro) return <p className="text-sm text-slate-400">Chargement…</p>;
@@ -178,6 +186,31 @@ export default function NoteFraisDetail() {
     setBusy(true);
     await supabase.from("note_de_frais").update({ statut: "remboursee", rembourse_le: new Date().toISOString() }).eq("id", id);
     setBusy(false); router.push("/pro/notes-frais");
+  }
+
+  function telechargerPdf() {
+    if (!note) return;
+    genererPdfNoteFrais({
+      titre: note.titre, emetteur: nomDe(note.emetteur) || "", statut: (STATUTS_NDF[note.statut] ?? STATUTS_NDF.brouillon).label,
+      periode_debut: note.periode_debut, periode_fin: note.periode_fin, total_ttc: note.total_ttc, total_ht: note.total_ht,
+      lignes: lignes.map((l) => ({ type: l.type, description: l.description, date_depense: l.date_depense, montant_ttc: l.montant_ttc, montant_ht: l.montant_ht, est_avantage_ps: l.est_avantage_ps, beneficiaire_nom: l.beneficiaire_nom })),
+    });
+  }
+  function envoyerCompta() {
+    if (!note) return;
+    const periode = [note.periode_debut, note.periode_fin].filter(Boolean).map((x) => new Date(x as string).toLocaleDateString("fr-FR")).join(" → ");
+    const corps =
+      `Note de frais : ${note.titre}\n` +
+      `Émetteur : ${nomDe(note.emetteur) || "—"}\n` +
+      (periode ? `Période : ${periode}\n` : "") +
+      `Statut : ${(STATUTS_NDF[note.statut] ?? STATUTS_NDF.brouillon).label}\n\n` +
+      `Dépenses :\n` +
+      lignes.map((l) => `- ${l.date_depense ? new Date(l.date_depense).toLocaleDateString("fr-FR") : ""} ${libDepense(l.type)}${l.description ? ` (${l.description})` : ""} : ${eurNdf(l.montant_ttc)}`).join("\n") +
+      `\n\nTotal HT : ${eurNdf(note.total_ht)}\nTotal TTC : ${eurNdf(note.total_ttc)}\n\n` +
+      `(Récapitulatif PDF joint ; justificatifs à récupérer dans l'application.)`;
+    const sujet = `Note de frais — ${note.titre} — ${eurNdf(note.total_ttc)}`;
+    window.location.href = `mailto:${encodeURIComponent(emailCompta)}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
+    setTimeout(telechargerPdf, 400);
   }
 
   const justifsDe = (lid: string) => justifs.filter((j) => j.ligne_id === lid);
@@ -307,6 +340,15 @@ export default function NoteFraisDetail() {
         </>)}
         {peutRembourser && <button onClick={rembourser} disabled={busy} className="btn-primary flex-1">Marquer remboursée</button>}
       </div>
+
+      {/* Récap PDF + envoi comptabilité */}
+      {lignes.length > 0 && (note.statut === "validee" || note.statut === "remboursee") && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-rose-100 pt-3">
+          <button onClick={telechargerPdf} className="btn-secondary px-3 py-2 text-sm">📄 Récap PDF</button>
+          <button onClick={envoyerCompta} className="btn-secondary px-3 py-2 text-sm">✉️ Envoyer à la comptabilité</button>
+          {!emailCompta && <span className="text-xs text-slate-400">Adresse comptabilité non renseignée (Barème DMOS → Paramètres).</span>}
+        </div>
+      )}
     </div>
   );
 }

@@ -23,8 +23,18 @@ export default function BaremeDmosPage() {
   const [rows, setRows] = useState<Bareme[]>([]);
   const [pret, setPret] = useState(false);
 
+  const [emailCompta, setEmailCompta] = useState("");
   const charger = () => createClient().from("dmos_bareme").select("id,type_avantage,seuil_declaration,seuil_autorisation,periode,actif").order("type_avantage").then(({ data }) => { setRows((data ?? []) as Bareme[]); setPret(true); });
   useEffect(() => { charger(); }, []);
+  useEffect(() => {
+    if (!pro?.prestataire_id) return;
+    createClient().from("parametre_notes_frais").select("email_comptabilite").eq("prestataire_id", pro.prestataire_id).maybeSingle()
+      .then(({ data }) => setEmailCompta((data?.email_comptabilite as string) ?? ""));
+  }, [pro?.prestataire_id]);
+  const sauverEmail = async (v: string) => {
+    if (!pro?.prestataire_id) return;
+    await createClient().from("parametre_notes_frais").upsert({ prestataire_id: pro.prestataire_id, email_comptabilite: v.trim() || null, updated_at: new Date().toISOString() });
+  };
 
   const maj = (id: string, patch: Partial<Bareme>) => setRows((a) => a.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   const persist = async (id: string, patch: Partial<Bareme>) => { await createClient().from("dmos_bareme").update(patch).eq("id", id); };
@@ -41,6 +51,12 @@ export default function BaremeDmosPage() {
         Seuils par type d&apos;avantage. Au-dessus du seuil d&apos;autorisation → <b>autorisation préalable</b> ; sinon → <b>déclaration</b> ;
         en dessous du seuil de déclaration → rien. Laisser vide = pas de seuil (déclaration par défaut). Montants à confirmer selon l&apos;arrêté en vigueur.
       </p>
+
+      <div className="card mb-5 grid gap-2">
+        <label className="label">E-mail de la comptabilité</label>
+        <input className="input" type="email" inputMode="email" value={emailCompta} onChange={(e) => setEmailCompta(e.target.value)} onBlur={(e) => sauverEmail(e.target.value)} placeholder="comptabilite@entreprise.fr" />
+        <p className="text-xs text-slate-400">Destinataire de l&apos;envoi des notes de frais validées (« Envoyer à la comptabilité »).</p>
+      </div>
 
       {!pret ? (
         <p className="text-sm text-slate-400">Chargement…</p>
