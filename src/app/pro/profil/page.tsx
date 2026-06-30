@@ -21,10 +21,10 @@ const VIDE: Form = { prenom: "", nom: "", date_naissance: "", telephone: "", ema
 const fmtDate = (iso: string) => { if (!iso) return ""; const [a, m, j] = iso.split("-"); return j && m && a ? `${j}/${m}/${a}` : iso; };
 
 const ESPACES = [
-  { href: "/pro/notes-frais", titre: "Mes notes de frais", sous: "Notes de frais et demandes de financement." },
-  { href: "/pro/espace-rh", titre: "Espace RH", sous: "Mes démarches RH." },
-  { href: "/pro/voiture", titre: "Espace voiture", sous: "Mon véhicule et le parc auto." },
-  { href: "/pro/formation", titre: "Espace formation", sous: "Mes formations." },
+  { href: "/pro/notes-frais", titre: "Notes de frais", sous: "Frais & financements", icon: "recu" },
+  { href: "/pro/espace-rh", titre: "Espace RH", sous: "Mes démarches RH", icon: "rh" },
+  { href: "/pro/voiture", titre: "Espace voiture", sous: "Véhicule & parc auto", icon: "voiture" },
+  { href: "/pro/formation", titre: "Espace formation", sous: "Mes formations", icon: "formation" },
 ];
 
 export default function MonProfil() {
@@ -122,16 +122,13 @@ export default function MonProfil() {
   const nomComplet = [f.prenom, f.nom].filter(Boolean).join(" ") || (pro?.nom ?? "");
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="mb-1 text-2xl font-bold text-slate-800">Mon profil</h1>
-      <p className="mb-5 text-sm text-slate-500">{role ? LIBELLE_ROLE[role as keyof typeof LIBELLE_ROLE] : ""}</p>
-
+    <div className="mx-auto max-w-3xl">
       {!pret ? (
         <p className="text-sm text-slate-400">Chargement…</p>
       ) : (
-        <div className="grid gap-4">
-          {/* ── Carte infos personnelles (lecture seule + crayon) ── */}
-          <div className="card grid gap-4">
+        <div className="grid gap-6">
+          {/* ── Carte profil (compacte, haut gauche ; pleine largeur en édition) ── */}
+          <div className={`card grid gap-4 ${edition ? "" : "w-full max-w-xs"}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-4">
                 <Avatar url={photoUrl} prenom={f.prenom} nom={f.nom} taille="lg" />
@@ -224,13 +221,14 @@ export default function MonProfil() {
             )}
           </div>
 
-          {/* ── Mes espaces / actions ── */}
+          {/* ── Mes espaces (tuiles centrées, façon réseau social) ── */}
           {peutNotesFrais(role) && (
-            <div className="grid gap-2">
+            <div className="mx-auto grid w-full max-w-xl grid-cols-2 gap-3">
               {ESPACES.map((e) => (
-                <Link key={e.href} href={e.href} prefetch className="card flex items-center justify-between gap-3 transition hover:bg-rose-50/40">
-                  <div><p className="font-semibold text-slate-800">{e.titre}</p><p className="text-sm text-slate-500">{e.sous}</p></div>
-                  <span className="text-xl text-brand">→</span>
+                <Link key={e.href} href={e.href} prefetch className="card flex flex-col items-center gap-2 py-6 text-center transition hover:-translate-y-0.5 hover:bg-rose-50/40 hover:shadow-md">
+                  <span className="grid h-12 w-12 place-items-center rounded-full bg-rose-100 text-brand"><IconeEspace name={e.icon} /></span>
+                  <p className="font-semibold text-slate-800">{e.titre}</p>
+                  <p className="text-xs text-slate-500">{e.sous}</p>
                 </Link>
               ))}
             </div>
@@ -239,6 +237,17 @@ export default function MonProfil() {
       )}
     </div>
   );
+}
+
+function IconeEspace({ name }: { name: string }) {
+  const p = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  const paths: Record<string, React.ReactNode> = {
+    recu: (<><path d="M6 3h12v18l-2.3-1.4L13.5 21 12 19.6 10.5 21 8.3 19.6 6 21z" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="9" y1="12" x2="15" y2="12" /></>),
+    rh: (<><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21" /><circle cx="9" cy="7" r="3.5" /><path d="M22 21v-1.5a4 4 0 0 0-3-3.85" /><path d="M16 3.6a3.5 3.5 0 0 1 0 6.8" /></>),
+    voiture: (<><path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13" /><path d="M3.5 13h17v4a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1v-1H7v1a1 1 0 0 1-1 1H4.5a1 1 0 0 1-1-1z" /></>),
+    formation: (<><path d="M12 4 2 9l10 5 10-5z" /><path d="M6 11v4c0 1.2 2.7 2.5 6 2.5s6-1.3 6-2.5v-4" /></>),
+  };
+  return <svg viewBox="0 0 24 24" className="h-6 w-6" {...p} aria-hidden="true">{paths[name] ?? paths.recu}</svg>;
 }
 
 function Ligne({ label, value }: { label: string; value: string }) {
