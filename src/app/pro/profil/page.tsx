@@ -133,6 +133,7 @@ export default function MonProfil() {
           <div className="mb-4 grid gap-2">
             {[
               { href: "/pro/notes-frais", titre: "Mes notes de frais", sous: "Déposer et suivre mes frais professionnels." },
+              { href: "/pro/financement", titre: "Demande de financement", sous: "Salon, congrès, formation…" },
               { href: "/pro/espace-rh", titre: "Espace RH", sous: "Mes informations et documents RH." },
               { href: "/pro/voiture", titre: "Espace voiture", sous: "Mon véhicule de fonction." },
               { href: "/pro/formation", titre: "Espace formation", sous: "Mes formations et habilitations." },

@@ -1,7 +1,16 @@
 "use client";
 
-import { EspacePlaceholder } from "@/components/EspacePlaceholder";
+import { EspaceRubriques } from "@/components/EspaceRubriques";
 
 export default function EspaceRhPage() {
-  return <EspacePlaceholder titre="Espace RH" sous="Mes informations et documents RH." message="Contrat, attestations, congés et documents RH seront disponibles ici." />;
+  return (
+    <EspaceRubriques
+      titre="Espace RH"
+      sous="Mes démarches RH."
+      rubriques={[
+        { id: "entretien", label: "Demander un entretien", message: "Formulaire de demande d'entretien (manager / RH), avec motif et créneaux souhaités." },
+        { id: "postes", label: "Postes à pourvoir", message: "Tous les postes ouverts au sein de l'entreprise, avec possibilité de candidater en interne." },
+      ]}
+    />
+  );
 }
