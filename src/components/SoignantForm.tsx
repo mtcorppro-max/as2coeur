@@ -6,6 +6,7 @@ import { Select } from "@/components/Select";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { optionsNiveau } from "@/lib/niveaux";
+import { SERVICES } from "@/lib/roles";
 import { ProtocoleEditor, protocoleVide, protocolePropre, type Protocole } from "@/components/protocole";
 
 type Prestataire = { id: string; nom: string };
@@ -45,6 +46,7 @@ const VIDE = {
   niveau: "3",
   prestataire_id: "",
   poste: "",
+  service: "",
   telephone: "",
   specialite: "",
   rpps: "",
@@ -157,6 +159,10 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
     const sansAgence = estInfLib || estPharma || estDir || estHorsHierarchie; // pas de rattachement à une agence
     if (estInfLib && !form.zone_exercice.trim()) {
       setErreur("Indiquez la zone d'exercice de l'infirmière libérale.");
+      return;
+    }
+    if (form.role === "personnel" && !form.service) {
+      setErreur("Choisissez le service du compte personnel.");
       return;
     }
     if (estDelegue && niveau23 && agencesDelegue.length === 0) {
@@ -312,11 +318,17 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
           </div>
         )}
         {form.role === "personnel" && (
-          <div>
-            <label className="label">Poste / fonction</label>
-            <input className="input" value={form.poste} onChange={set("poste")} placeholder="Secrétaire, Comptable, Technicien…" />
-            <p className="mt-1 text-xs text-slate-400">Compte interne sans accès patient (modifiable par RH / dirigeant / manager).</p>
-          </div>
+          <>
+            <div>
+              <label className="label">Service *</label>
+              <Select value={form.service} onChange={(v) => setForm((f) => ({ ...f, service: v }))} placeholder="— Choisir un service —" options={SERVICES} />
+            </div>
+            <div>
+              <label className="label">Poste / fonction</label>
+              <input className="input" value={form.poste} onChange={set("poste")} placeholder="Secrétaire, Comptable, Technicien…" />
+              <p className="mt-1 text-xs text-slate-400">Compte interne sans accès patient (modifiable par RH / dirigeant / manager).</p>
+            </div>
+          </>
         )}
         {estChirurgien && (
           <>

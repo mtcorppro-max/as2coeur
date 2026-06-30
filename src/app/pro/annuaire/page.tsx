@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { Avatar } from "@/components/Avatar";
-import { LIBELLE_ROLE, peutGererPersonnel } from "@/lib/roles";
+import { Select } from "@/components/Select";
+import { LIBELLE_ROLE, peutGererPersonnel, SERVICES, libService } from "@/lib/roles";
 
 type Pro = {
   id: string;
@@ -13,6 +14,7 @@ type Pro = {
   titre: string | null;
   role: string;
   poste: string | null;
+  service: string | null;
   email: string | null;
   telephone: string | null;
   photo_url: string | null;
@@ -22,7 +24,7 @@ type Pro = {
 type Region = { id: string; nom: string };
 type Agence = { id: string; nom: string; region_id: string };
 
-const COLS = "id,nom,prenom,titre,role,poste,email,telephone,photo_url,agence_id,region_id";
+const COLS = "id,nom,prenom,titre,role,poste,service,email,telephone,photo_url,agence_id,region_id";
 const nomComplet = (p: Pro) => [p.titre, p.prenom, p.nom].filter(Boolean).join(" ") || p.nom;
 const libRole = (r: string) => LIBELLE_ROLE[r as keyof typeof LIBELLE_ROLE] ?? r;
 
@@ -43,7 +45,7 @@ export default function AnnuairePage() {
 
   // Création d'un compte « personnel ».
   const [formOuvert, setFormOuvert] = useState(false);
-  const VIDE = { nom: "", prenom: "", poste: "", email: "", telephone: "", motDePasse: "" };
+  const VIDE = { nom: "", prenom: "", service: "", poste: "", email: "", telephone: "", motDePasse: "" };
   const [cForm, setCForm] = useState({ ...VIDE });
   const [cBusy, setCBusy] = useState(false);
   const [cErr, setCErr] = useState<string | null>(null);
@@ -113,6 +115,7 @@ export default function AnnuairePage() {
 
   async function creerPersonnel(e: React.FormEvent) {
     e.preventDefault();
+    if (!cForm.service) { setCErr("Choisissez le service."); return; }
     setCErr(null); setCBusy(true);
     try {
       const res = await fetch("/api/soignants", {
@@ -171,6 +174,7 @@ export default function AnnuairePage() {
                 <div><label className="label">Prénom *</label><input className="input" value={cForm.prenom} onChange={(e) => setCForm((f) => ({ ...f, prenom: e.target.value }))} placeholder="Marie" required /></div>
                 <div><label className="label">Nom *</label><input className="input" value={cForm.nom} onChange={(e) => setCForm((f) => ({ ...f, nom: e.target.value }))} placeholder="DUPONT" required /></div>
               </div>
+              <div><label className="label">Service *</label><Select value={cForm.service} onChange={(v) => setCForm((f) => ({ ...f, service: v }))} placeholder="— Choisir un service —" options={SERVICES} /></div>
               <div><label className="label">Poste / fonction</label><input className="input" value={cForm.poste} onChange={(e) => setCForm((f) => ({ ...f, poste: e.target.value }))} placeholder="Secrétaire, Comptable, Technicien…" /></div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div><label className="label">Email de connexion *</label><input className="input" type="email" value={cForm.email} onChange={(e) => setCForm((f) => ({ ...f, email: e.target.value }))} placeholder="nom@email.fr" inputMode="email" required /></div>
@@ -206,6 +210,7 @@ export default function AnnuairePage() {
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-semibold text-slate-800">{nomComplet(m)}</span>
                         <span className="badge bg-rose-100 text-brand">{libRole(m.role)}</span>
+                        {m.service && <span className="badge bg-sky-100 text-sky-700">{libService(m.service)}</span>}
                         {m.id === pro?.id && <span className="badge bg-slate-100 text-slate-500">Vous</span>}
                       </div>
                       {/* Poste (dénomination) */}

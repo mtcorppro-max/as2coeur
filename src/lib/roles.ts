@@ -22,6 +22,16 @@ export const estRh = (r: string | undefined | null) => r === "rh";
 // Sa dénomination de poste est gérée par RH / dirigeant / manager.
 export const estPersonnel = (r: string | undefined | null) => r === "personnel";
 
+// Services d'affectation d'un compte « Personnel (autre fonction) ».
+export const SERVICES: { value: string; label: string }[] = [
+  { value: "marketing", label: "Service marketing" },
+  { value: "rh", label: "Service RH" },
+  { value: "comptabilite", label: "Service comptabilité" },
+  { value: "logistique", label: "Service logistique" },
+  { value: "informatique", label: "Service informatique" },
+];
+export const libService = (v: string | null | undefined) => SERVICES.find((s) => s.value === v)?.label ?? "";
+
 // Peut gérer l'annuaire & les postes du personnel : RH, dirigeant, manager, admin.
 export const peutGererPersonnel = (role: string | undefined | null, niveau: number | undefined | null) =>
   niveau === 0 || role === "rh" || role === "dirigeant" || role === "manager";

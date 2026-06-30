@@ -147,6 +147,7 @@ export async function POST(request: Request) {
           zone_exercice: role === "infirmiere_liberale" ? texteOuNull(body.zone_exercice) : null,
           cabinets: role === "pharmacie" ? texteOuNull(body.cabinets) : null,
           poste: texteOuNull(body.poste),
+          service: role === "personnel" ? texteOuNull(body.service) : null,
         };
 
   // Rattachement : infirmière libérale & pharmacie -> aucune agence ;
