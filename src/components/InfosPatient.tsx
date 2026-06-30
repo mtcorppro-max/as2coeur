@@ -353,6 +353,12 @@ export function InfosPatient({
   const ageAns = age(vue.date_naissance);
   const villeLigne = [vue.code_postal, vue.ville].filter(Boolean).join(" ");
   const duree = vue.duree_prise_en_charge ? Number(vue.duree_prise_en_charge) : null;
+  // Tél. de la pharmacie rattachée (compte portail ou soignant externe) — auto.
+  const telPharmacie = vue.pharmacie_compte_nom
+    ? (pharmacies.find((s) => nomComplet(s) === vue.pharmacie_compte_nom)?.telephone
+      ?? externes.find((e) => e.type === "pharmacie" && nomComplet(e) === vue.pharmacie_compte_nom)?.telephone
+      ?? null)
+    : null;
 
   return (
     <section className="card grid gap-4">
@@ -410,7 +416,12 @@ export function InfosPatient({
               extra={vue.infirmiere_tel}
               href={vue.infirmiere_tel ? `tel:${vue.infirmiere_tel}` : undefined}
             />
-            <Ligne label="Pharmacie (portail)" value={vue.pharmacie_compte_nom} />
+            <Ligne
+              label="Pharmacie (portail)"
+              value={vue.pharmacie_compte_nom}
+              extra={telPharmacie ?? undefined}
+              href={telPharmacie ? `tel:${telPharmacie}` : undefined}
+            />
             <Ligne
               label={vue.alerte_1_nom ? `Alerte 1 · ${vue.alerte_1_nom}` : "N° alerte 1"}
               value={vue.tel_alerte_1}
