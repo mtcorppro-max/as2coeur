@@ -47,7 +47,7 @@ function libelleAction(a: ActionItem): string {
 async function fetchDashboard(): Promise<DashData> {
   const supabase = createClient();
   const [{ data: pts }, { data: als }, { data: msgs }, { data: svs }, { data: rps }, { data: livs }] = await Promise.all([
-    supabase.from("patient").select("id,nom,statut,code_postal,prestataire_id,user_id,date_operation,duree_prise_en_charge,jours_suivi,infirmiere_nom,infirmiere_tel").order("nom"),
+    supabase.from("patient").select("id,nom,statut,code_postal,prestataire_id,user_id,date_operation,duree_prise_en_charge,jours_suivi").order("nom"),
     supabase.from("alerte").select("id,patient_id,statut").in("statut", ["declenchee", "escaladee", "acquittee"]),
     supabase.from("message").select("patient_id,auteur_user_id,horodatage").order("horodatage", { ascending: true }).limit(2000),
     supabase.from("suivi").select("patient_id,created_at"),
@@ -133,19 +133,34 @@ export default function Dashboard() {
   // Le suivi des livraisons à attribuer est réservé aux coordinatrices/managers.
   const peutVoirLivraisons = estCoordOuManager(pro?.role);
 
-  // Médecin : ordonnances en attente de sa signature, par patient.
-  const ordoData = useData<Map<string, number>>(
-    estMedecin && pro?.id ? `pro:dash-ordo:${pro.id}` : "pro:dash-ordo:none",
+  // Médecin : ordonnances en attente de sa signature + infirmière coordinatrice
+  // qui suit chaque patient (via patient_soignant), par patient.
+  type CoordInfo = { nom: string; tel: string | null };
+  const medData = useData<{ ordo: Map<string, number>; coord: Map<string, CoordInfo> }>(
+    estMedecin && pro?.id ? `pro:dash-med:${pro.id}` : "pro:dash-med:none",
     async () => {
-      if (!estMedecin || !pro?.id) return new Map<string, number>();
-      const { data } = await createClient().from("ordonnance").select("patient_id").eq("destinataire_id", pro.id).eq("statut", "a_signer");
-      const m = new Map<string, number>();
-      (data ?? []).forEach((o) => { const id = (o as { patient_id: string }).patient_id; m.set(id, (m.get(id) ?? 0) + 1); });
-      return m;
+      if (!estMedecin || !pro?.id) return { ordo: new Map<string, number>(), coord: new Map<string, CoordInfo>() };
+      const supabase = createClient();
+      const [{ data: ordos }, { data: liens }, { data: coords }] = await Promise.all([
+        supabase.from("ordonnance").select("patient_id").eq("destinataire_id", pro.id).eq("statut", "a_signer"),
+        supabase.from("patient_soignant").select("patient_id,professionnel_id"),
+        supabase.from("professionnel").select("id,nom,prenom,titre,telephone").eq("role", "coordinatrice"),
+      ]);
+      const ordo = new Map<string, number>();
+      (ordos ?? []).forEach((o) => { const id = (o as { patient_id: string }).patient_id; ordo.set(id, (ordo.get(id) ?? 0) + 1); });
+      const coordById = new Map((coords ?? []).map((c) => [c.id as string, c as { nom: string; prenom: string | null; titre: string | null; telephone: string | null }]));
+      const coord = new Map<string, CoordInfo>();
+      (liens ?? []).forEach((l) => {
+        const lien = l as { patient_id: string; professionnel_id: string };
+        const c = coordById.get(lien.professionnel_id);
+        if (c) coord.set(lien.patient_id, { nom: [c.titre, c.prenom, c.nom].filter(Boolean).join(" "), tel: c.telephone ?? null });
+      });
+      return { ordo, coord };
     },
     [estMedecin, pro?.id]
   );
-  const ordoParPatient = ordoData ?? new Map<string, number>();
+  const ordoParPatient = medData?.ordo ?? new Map<string, number>();
+  const coordParPatient = medData?.coord ?? new Map<string, CoordInfo>();
 
   // Pharmacie, livreur et dirigeant n'ont pas de tableau de bord : on les renvoie vers leur espace.
   useEffect(() => {
@@ -241,10 +256,10 @@ export default function Dashboard() {
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-slate-700">{p.nom}</p>
                       <StatutSuivi statut={p.statut} />
-                      {estMedecin && (p.infirmiere_nom || p.infirmiere_tel) && (
+                      {estMedecin && coordParPatient.get(p.id) && (
                         <p className="mt-0.5 truncate text-xs text-slate-400">
-                          IDE : {p.infirmiere_nom || "—"}
-                          {p.infirmiere_tel && <> · <a href={`tel:${p.infirmiere_tel}`} onClick={(ev) => ev.stopPropagation()} className="text-brand hover:underline">{p.infirmiere_tel}</a></>}
+                          Coord. : {coordParPatient.get(p.id)!.nom}
+                          {coordParPatient.get(p.id)!.tel && <> · <a href={`tel:${coordParPatient.get(p.id)!.tel!}`} onClick={(ev) => ev.stopPropagation()} className="text-brand hover:underline">{coordParPatient.get(p.id)!.tel}</a></>}
                         </p>
                       )}
                     </div>
@@ -306,7 +321,7 @@ export default function Dashboard() {
                   <th className="px-4 py-3">Alertes</th>
                   {estMedecin ? (
                     <>
-                      <th className="px-4 py-3">Infirmière</th>
+                      <th className="px-4 py-3">Coordinatrice</th>
                       <th className="px-4 py-3">Ordonnances</th>
                     </>
                   ) : (
@@ -351,14 +366,17 @@ export default function Dashboard() {
                       {estMedecin ? (
                         <>
                           <td className="px-4 py-3">
-                            {p.infirmiere_nom || p.infirmiere_tel ? (
-                              <span className="flex flex-col leading-tight">
-                                <span className="font-medium text-slate-700">{p.infirmiere_nom || "—"}</span>
-                                {p.infirmiere_tel && <a href={`tel:${p.infirmiere_tel}`} onClick={(ev) => ev.stopPropagation()} className="text-xs text-brand hover:underline">{p.infirmiere_tel}</a>}
-                              </span>
-                            ) : (
-                              <span className="text-slate-300">—</span>
-                            )}
+                            {(() => {
+                              const c = coordParPatient.get(p.id);
+                              return c ? (
+                                <span className="flex flex-col leading-tight">
+                                  <span className="font-medium text-slate-700">{c.nom}</span>
+                                  {c.tel && <a href={`tel:${c.tel}`} onClick={(ev) => ev.stopPropagation()} className="text-xs text-brand hover:underline">{c.tel}</a>}
+                                </span>
+                              ) : (
+                                <span className="text-slate-300">—</span>
+                              );
+                            })()}
                           </td>
                           <td className="px-4 py-3">
                             {(ordoParPatient.get(p.id) ?? 0) > 0 ? (
