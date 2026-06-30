@@ -413,25 +413,12 @@ export function NouveauPatientForm() {
             Jours de suivi programmés : {joursSuivi.map((j) => `J${j}`).join(", ")}
           </p>
         )}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="label">Pharmacie</label>
-            <input className="input" value={form.pharmacie} onChange={set("pharmacie")} placeholder="Nom / ville de la pharmacie" />
-          </div>
-          <div>
-            <label className="label">Tél. pharmacie</label>
-            <input className="input" value={form.pharmacie_tel} onChange={set("pharmacie_tel")} placeholder="0…" inputMode="tel" />
-          </div>
-        </div>
         {pharmacies.length > 0 && (
           <div>
             <label className="label">Pharmacie — accès au portail (compte AS2CŒUR)</label>
             <Select
               value={form.pharmacie_compte_nom}
-              onChange={(v) => {
-                const ph = pharmacies.find((s) => nomComplet(s) === v);
-                setForm((f) => ({ ...f, pharmacie_compte_nom: v, pharmacie: f.pharmacie || v, pharmacie_tel: f.pharmacie_tel || (ph?.telephone ?? "") }));
-              }}
+              onChange={(v) => setForm((f) => ({ ...f, pharmacie_compte_nom: v }))}
               placeholder="— Aucun compte pharmacie —"
               options={[
                 ...pharmacies.map((s) => ({ value: nomComplet(s), label: nomComplet(s) })),

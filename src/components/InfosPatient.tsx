@@ -303,10 +303,6 @@ export function InfosPatient({
           {joursSuivi.length > 0 && (
             <p className="text-xs text-brand">Jours de suivi : {joursSuivi.map((j) => `J${j}`).join(", ")}</p>
           )}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Champ label="Pharmacie" value={form.pharmacie} onChange={set("pharmacie")} />
-            <Champ label="Tél. pharmacie" value={form.pharmacie_tel} onChange={set("pharmacie_tel")} />
-          </div>
           <div>
             <label className="label">Infirmière libérale</label>
             <Select
@@ -408,12 +404,6 @@ export function InfosPatient({
             <Ligne label="Prise en charge" value={duree ? `${duree} jours` : ""} />
             <Ligne label="Type de traitement" value={vue.traitement} />
             <Ligne label={vue.operation ? "Chirurgien" : "Médecin"} value={vue.chirurgien} />
-            <Ligne
-              label="Pharmacie"
-              value={vue.pharmacie}
-              extra={vue.pharmacie_tel}
-              href={vue.pharmacie_tel ? `tel:${vue.pharmacie_tel}` : undefined}
-            />
             <Ligne
               label="Infirmière libérale"
               value={vue.infirmiere_nom}
