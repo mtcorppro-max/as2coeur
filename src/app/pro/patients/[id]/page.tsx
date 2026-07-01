@@ -15,6 +15,7 @@ import { EquipementsPatient } from "@/components/EquipementsPatient";
 import { OrdonnancesPatient } from "@/components/OrdonnancesPatient";
 import { FacturationPatient } from "@/components/FacturationPatient";
 import { StatutPatient } from "@/components/StatutPatient";
+import { CouvertureOrdo } from "@/components/CouvertureOrdo";
 import { BilansPatient } from "@/components/BilansPatient";
 import { MarquerVisite } from "@/components/MarquerVisite";
 import { AlertesPatient } from "@/components/AlertesPatient";
@@ -163,7 +164,10 @@ export default function FichePatient() {
           <h1 className="text-2xl font-bold text-slate-800">{patient.nom}</h1>
           {/* Desktop : icônes à côté du nom */}
           <div className="hidden flex-wrap items-center gap-1.5 sm:flex">{rubriques}</div>
-          <div className="ml-auto"><StatutPatient patientId={patient.id} statut={patient.statut} modifiable={peutStatut} estPostOp={patient.traitement === "Post op"} statutDetail={patient.statut_detail ?? null} /></div>
+          <div className="ml-auto flex items-center gap-2">
+            <CouvertureOrdo patientId={patient.id} statut={patient.statut} dateOperation={patient.date_operation ?? null} />
+            <StatutPatient patientId={patient.id} statut={patient.statut} modifiable={peutStatut} estPostOp={patient.traitement === "Post op"} statutDetail={patient.statut_detail ?? null} />
+          </div>
         </div>
         <p className="text-sm text-slate-500">
           Code : <span className="font-mono font-semibold">{patient.code_unique}</span>
