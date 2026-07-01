@@ -310,14 +310,14 @@ export const CONFIGS: Record<string, Conf> = {
         "PICC-line": { x: 32, y: 415 },
         "Chambre implantable": { x: 32, y: 433 },
       } },
-      // Valeurs de la ligne « Perfusion IV de … » (comblent les blancs effacés ci-dessus).
       // Heures d'administration (centrées dans le blanc « à … heures », pointillés effacés).
       { k: "txt", key: "heure_matin", pos: { x: 133, y: 527 }, size: 11, centre: true },
       { k: "txt", key: "heure_midi", pos: { x: 282, y: 527 }, size: 11, centre: true },
       { k: "txt", key: "heure_soir", pos: { x: 426, y: 527 }, size: 11, centre: true },
-      { k: "txt", key: "perfusion_produit", pos: { x: 133, y: 485 }, size: 11, gras: true },
-      { k: "txt", key: "perfusion_volume", pos: { x: 446, y: 485 }, size: 11, gras: true },
-      { k: "txt", key: "perfusion_duree", pos: { x: 115, y: 498 }, size: 11, gras: true },
+      // Valeurs « Perfusion IV de … » : taille réduite et sans gras pour tenir dans les espaces.
+      { k: "txt", key: "perfusion_produit", pos: { x: 133, y: 485 }, size: 9 },
+      { k: "txt", key: "perfusion_volume", pos: { x: 446, y: 485 }, size: 9 },
+      { k: "txt", key: "perfusion_duree", pos: { x: 115, y: 498 }, size: 9 },
       { k: "txt", key: "ordonnance_jours", pos: { x: 116, y: 562 }, size: 11 },
       { k: "txt", key: "a_renouveler", pos: { x: 100, y: 591 }, size: 11 },
     ],
