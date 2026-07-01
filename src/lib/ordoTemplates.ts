@@ -231,9 +231,12 @@ export const CONFIGS: Record<string, Conf> = {
   },
   ald_perfadom_npad: {
     template: "/PERFADOM%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 450, y: 293 }, signature: { x: 380, y: 620 },
-    blancs: [[122, 632, 42, 13]], // masque « jours » imprimé (durée libre : jour/semaine/mois)
+    // masque « jours » (Ordonnances pour) + les deux « jours/7. » imprimés
+    blancs: [[122, 632, 42, 13], [48, 385, 46, 16], [48, 545, 46, 16]],
     champs: [
       { k: "checks", key: "options", map: { "Première installation": { x: 33, y: 321 }, "12 premières semaines": { x: 33, y: 352 }, "Après les 12 premières semaines": { x: 30, y: 499 } } },
+      { k: "phrase", modele: "{jours7_avant} jours/7.", pos: { x: 48, y: 396 }, size: 11 },
+      { k: "phrase", modele: "{jours7_apres} jours/7.", pos: { x: 48, y: 556 }, size: 11 },
       { k: "txt", key: "ordonnance_jours", pos: { x: 105, y: 640 } },
       { k: "txt", key: "a_renouveler", pos: { x: 80, y: 663 } },
     ],

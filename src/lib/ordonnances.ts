@@ -263,6 +263,8 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     description: "Bizone ALD — nutrition parentérale à domicile (forfaits).",
     champs: [
       { key: "options", label: "Forfaits", type: "checkboxes", options: ["Première installation", "12 premières semaines", "Après les 12 premières semaines"] },
+      { key: "jours7_avant", label: "Prestation hebdo (12 premières sem.) — administrée … jours/7", type: "text" },
+      { key: "jours7_apres", label: "Prestation hebdo (après 12 sem.) — administrée … jours/7", type: "text" },
       { key: "ordonnance_jours", label: "Ordonnance pour (durée, ex. 4 semaines / 6 mois)", type: "text" },
       { key: "a_renouveler", label: "À renouveler (nombre de fois)", type: "text" },
     ],
