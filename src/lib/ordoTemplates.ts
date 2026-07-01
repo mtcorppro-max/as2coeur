@@ -293,9 +293,9 @@ export const CONFIGS: Record<string, Conf> = {
     // ce bloc de 36 pt (rendu exact préservé) et on redessine 4 choix de voie d'abord.
     blancs: [[24, 372, 566, 126]],
     blocs: [{ clip: [24, 406, 566, 90], dy: 36 }],
-    // Efface (après déplacement +36) les 3 valeurs pré-imprimées de la ligne « Perfusion IV de … »
-    // — produit, volume, durée — remplacées par des champs à saisir (voir champs ci-dessous).
-    blancsApres: [[131, 475, 52, 13], [444, 475, 38, 13], [113, 488, 54, 13]],
+    // Efface (après déplacement +36) : les 3 valeurs pré-imprimées « Perfusion IV de … »
+    // (produit/volume/durée) et les pointillés de la ligne « matin/midi/soir à … heures ».
+    blancsApres: [[131, 475, 52, 13], [444, 475, 38, 13], [113, 488, 54, 13], [117, 520, 32, 11], [265, 520, 34, 11], [414, 520, 25, 11]],
     boites: [[31, 371, 9], [31, 389, 9], [31, 407, 9], [31, 425, 9]],
     textes: [
       { s: "Sur voie veineuse périphérique ou en sous cutanée", pos: { x: 61, y: 379 }, size: 11 },
@@ -311,6 +311,10 @@ export const CONFIGS: Record<string, Conf> = {
         "Chambre implantable": { x: 32, y: 433 },
       } },
       // Valeurs de la ligne « Perfusion IV de … » (comblent les blancs effacés ci-dessus).
+      // Heures d'administration (centrées dans le blanc « à … heures », pointillés effacés).
+      { k: "txt", key: "heure_matin", pos: { x: 133, y: 527 }, size: 11, centre: true },
+      { k: "txt", key: "heure_midi", pos: { x: 282, y: 527 }, size: 11, centre: true },
+      { k: "txt", key: "heure_soir", pos: { x: 426, y: 527 }, size: 11, centre: true },
       { k: "txt", key: "perfusion_produit", pos: { x: 133, y: 485 }, size: 11, gras: true },
       { k: "txt", key: "perfusion_volume", pos: { x: 446, y: 485 }, size: 11, gras: true },
       { k: "txt", key: "perfusion_duree", pos: { x: 115, y: 498 }, size: 11, gras: true },
