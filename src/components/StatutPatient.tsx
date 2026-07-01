@@ -40,7 +40,13 @@ export function StatutPatient({
     setVal(s); setDetail(det); setBusy(true);
     const { error } = await createClient().from("patient").update({ statut: s, statut_detail: det }).eq("id", patientId);
     setBusy(false);
-    if (error) { alert("Échec : " + error.message); setVal(prev); setDetail(prevD); }
+    if (error) { alert("Échec : " + error.message); setVal(prev); setDetail(prevD); return; }
+    // Chaque changement de statut est notifié au service comptabilité (facturation),
+    // avec le motif et les perfusions effectuées. Non bloquant.
+    fetch("/api/statut-notif", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ patient_id: patientId, ancien: prev, nouveau: s, detail: det }),
+    }).catch(() => {});
   }
 
   function choisir(s: string) {
