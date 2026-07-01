@@ -212,8 +212,8 @@ export const CONFIGS: Record<string, Conf> = {
   idel_piccline: {
     template: "/IDEL%20ENTRETIEN%20PICCLINE.pdf", ...BIZONE, date: { x: 457, y: 266 }, signature: { x: 925, y: 618 },
     champs: [
-      { k: "txt", key: "ordonnance_mois", pos: { x: 126, y: 491 }, size: 11, centre: true },
-      { k: "txt", key: "a_renouveler", pos: { x: 107, y: 520 }, size: 11, centre: true },
+      { k: "txt", key: "ordonnance_mois", pos: { x: 131, y: 493 }, size: 11, centre: true },
+      { k: "txt", key: "a_renouveler", pos: { x: 107, y: 517 }, size: 11, centre: true },
     ],
   },
   bizone_vierge: {
