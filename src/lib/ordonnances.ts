@@ -198,7 +198,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
   // Contenu majoritairement pré-imprimé : on ne saisit que l'en-tête (auto) et
   // quelques champs variables (durée, renouvellement, poches, cases à cocher).
   {
-    id: "ald_pst", categorie: "ALD", label: "Pansement post-opératoire (PST)",
+    id: "ald_pst", categorie: "ALD", label: "Pansement post-opératoire ALD",
     description: "Bizone ALD — protocole de pansement pré-imprimé.",
     champs: [
       { key: "qsp_jours", label: "QSP (nombre de jours)", type: "text" },
@@ -206,7 +206,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     ],
   },
   {
-    id: "ald_glycemie", categorie: "ALD", label: "Surveillance glycémique",
+    id: "ald_glycemie", categorie: "ALD", label: "Surveillance glycémique ALD",
     description: "Bizone ALD — surveillance glycémique + insuline.",
     champs: [
       { key: "ordonnance_jours", label: "Ordonnance pour (durée, ex. 6 mois)", type: "text" },
@@ -214,7 +214,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     ],
   },
   {
-    id: "ald_hemocs", categorie: "ALD", label: "Hémocultures",
+    id: "ald_hemocs", categorie: "ALD", label: "Hémocultures ALD",
     description: "Bizone ALD — 1 train d'hémocultures (PAC/PICC-line + périphérique).",
     champs: [
       { key: "ordonnance_jours", label: "Ordonnance pour (durée)", type: "text" },
@@ -222,7 +222,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     ],
   },
   {
-    id: "ald_taurolock", categorie: "ALD", label: "Verrou Taurolock",
+    id: "ald_taurolock", categorie: "ALD", label: "Verrou Taurolock ALD",
     description: "Bizone ALD — protocole Taurolock pré-imprimé.",
     champs: [
       { key: "qsp_jours", label: "QSP (jours)", type: "text" },
@@ -230,7 +230,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     ],
   },
   {
-    id: "ald_pharma", categorie: "ALD", label: "Pharmacie (pansements)",
+    id: "ald_pharma", categorie: "ALD", label: "Pharmacie ALD",
     description: "Bizone ALD — Bétadine, Biseptine, sérum physio, tubifast, mepitel.",
     champs: [
       { key: "poches_100", label: "Sérum physiologique 100 mL (poches/jour)", type: "text" },
@@ -239,7 +239,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     ],
   },
   {
-    id: "ald_pharma_pac", categorie: "ALD", label: "Pharmacie — PAC",
+    id: "ald_pharma_pac", categorie: "ALD", label: "Pharmacie PAC ALD",
     description: "Bizone ALD — matériel pansement chambre implantable (PAC).",
     champs: [
       { key: "poches_100", label: "Sérum physiologique 100 mL (poches/jour)", type: "text" },
@@ -248,7 +248,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     ],
   },
   {
-    id: "ald_bs", categorie: "ALD", label: "Bilan sanguin",
+    id: "ald_bs", categorie: "ALD", label: "Bilan sanguin ALD",
     description: "Bizone ALD — bilan sanguin à domicile (à faxer ASDIA).",
     champs: [
       { key: "voie", label: "Voie d'abord", type: "radio", options: ["VVP", "PAC", "VVC", "PICCLINE"] },
@@ -259,7 +259,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     ],
   },
   {
-    id: "ald_perfadom_npad", categorie: "ALD", label: "Perfadom — NPAD",
+    id: "ald_perfadom_npad", categorie: "ALD", label: "Perfadom NPAD ALD",
     description: "Bizone ALD — nutrition parentérale à domicile (forfaits).",
     champs: [
       { key: "options", label: "Forfaits", type: "checkboxes", options: ["Première installation", "12 premières semaines", "Après les 12 premières semaines"] },
@@ -268,7 +268,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     ],
   },
   {
-    id: "ald_idel_npad", categorie: "ALD", label: "IDEL — NPAD",
+    id: "ald_idel_npad", categorie: "ALD", label: "IDEL NPAD ALD",
     description: "Bizone ALD — branchement/débranchement nutrition parentérale.",
     champs: [
       { key: "voie", label: "Voie d'abord", type: "radio", options: ["Cathéter central", "Picc-line", "Chambre implantable"] },
@@ -277,7 +277,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     ],
   },
   {
-    id: "ald_idel_pca", categorie: "ALD", label: "IDEL — PCA",
+    id: "ald_idel_pca", categorie: "ALD", label: "IDEL PCA ALD",
     description: "Bizone ALD — analgésie contrôlée (PCA).",
     champs: [
       { key: "produit", label: "Produit", type: "checkboxes", options: ["Chlorhydrate de morphine", "Oxynorm", "Autre"] },
@@ -292,7 +292,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     ],
   },
   {
-    id: "ald_idel_piccline", categorie: "ALD", label: "IDEL — Entretien PICC-line",
+    id: "ald_idel_piccline", categorie: "ALD", label: "IDEL Entretien PICC-line ALD",
     description: "Bizone ALD — entretien PICC-line.",
     champs: [
       { key: "qsp_jours", label: "QSP (jours)", type: "text" },
@@ -300,7 +300,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     ],
   },
   {
-    id: "ald_idel", categorie: "ALD", label: "IDEL (soins)",
+    id: "ald_idel", categorie: "ALD", label: "IDEL ALD",
     description: "Bizone ALD — soins infirmiers à domicile.",
     champs: [
       { key: "ordonnance_jours", label: "Ordonnance pour (durée)", type: "text" },

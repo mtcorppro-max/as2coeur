@@ -197,19 +197,23 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   ald_pharma: {
-    template: "/PHARMA%20ALD.pdf", ...BIZONE, date: { x: 435, y: 308 }, signature: { x: 380, y: 560 },
+    template: "/PHARMA%20ALD.pdf", ...BIZONE, date: { x: 430, y: 309 }, signature: { x: 380, y: 560 },
+    // On masque « poches/jour » / « jours » imprimés et on réécrit « N poches/jour »
+    // (chiffre devant, unité décalée à droite).
+    blancs: [[149, 356, 86, 13], [141, 369, 82, 13], [58, 461, 46, 13]],
     champs: [
-      { k: "txt", key: "poches_100", pos: { x: 150, y: 365 } },
-      { k: "txt", key: "poches_50", pos: { x: 150, y: 378 } },
-      { k: "txt", key: "qsp_jours", pos: { x: 55, y: 470 } },
+      { k: "phrase", modele: "{poches_100} poches/jour", pos: { x: 150, y: 365 } },
+      { k: "phrase", modele: "{poches_50} poche/jour", pos: { x: 143, y: 378 } },
+      { k: "phrase", modele: "{qsp_jours} jours", pos: { x: 44, y: 470 } },
     ],
   },
   ald_pharma_pac: {
-    template: "/PHARMA%20PAC%20ALD.pdf", ...BIZONE, date: { x: 385, y: 322 }, signature: { x: 380, y: 560 },
+    template: "/PHARMA%20PAC%20ALD.pdf", ...BIZONE, date: { x: 420, y: 309 }, signature: { x: 380, y: 560 },
+    blancs: [[149, 382, 86, 13], [141, 395, 82, 13], [58, 500, 46, 13]],
     champs: [
-      { k: "txt", key: "poches_100", pos: { x: 150, y: 393 } },
-      { k: "txt", key: "poches_50", pos: { x: 150, y: 406 } },
-      { k: "txt", key: "qsp_jours", pos: { x: 55, y: 508 } },
+      { k: "phrase", modele: "{poches_100} poches/jour", pos: { x: 150, y: 391 } },
+      { k: "phrase", modele: "{poches_50} poche/jour", pos: { x: 143, y: 404 } },
+      { k: "phrase", modele: "{qsp_jours} jours", pos: { x: 44, y: 509 } },
     ],
   },
   ald_bs: {
