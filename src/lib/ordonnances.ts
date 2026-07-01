@@ -200,7 +200,10 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
   {
     id: "ald_pst", categorie: "ALD", label: "Pansement post-opératoire (PST)",
     description: "Bizone ALD — protocole de pansement pré-imprimé.",
-    champs: [],
+    champs: [
+      { key: "qsp_jours", label: "QSP (nombre de jours)", type: "text" },
+      { key: "a_renouveler", label: "À renouveler (nombre de fois)", type: "text" },
+    ],
   },
   {
     id: "ald_glycemie", categorie: "ALD", label: "Surveillance glycémique",

@@ -36,7 +36,7 @@ const STD = {
 const BIZONE = {
   presc: { x: 46, y: 118 } as Pt,
   rpps: { x: 46, y: 141 } as Pt,
-  patient: { x: 300, y: 197 } as Pt, // centre de la case patient
+  patient: { x: 300, y: 202 } as Pt, // centre de la case patient
 };
 
 export const CONFIGS: Record<string, Conf> = {
@@ -169,7 +169,11 @@ export const CONFIGS: Record<string, Conf> = {
   // NB : positions des champs variables à affiner à la génération test (phase 2).
   ald_pst: {
     template: "/PST%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 560 },
-    champs: [],
+    blancs: [[44, 489, 20, 13], [102, 511, 9, 13]], // masque « 14 » (QSP) et « 2 » (renouveler)
+    champs: [
+      { k: "txt", key: "qsp_jours", pos: { x: 46, y: 499 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 103, y: 520 } },
+    ],
   },
   ald_glycemie: {
     template: "/GLYCEMIE%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 560 },
