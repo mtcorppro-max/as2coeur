@@ -4,7 +4,7 @@ import { ouvrirTemplate, nomPrescripteur, frDate, type DocOrdoData, type Pt } fr
 type Champ =
   | { k: "txt"; key: string; pos: Pt; size?: number; centre?: boolean; gras?: boolean; masque?: Rect; auto?: { key: string; option: string; valeur: string } }
   | { k: "date"; key: string; pos: Pt; size?: number }
-  | { k: "lignes"; key: string; pos: Pt; lineH?: number }
+  | { k: "lignes"; key: string; pos: Pt; lineH?: number; size?: number }
   | { k: "radio" | "checks"; key: string; map: Record<string, Pt> }
   // Coche une case automatiquement si le champ `key` est rempli (ex. « Autres »).
   | { k: "cocheSi"; key: string; pos: Pt }
@@ -216,6 +216,12 @@ export const CONFIGS: Record<string, Conf> = {
       { k: "txt", key: "a_renouveler", pos: { x: 107, y: 520 }, size: 11, centre: true },
     ],
   },
+  bizone_vierge: {
+    template: "/BIZONE%20Vierge.pdf", ...BIZONE, date: { x: 466, y: 245 }, signature: { x: 390, y: 596 },
+    champs: [
+      { k: "lignes", key: "prescription", pos: { x: 30, y: 292 }, lineH: 15, size: 11 },
+    ],
+  },
 
   // ── Catégorie ALD — CERFA bizone 14465*01 (en-tête BIZONE partagé) ──────────
   // NB : positions des champs variables à affiner à la génération test (phase 2).
@@ -379,6 +385,12 @@ export const CONFIGS: Record<string, Conf> = {
       { k: "txt", key: "a_renouveler", pos: { x: 100, y: 591 }, size: 11 },
     ],
   },
+  vierge_ald: {
+    template: "/Vierge%20ALD.pdf", ...BIZONE, date: { x: 433, y: 307 }, signature: { x: 400, y: 495 },
+    champs: [
+      { k: "lignes", key: "prescription", pos: { x: 30, y: 315 }, lineH: 15, size: 11 },
+    ],
+  },
 };
 
 export async function genererPdfModele(type: string, d: DocOrdoData, mode: "download" | "bloburl" = "download"): Promise<string | void> {
@@ -410,7 +422,7 @@ export async function genererPdfModele(type: string, d: DocOrdoData, mode: "down
     } else if (ch.k === "date") txt(frDate(c[ch.key]), ch.pos);
     else if (ch.k === "lignes") {
       const v = typeof c[ch.key] === "string" ? (c[ch.key] as string).split("\n").filter((l) => l.trim()) : [];
-      v.forEach((l, i) => txt(l.trim(), { x: ch.pos.x, y: ch.pos.y + i * (ch.lineH ?? 14) }));
+      v.forEach((l, i) => txt(l.trim(), { x: ch.pos.x, y: ch.pos.y + i * (ch.lineH ?? 14) }, ch.size));
     } else if (ch.k === "radio") {
       const v = c[ch.key] as string;
       if (v && ch.map[v]) coche(ch.map[v]);

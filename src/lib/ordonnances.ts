@@ -247,6 +247,14 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
       { key: "a_renouveler", label: "À renouveler (nombre de fois)", type: "text" },
     ],
   },
+  {
+    id: "bizone_vierge",
+    label: "Ordonnance vierge",
+    description: "Ordonnance vierge — prescription en texte libre.",
+    champs: [
+      { key: "prescription", label: "Prescription (une ligne par élément)", type: "textarea" },
+    ],
+  },
 
   // ── Catégorie ALD (Affection Longue Durée) — CERFA bizone 14465*01 ──────────
   // Contenu majoritairement pré-imprimé : on ne saisit que l'en-tête (auto) et
@@ -371,6 +379,13 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
       { key: "heure_soir", label: "Le soir à (heure)", type: "text" },
       { key: "ordonnance_jours", label: "Ordonnance pour (durée)", type: "text" },
       { key: "a_renouveler", label: "À renouveler (nombre)", type: "text" },
+    ],
+  },
+  {
+    id: "vierge_ald", categorie: "ALD", label: "Ordonnance vierge ALD",
+    description: "Bizone ALD vierge — prescription en texte libre.",
+    champs: [
+      { key: "prescription", label: "Prescription (une ligne par élément)", type: "textarea" },
     ],
   },
 ];
