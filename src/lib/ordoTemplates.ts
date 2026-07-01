@@ -230,10 +230,10 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   ald_perfadom_npad: {
-    template: "/PERFADOM%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 450, y: 296 }, signature: { x: 380, y: 620 },
+    template: "/PERFADOM%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 450, y: 293 }, signature: { x: 380, y: 620 },
     blancs: [[122, 632, 42, 13]], // masque « jours » imprimé (durée libre : jour/semaine/mois)
     champs: [
-      { k: "checks", key: "options", map: { "Première installation": { x: 35, y: 322 }, "12 premières semaines": { x: 35, y: 353 }, "Après les 12 premières semaines": { x: 35, y: 500 } } },
+      { k: "checks", key: "options", map: { "Première installation": { x: 36, y: 325 }, "12 premières semaines": { x: 36, y: 356 }, "Après les 12 premières semaines": { x: 37, y: 503 } } },
       { k: "txt", key: "ordonnance_jours", pos: { x: 105, y: 640 } },
       { k: "txt", key: "a_renouveler", pos: { x: 80, y: 663 } },
     ],
