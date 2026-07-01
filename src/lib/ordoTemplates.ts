@@ -239,11 +239,12 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   ald_idel_npad: {
-    template: "/IDEL%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 420, y: 312 }, signature: { x: 380, y: 620 },
+    template: "/IDEL%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 437, y: 314 }, signature: { x: 380, y: 620 },
+    blancs: [[120, 596, 44, 13]], // masque « jours » imprimé (durée libre : jour/semaine/mois)
     champs: [
-      { k: "radio", key: "voie", map: { "Cathéter central": { x: 22, y: 360 }, "Picc-line": { x: 22, y: 380 }, "Chambre implantable": { x: 22, y: 400 } } },
-      { k: "txt", key: "ordonnance_jours", pos: { x: 130, y: 650 } },
-      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 665 } },
+      { k: "radio", key: "voie", map: { "Cathéter central": { x: 39, y: 369 }, "Picc-line": { x: 39, y: 398 }, "Chambre implantable": { x: 39, y: 430 } } },
+      { k: "txt", key: "perfusion", pos: { x: 115, y: 470 } },
+      { k: "txt", key: "ordonnance_jours", pos: { x: 110, y: 604 } },
     ],
   },
   ald_idel_pca: {

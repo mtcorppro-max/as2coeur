@@ -272,8 +272,8 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     description: "Bizone ALD — branchement/débranchement nutrition parentérale.",
     champs: [
       { key: "voie", label: "Voie d'abord", type: "radio", options: ["Cathéter central", "Picc-line", "Chambre implantable"] },
-      { key: "ordonnance_jours", label: "Ordonnance pour (durée)", type: "text" },
-      { key: "a_renouveler", label: "À renouveler (nombre)", type: "text" },
+      { key: "perfusion", label: "Programmation, pose et surveillance de la perfusion de", type: "textarea" },
+      { key: "ordonnance_jours", label: "Ordonnance pour (durée, ex. 4 semaines / 6 mois)", type: "text" },
     ],
   },
   {
