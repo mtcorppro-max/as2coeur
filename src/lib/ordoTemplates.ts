@@ -233,7 +233,7 @@ export const CONFIGS: Record<string, Conf> = {
     template: "/PERFADOM%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 450, y: 293 }, signature: { x: 380, y: 620 },
     blancs: [[122, 632, 42, 13]], // masque « jours » imprimé (durée libre : jour/semaine/mois)
     champs: [
-      { k: "checks", key: "options", map: { "Première installation": { x: 36, y: 325 }, "12 premières semaines": { x: 36, y: 356 }, "Après les 12 premières semaines": { x: 37, y: 503 } } },
+      { k: "checks", key: "options", map: { "Première installation": { x: 33, y: 321 }, "12 premières semaines": { x: 33, y: 352 }, "Après les 12 premières semaines": { x: 30, y: 499 } } },
       { k: "txt", key: "ordonnance_jours", pos: { x: 105, y: 640 } },
       { k: "txt", key: "a_renouveler", pos: { x: 80, y: 663 } },
     ],
