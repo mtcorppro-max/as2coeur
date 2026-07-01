@@ -6,6 +6,7 @@ import { useProSession } from "@/lib/hooks/useSession";
 import { modeleOrdo, valeurLisible } from "@/lib/ordonnances";
 import { genererPdfOrdo } from "@/lib/genererPdfOrdo";
 import { GenerateurOrdonnance } from "@/components/GenerateurOrdonnance";
+import { IntegrerOrdonnance } from "@/components/IntegrerOrdonnance";
 import { ChampsOrdonnance } from "@/components/ChampsOrdonnance";
 import { Select } from "@/components/Select";
 
@@ -47,7 +48,27 @@ export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, pa
     return genererPdfOrdo(o, patientNom, patientNaissance, mode);
   }
 
+  // Ordonnance importée : URL signée du fichier stocké (bucket privé).
+  async function urlImporte(o: Ordo): Promise<string | null> {
+    const res = await fetch(`/api/ordonnance-import?id=${o.id}`);
+    if (!res.ok) return null;
+    const { url } = await res.json().catch(() => ({ url: null }));
+    return typeof url === "string" ? url : null;
+  }
+
   async function telecharger(o: Ordo) {
+    if (o.type === "importee") {
+      try {
+        const url = await urlImporte(o);
+        if (!url) { alert("Fichier introuvable."); return; }
+        const blob = await (await fetch(url)).blob();
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = o.titre || "ordonnance"; a.rel = "noopener";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+      } catch { alert("Impossible de télécharger le fichier."); }
+      return;
+    }
     try { await genererPdf(o, "download"); }
     catch (e) { alert("Impossible de générer le PDF.\n" + (e instanceof Error ? e.message : "")); }
   }
@@ -56,8 +77,8 @@ export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, pa
     // Samsung : si la pop-up est bloquée, on bascule sur l'onglet courant.
     const win = window.open("", "_blank");
     try {
-      const url = await genererPdf(o, "bloburl");
-      if (typeof url !== "string") { win?.close(); return; }
+      const url = o.type === "importee" ? await urlImporte(o) : await genererPdf(o, "bloburl");
+      if (typeof url !== "string") { win?.close(); if (o.type === "importee") alert("Fichier introuvable."); return; }
       if (win && !win.closed) win.location.href = url;
       else window.location.href = url;
     } catch (e) {
@@ -68,6 +89,12 @@ export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, pa
 
   async function supprimer(o: Ordo) {
     if (!confirm(`Supprimer l'ordonnance « ${o.titre} » ?`)) return;
+    if (o.type === "importee") {
+      const res = await fetch("/api/ordonnance-import", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: o.id }) });
+      if (!res.ok) { const { message } = await res.json().catch(() => ({ message: "" })); alert(message || "Échec de la suppression."); return; }
+      setOrdos((arr) => arr.filter((x) => x.id !== o.id));
+      return;
+    }
     const { error } = await createClient().from("ordonnance").delete().eq("id", o.id);
     if (error) { alert("Échec : " + error.message); return; }
     setOrdos((arr) => arr.filter((x) => x.id !== o.id));
@@ -79,7 +106,12 @@ export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, pa
     <section className="card grid gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-slate-700">Ordonnances</h2>
-        {!lectureSeule && <GenerateurOrdonnance patientId={patientId} patientChirurgien={patientChirurgien} onCreated={charger} />}
+        {!lectureSeule && (
+          <div className="flex flex-wrap items-center gap-2">
+            <GenerateurOrdonnance patientId={patientId} patientChirurgien={patientChirurgien} onCreated={charger} />
+            <IntegrerOrdonnance patientId={patientId} onCreated={charger} />
+          </div>
+        )}
       </div>
 
       {ordos.length === 0 ? (
@@ -93,11 +125,13 @@ export function OrdonnancesPatient({ patientId, patientNom, patientNaissance, pa
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium text-slate-800">{o.titre}</span>
-                    {o.statut === "signee"
-                      ? <span className="badge bg-green-100 text-ok">Signée</span>
-                      : o.statut === "refusee"
-                        ? <span className="badge bg-red-100 text-critique">Refusée</span>
-                        : <span className="badge bg-amber-100 text-attention">En attente de signature</span>}
+                    {o.type === "importee"
+                      ? <span className="badge bg-sky-100 text-sky-700">Importée</span>
+                      : o.statut === "signee"
+                        ? <span className="badge bg-green-100 text-ok">Signée</span>
+                        : o.statut === "refusee"
+                          ? <span className="badge bg-red-100 text-critique">Refusée</span>
+                          : <span className="badge bg-amber-100 text-attention">En attente de signature</span>}
                   </div>
                   <p className="text-xs text-slate-400">{new Date(o.created_at).toLocaleDateString("fr-FR")}</p>
                 </div>
