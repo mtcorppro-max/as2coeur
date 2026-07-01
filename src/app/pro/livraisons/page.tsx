@@ -98,6 +98,7 @@ export default function LivraisonsPage() {
   const [coords, setCoords] = useState<Record<string, LatLng | null>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [ouverts, setOuverts] = useState<Set<string>>(new Set());
+  const [livreesOuvert, setLivreesOuvert] = useState(false);
   const toggleDetails = (id: string) =>
     setOuverts((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
@@ -337,11 +338,14 @@ export default function LivraisonsPage() {
         </section>
       )}
 
-      {/* ── Livrées ── */}
+      {/* ── Livraisons effectuées (espace rangé, repliable) ── */}
       {livrees.length > 0 && (
         <section className="grid grid-cols-1 gap-3">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Livrées ({livrees.length})</h2>
-          {livrees.map((l) => {
+          <button onClick={() => setLivreesOuvert((o) => !o)} className="flex items-center gap-2 text-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className={`h-3.5 w-3.5 text-rose-400 transition-transform ${livreesOuvert ? "rotate-90" : ""}`}><path d="M9 6l6 6-6 6" /></svg>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Livraisons effectuées ({livrees.length})</h2>
+          </button>
+          {livreesOuvert && livrees.map((l) => {
             const p = patientDe(l); if (!p) return null;
             return (
               <div key={l.id} className="card flex flex-col gap-3 opacity-75 sm:flex-row sm:items-center sm:justify-between">
