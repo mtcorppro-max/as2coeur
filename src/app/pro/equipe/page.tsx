@@ -385,9 +385,9 @@ export default function EquipePage() {
       ) : (
         <div className="grid gap-7">
           <section className="grid gap-3">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Médecins / Chirurgiens</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-rose-400">Médecins</h2>
             {medecinsComptes.length + externesMed.length === 0 ? (
-              <p className="text-sm text-slate-400">Aucun médecin / chirurgien.</p>
+              <p className="text-sm text-slate-400">Aucun médecin.</p>
             ) : (
               <>
                 {medecinsComptes.map((s) => carte(s, true))}

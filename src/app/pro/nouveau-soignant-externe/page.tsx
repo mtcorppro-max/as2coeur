@@ -92,7 +92,7 @@ export default function NouveauSoignantExterne() {
         <RetourNouveau />
         <h1 className="text-2xl font-bold text-slate-800">Nouveau soignant externe</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Soignant ou partenaire hors entreprise, sans compte AS2CŒUR (médecin, chirurgien, infirmière libérale ou pharmacie).
+          Soignant ou partenaire hors entreprise, sans compte AS2CŒUR (médecin, infirmière libérale ou pharmacie).
         </p>
       </div>
 
@@ -103,7 +103,7 @@ export default function NouveauSoignantExterne() {
             value={f.type}
             onChange={(v) => setF((s) => ({ ...s, type: v }))}
             options={[
-              { value: "medecin", label: "Médecin / Chirurgien" },
+              { value: "medecin", label: "Médecin" },
               { value: "infirmiere", label: "Infirmière libérale" },
               { value: "pharmacie", label: "Pharmacie" },
             ]}

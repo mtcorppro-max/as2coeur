@@ -20,7 +20,7 @@ type Resultat = ResPatient | ResSoignant;
 
 const nomComplet = (p: { titre: string | null; prenom: string | null; nom: string }) =>
   [p.titre, p.prenom, p.nom].filter(Boolean).join(" ");
-const labelMedecin = (s: string | null) => ((s ?? "").toLowerCase().includes("chirurg") ? "Chirurgien" : "Médecin");
+const labelMedecin = (s: string | null) => ((s ?? "").toLowerCase().includes("chirurg") ? "Médecin" : "Médecin");
 const interventions = (ps: ProtocolePdf[] | null) => (ps ?? []).map((p) => p.intervention || "").join(" ");
 
 export function RechercheSoignants() {

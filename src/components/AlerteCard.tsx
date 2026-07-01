@@ -102,7 +102,7 @@ export function AlerteCard({
           </p>
         )}
         {alerte.patient?.chirurgien && (
-          <p><span className="text-slate-400">Opéré par : </span><span className="font-medium text-slate-600">{alerte.patient.chirurgien}</span></p>
+          <p><span className="text-slate-400">Médecin : </span><span className="font-medium text-slate-600">{alerte.patient.chirurgien}</span></p>
         )}
         {(alerte.patient?.operation || alerte.patient?.date_operation) && (
           <p>

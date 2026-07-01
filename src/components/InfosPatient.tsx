@@ -258,11 +258,11 @@ export function InfosPatient({
             </div>
           )}
           <div>
-            <label className="label">Chirurgien / Médecin</label>
+            <label className="label">Médecin</label>
             <Select
               value={form.chirurgien}
               onChange={(v) => { setForm((f) => ({ ...f, chirurgien: v, traitement: "", operation: "" })); setAutreTrait(false); setJoursSuivi([]); }}
-              placeholder="— Choisir un chirurgien / médecin —"
+              placeholder="— Choisir un médecin —"
               options={optionsChirurgien}
             />
           </div>
@@ -411,7 +411,7 @@ export function InfosPatient({
             ) : null}
             <Ligne label="Prise en charge" value={duree ? `${duree} jours` : ""} />
             <Ligne label="Type de traitement" value={vue.traitement} />
-            <Ligne label={vue.operation ? "Chirurgien" : "Médecin"} value={vue.chirurgien} />
+            <Ligne label="Médecin" value={vue.chirurgien} />
             <Ligne
               label="Infirmière libérale"
               value={vue.infirmiere_nom}

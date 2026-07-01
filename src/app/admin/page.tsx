@@ -40,7 +40,7 @@ export default function AdminPage() {
         <h1 className="text-2xl font-bold text-slate-800">Création de comptes</h1>
         <p className="mt-1 text-sm text-slate-500">
           Connecté en tant qu&apos;administrateur ({ctx.email}). Créez les comptes soignants
-          (coordinatrice, chirurgien/médecin, délégué) et leurs consignes.
+          (coordinatrice, médecin, délégué) et leurs consignes.
         </p>
       </div>
       <SoignantForm prestataires={ctx.prestataires ?? []} />

@@ -3,7 +3,7 @@ import type { RolePro } from "./types";
 export const LIBELLE_ROLE: Record<RolePro, string> = {
   coordinatrice: "Coordinatrice",
   manager: "Manager",
-  chirurgien: "Chirurgien",
+  chirurgien: "Médecin",
   delegue: "Délégué médical",
   infirmiere_liberale: "Infirmière libérale",
   livreur: "Livreur",

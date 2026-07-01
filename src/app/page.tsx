@@ -275,7 +275,7 @@ const FEATURES = [
     icon: "chat",
     titre: "Messagerie directe",
     description:
-      "Canal de chat sécurisé entre le patient et la coordinatrice ou le chirurgien, en temps réel. Le délégué est exclu par design.",
+      "Canal de chat sécurisé entre le patient et la coordinatrice ou le médecin, en temps réel. Le délégué est exclu par design.",
   },
   {
     icon: "camera",
@@ -317,7 +317,7 @@ const FEATURES = [
     icon: "ordonnance",
     titre: "Ordonnances automatiques",
     description:
-      "Protocole chirurgien → génération CERFA → signature électronique → envoi pharmacie. Zéro ressaisie, circuit tracé et horodaté.",
+      "Protocole médecin → génération CERFA → signature électronique → envoi pharmacie. Zéro ressaisie, circuit tracé et horodaté.",
   },
   {
     icon: "truck",
@@ -347,7 +347,7 @@ const FAQ = [
     a: "Au-delà des constantes, l'équipe réalise des suivis structurés (état général, douleur, cicatrisation, alimentation…), planifiés notamment à J1 et au dernier jour de prise en charge. Chaque suivi génère un compte rendu PDF avec les courbes de surveillance et les photos de cicatrice.",
   },
   {
-    q: "Le chirurgien peut-il définir son propre protocole ?",
+    q: "Le médecin peut-il définir son propre protocole ?",
     a: "Oui. À la création de son compte, le médecin renseigne ses consignes (molécules, débits, pansement, suivi…), la durée de prise en charge et le nombre de suivis souhaités. Le suivi s'adapte ainsi aux préférences de chaque praticien.",
   },
   {
@@ -356,7 +356,7 @@ const FAQ = [
   },
   {
     q: "Qui peut consulter les photos de cicatrice envoyées ?",
-    a: "Uniquement les professionnels de santé rattachés au prestataire du patient (coordinatrice, chirurgien). Les photos sont stockées dans un espace privé et accessibles uniquement via des liens signés à durée limitée.",
+    a: "Uniquement les professionnels de santé rattachés au prestataire du patient (coordinatrice, médecin). Les photos sont stockées dans un espace privé et accessibles uniquement via des liens signés à durée limitée.",
   },
   {
     q: "L'application est-elle conforme au RGPD ?",
@@ -377,7 +377,7 @@ const ROLES = [
 
 const SECURITE = [
   "RLS active sur 100 % des tables",
-  "Accès par rôle (infirmière coordinatrice / délégué médical / chirurgien)",
+  "Accès par rôle (infirmière coordinatrice / délégué médical / médecin)",
   "Dossier patient strictement cloisonné",
   "Clé service_role côté serveur uniquement",
   "Code unique régénérable sans mot de passe",

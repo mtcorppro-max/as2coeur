@@ -38,7 +38,7 @@ export default function NouveauHub() {
             href="/pro/nouveau-soignant"
             icon="✚"
             titre="Nouveau compte soignant"
-            desc="Créer un compte coordinatrice, chirurgien/médecin ou délégué."
+            desc="Créer un compte coordinatrice, médecin ou délégué."
           />
         )}
         {peutSoignantExterne && (
@@ -52,7 +52,7 @@ export default function NouveauHub() {
               </svg>
             }
             titre="Nouveau soignant externe"
-            desc="Médecin, chirurgien ou infirmière libérale hors entreprise, sans compte."
+            desc="Médecin ou infirmière libérale hors entreprise, sans compte."
           />
         )}
         {peutRegion && (

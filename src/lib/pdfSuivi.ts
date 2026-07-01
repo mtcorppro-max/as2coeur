@@ -353,7 +353,7 @@ export async function genererPdfSuivi(
     [valeur, tel].filter(Boolean).join(" · ") || "—";
 
   let yD = y;
-  ligne(colD, yD, "Chirurgien :", patient.chirurgien ?? "—"); yD += interligne;
+  ligne(colD, yD, "Médecin :", patient.chirurgien ?? "—"); yD += interligne;
   ligne(colD, yD, "Pharmacie :", avecTel(patient.pharmacie, patient.pharmacie_tel)); yD += interligne;
   ligne(colD, yD, "Infirmière :", avecTel(patient.infirmiere_nom, patient.infirmiere_tel)); yD += interligne;
   ligne(colD, yD, "Suivi par :", s.auteur_nom ?? "—"); yD += interligne;

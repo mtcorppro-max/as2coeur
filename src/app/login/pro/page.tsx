@@ -47,7 +47,7 @@ export default function LoginPro() {
           Espace équipe médicale
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Coordinatrice · Chirurgien · Délégué médical
+          Coordinatrice · Médecin · Délégué médical
         </p>
       </div>
 
