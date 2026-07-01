@@ -192,7 +192,7 @@ export const CONFIGS: Record<string, Conf> = {
   ald_taurolock: {
     template: "/Taurolock%20ALD.pdf", ...BIZONE, date: { x: 415, y: 318 }, signature: { x: 380, y: 590 },
     champs: [
-      { k: "txt", key: "qsp_jours", pos: { x: 52, y: 514 } },
+      { k: "txt", key: "qsp_jours", pos: { x: 52, y: 518 } },
       { k: "txt", key: "a_renouveler", pos: { x: 110, y: 530 } },
     ],
   },
