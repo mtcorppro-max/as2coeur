@@ -30,6 +30,15 @@ const STD = {
   rppsBarres: [84, 144, 152, 12] as Rect,
 };
 
+// En-tête commun aux CERFA bizone ALD 14465*01 (identique sur les 12 modèles) :
+// prescripteur (haut gauche), RPPS, patient (case centrale). Positions en points
+// depuis le haut-gauche.
+const BIZONE = {
+  presc: { x: 46, y: 118 } as Pt,
+  rpps: { x: 46, y: 141 } as Pt,
+  patient: { x: 300, y: 197 } as Pt, // centre de la case patient
+};
+
 export const CONFIGS: Record<string, Conf> = {
   // Remplace « Pharmacie (perfusion) » — ordonnance bizone ALD (cases vides, sans barres).
   pharma_perf: {
@@ -153,6 +162,104 @@ export const CONFIGS: Record<string, Conf> = {
       { k: "txt", key: "nom_autre", pos: { x: 354, y: 472 }, centre: true, size: 11, masque: [228, 462, 252, 13] }, { k: "txt", key: "qte_autre", pos: { x: 525, y: 472 }, centre: true, size: 11, masque: [482, 462, 87, 13] },
       { k: "txt", key: "frequence", pos: { x: 100, y: 720 } },
       { k: "txt", key: "renouveler", pos: { x: 210, y: 748 } },
+    ],
+  },
+
+  // ── Catégorie ALD — CERFA bizone 14465*01 (en-tête BIZONE partagé) ──────────
+  // NB : positions des champs variables à affiner à la génération test (phase 2).
+  ald_pst: {
+    template: "/PST%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 560 },
+    champs: [],
+  },
+  ald_glycemie: {
+    template: "/GLYCEMIE%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 560 },
+    champs: [
+      { k: "txt", key: "ordonnance_jours", pos: { x: 135, y: 470 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 485 } },
+    ],
+  },
+  ald_hemocs: {
+    template: "/HEMOCS%20ALD.pdf", ...BIZONE, date: { x: 445, y: 308 }, signature: { x: 380, y: 590 },
+    champs: [
+      { k: "txt", key: "ordonnance_jours", pos: { x: 135, y: 527 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 542 } },
+    ],
+  },
+  ald_taurolock: {
+    template: "/Taurolock%20ALD.pdf", ...BIZONE, date: { x: 400, y: 320 }, signature: { x: 380, y: 590 },
+    champs: [
+      { k: "txt", key: "qsp_jours", pos: { x: 55, y: 515 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 530 } },
+    ],
+  },
+  ald_pharma: {
+    template: "/PHARMA%20ALD.pdf", ...BIZONE, date: { x: 435, y: 308 }, signature: { x: 380, y: 560 },
+    champs: [
+      { k: "txt", key: "poches_100", pos: { x: 150, y: 365 } },
+      { k: "txt", key: "poches_50", pos: { x: 150, y: 378 } },
+      { k: "txt", key: "qsp_jours", pos: { x: 55, y: 470 } },
+    ],
+  },
+  ald_pharma_pac: {
+    template: "/PHARMA%20PAC%20ALD.pdf", ...BIZONE, date: { x: 385, y: 322 }, signature: { x: 380, y: 560 },
+    champs: [
+      { k: "txt", key: "poches_100", pos: { x: 150, y: 393 } },
+      { k: "txt", key: "poches_50", pos: { x: 150, y: 406 } },
+      { k: "txt", key: "qsp_jours", pos: { x: 55, y: 508 } },
+    ],
+  },
+  ald_bs: {
+    template: "/ORDO%20BS%20ALD.pdf", ...BIZONE, date: { x: 460, y: 308 }, signature: { x: 380, y: 620 },
+    champs: [
+      { k: "radio", key: "voie", map: { "VVP": { x: 281, y: 328 }, "PAC": { x: 344, y: 328 }, "VVC": { x: 405, y: 328 }, "PICCLINE": { x: 480, y: 328 } } },
+      { k: "checks", key: "analyses", map: { "NFS": { x: 22, y: 353 }, "Plaquettes": { x: 22, y: 366 }, "Ionogramme sanguin": { x: 22, y: 380 }, "Calcémie": { x: 22, y: 393 }, "Urée": { x: 22, y: 407 }, "Créatinémie": { x: 22, y: 420 }, "Albuminémie": { x: 22, y: 433 }, "Pré-albumine": { x: 22, y: 446 }, "VS": { x: 22, y: 459 }, "CRP + PCT": { x: 22, y: 472 }, "Transaminases SGOT SGPT": { x: 22, y: 485 }, "Gamma GT": { x: 22, y: 498 }, "Phosphatases alcalines": { x: 22, y: 511 }, "Bilirubine total": { x: 22, y: 524 } } },
+      { k: "txt", key: "autres", pos: { x: 60, y: 548 } },
+      { k: "txt", key: "ordonnance_jours", pos: { x: 130, y: 630 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 645 } },
+    ],
+  },
+  ald_perfadom_npad: {
+    template: "/PERFADOM%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 620 },
+    champs: [
+      { k: "checks", key: "options", map: { "Première installation": { x: 22, y: 360 }, "12 premières semaines": { x: 22, y: 385 }, "Après les 12 premières semaines": { x: 22, y: 420 } } },
+      { k: "txt", key: "ordonnance_jours", pos: { x: 130, y: 650 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 665 } },
+    ],
+  },
+  ald_idel_npad: {
+    template: "/IDEL%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 620 },
+    champs: [
+      { k: "radio", key: "voie", map: { "Cathéter central": { x: 22, y: 360 }, "Picc-line": { x: 22, y: 380 }, "Chambre implantable": { x: 22, y: 400 } } },
+      { k: "txt", key: "ordonnance_jours", pos: { x: 130, y: 650 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 665 } },
+    ],
+  },
+  ald_idel_pca: {
+    template: "/IDEL%20PCA%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 640 },
+    champs: [
+      { k: "checks", key: "produit", map: { "Chlorhydrate de morphine": { x: 165, y: 405 }, "Oxynorm": { x: 315, y: 405 }, "Autre": { x: 420, y: 405 } } },
+      { k: "txt", key: "concentration", pos: { x: 150, y: 460 } },
+      { k: "txt", key: "debit_continu", pos: { x: 110, y: 490 } },
+      { k: "txt", key: "debit_24h", pos: { x: 250, y: 490 } },
+      { k: "txt", key: "bolus", pos: { x: 65, y: 520 } },
+      { k: "txt", key: "interdiction_min", pos: { x: 300, y: 520 } },
+      { k: "txt", key: "dose_24h", pos: { x: 250, y: 550 } },
+      { k: "txt", key: "ordonnance_jours", pos: { x: 130, y: 600 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 615 } },
+    ],
+  },
+  ald_idel_piccline: {
+    template: "/IDEL%20ENTRETIEN%20PICCLINE%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 590 },
+    champs: [
+      { k: "txt", key: "qsp_jours", pos: { x: 55, y: 520 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 535 } },
+    ],
+  },
+  ald_idel: {
+    template: "/ORDO%20IDEL%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 590 },
+    champs: [
+      { k: "txt", key: "ordonnance_jours", pos: { x: 130, y: 520 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 535 } },
     ],
   },
 };

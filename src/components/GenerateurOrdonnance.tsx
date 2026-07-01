@@ -5,12 +5,24 @@ import { createClient } from "@/lib/supabase/client";
 import { useProSession } from "@/lib/hooks/useSession";
 import { Select } from "@/components/Select";
 import { ChampsOrdonnance } from "@/components/ChampsOrdonnance";
-import { MODELES_ORDONNANCE } from "@/lib/ordonnances";
+import { MODELES_ORDONNANCE, type ModeleOrdo } from "@/lib/ordonnances";
 import type { OrdonnanceType } from "@/components/EditeurOrdonnancesTypes";
 
 type ProtoLite = { intervention?: string; ordonnances_types?: OrdonnanceType[] };
 type Medecin = { id: string; nom: string; prenom: string | null; titre: string | null; protocoles: ProtoLite[] | null };
 const nomComplet = (m: Medecin) => [m.titre, m.prenom, m.nom].filter(Boolean).join(" ");
+
+// Modèles regroupés par catégorie (ordre d'insertion préservé), pour l'affichage.
+const catLabel = (c: string) => (c === "ALD" ? "ALD — Affection Longue Durée" : "Ordonnances à générer");
+const GROUPES: [string, ModeleOrdo[]][] = (() => {
+  const m = new Map<string, ModeleOrdo[]>();
+  for (const mod of MODELES_ORDONNANCE) {
+    const k = mod.categorie ?? "";
+    const arr = m.get(k) ?? [];
+    arr.push(mod); m.set(k, arr);
+  }
+  return [...m.entries()];
+})();
 
 export function GenerateurOrdonnance({ patientId, patientChirurgien, onCreated }: { patientId: string; patientChirurgien: string | null; onCreated?: () => void }) {
   const pro = useProSession();
@@ -129,28 +141,30 @@ export function GenerateurOrdonnance({ patientId, patientChirurgien, onCreated }
                   </div>
                 )}
 
-                <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Ordonnances à générer</p>
-                <div className="grid gap-3">
-                  {MODELES_ORDONNANCE.map((m) => {
-                    const choisi = selection.has(m.id);
-                    return (
-                      <div key={m.id} className={`rounded-xl border p-3 transition ${choisi ? "border-brand bg-rose-50/40" : "border-rose-100"}`}>
-                        <label className="flex cursor-pointer items-start gap-2">
-                          <input type="checkbox" checked={choisi} onChange={() => toggleModele(m.id)} className="mt-1 h-4 w-4 accent-brand" />
-                          <span>
-                            <span className="font-semibold text-slate-800">{m.label}</span>
-                            {m.description && <span className="block text-xs text-slate-400">{m.description}</span>}
-                          </span>
-                        </label>
-                        {choisi && (
-                          <div className="mt-3 border-t border-rose-100 pt-3">
-                            <ChampsOrdonnance champs={m.champs} valeurs={valeurs[m.id] ?? {}} set={(k, val) => maj(m.id, k, val)} />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                {GROUPES.map(([cat, modeles]) => (
+                  <div key={cat || "default"} className="grid gap-3">
+                    <p className="text-xs font-bold uppercase tracking-widest text-rose-400">{catLabel(cat)}</p>
+                    {modeles.map((m) => {
+                      const choisi = selection.has(m.id);
+                      return (
+                        <div key={m.id} className={`rounded-xl border p-3 transition ${choisi ? "border-brand bg-rose-50/40" : "border-rose-100"}`}>
+                          <label className="flex cursor-pointer items-start gap-2">
+                            <input type="checkbox" checked={choisi} onChange={() => toggleModele(m.id)} className="mt-1 h-4 w-4 accent-brand" />
+                            <span>
+                              <span className="font-semibold text-slate-800">{m.label}</span>
+                              {m.description && <span className="block text-xs text-slate-400">{m.description}</span>}
+                            </span>
+                          </label>
+                          {choisi && (
+                            <div className="mt-3 border-t border-rose-100 pt-3">
+                              <ChampsOrdonnance champs={m.champs} valeurs={valeurs[m.id] ?? {}} set={(k, val) => maj(m.id, k, val)} />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
 
                 {erreur && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-critique">{erreur}</p>}
                 <button onClick={envoyer} disabled={busy} className="btn-primary py-3">

@@ -7,7 +7,7 @@ export type ChampOrdo =
   | { key: string; label: string; type: "valeur_unite"; uniteKey: string; options: string[] }
   | { key: string; label: string; type: "section" };
 
-export type ModeleOrdo = { id: string; label: string; description?: string; champs: ChampOrdo[] };
+export type ModeleOrdo = { id: string; label: string; description?: string; categorie?: string; champs: ChampOrdo[] };
 
 export const MODELES_ORDONNANCE: ModeleOrdo[] = [
   {
@@ -191,6 +191,117 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
       { key: "perfusion_1", label: "1/ Perfusion de", type: "textarea" },
       { key: "perfusion_2", label: "2/ Perfusion de", type: "textarea" },
       { key: "duree_jours", label: "D'une durée de (jours)", type: "number" },
+    ],
+  },
+
+  // ── Catégorie ALD (Affection Longue Durée) — CERFA bizone 14465*01 ──────────
+  // Contenu majoritairement pré-imprimé : on ne saisit que l'en-tête (auto) et
+  // quelques champs variables (durée, renouvellement, poches, cases à cocher).
+  {
+    id: "ald_pst", categorie: "ALD", label: "Pansement post-opératoire (PST)",
+    description: "Bizone ALD — protocole de pansement pré-imprimé.",
+    champs: [],
+  },
+  {
+    id: "ald_glycemie", categorie: "ALD", label: "Surveillance glycémique",
+    description: "Bizone ALD — surveillance glycémique + insuline.",
+    champs: [
+      { key: "ordonnance_jours", label: "Ordonnance pour (durée, ex. 6 mois)", type: "text" },
+      { key: "a_renouveler", label: "À renouveler (nombre)", type: "text" },
+    ],
+  },
+  {
+    id: "ald_hemocs", categorie: "ALD", label: "Hémocultures",
+    description: "Bizone ALD — 1 train d'hémocultures (PAC/PICC-line + périphérique).",
+    champs: [
+      { key: "ordonnance_jours", label: "Ordonnance pour (durée)", type: "text" },
+      { key: "a_renouveler", label: "À renouveler (nombre)", type: "text" },
+    ],
+  },
+  {
+    id: "ald_taurolock", categorie: "ALD", label: "Verrou Taurolock",
+    description: "Bizone ALD — protocole Taurolock pré-imprimé.",
+    champs: [
+      { key: "qsp_jours", label: "QSP (jours)", type: "text" },
+      { key: "a_renouveler", label: "À renouveler (nombre)", type: "text" },
+    ],
+  },
+  {
+    id: "ald_pharma", categorie: "ALD", label: "Pharmacie (pansements)",
+    description: "Bizone ALD — Bétadine, Biseptine, sérum physio, tubifast, mepitel.",
+    champs: [
+      { key: "poches_100", label: "Sérum physiologique 100 mL (poches/jour)", type: "text" },
+      { key: "poches_50", label: "Sérum physiologique 50 mL (poches/jour)", type: "text" },
+      { key: "qsp_jours", label: "QSP (jours)", type: "text" },
+    ],
+  },
+  {
+    id: "ald_pharma_pac", categorie: "ALD", label: "Pharmacie — PAC",
+    description: "Bizone ALD — matériel pansement chambre implantable (PAC).",
+    champs: [
+      { key: "poches_100", label: "Sérum physiologique 100 mL (poches/jour)", type: "text" },
+      { key: "poches_50", label: "Sérum physiologique 50 mL (poches/jour)", type: "text" },
+      { key: "qsp_jours", label: "QSP (jours)", type: "text" },
+    ],
+  },
+  {
+    id: "ald_bs", categorie: "ALD", label: "Bilan sanguin",
+    description: "Bizone ALD — bilan sanguin à domicile (à faxer ASDIA).",
+    champs: [
+      { key: "voie", label: "Voie d'abord", type: "radio", options: ["VVP", "PAC", "VVC", "PICCLINE"] },
+      { key: "analyses", label: "À doser", type: "checkboxes", options: ["NFS", "Plaquettes", "Ionogramme sanguin", "Calcémie", "Urée", "Créatinémie", "Albuminémie", "Pré-albumine", "VS", "CRP + PCT", "Transaminases SGOT SGPT", "Gamma GT", "Phosphatases alcalines", "Bilirubine total"] },
+      { key: "autres", label: "Autres", type: "text" },
+      { key: "ordonnance_jours", label: "Ordonnance pour (durée)", type: "text" },
+      { key: "a_renouveler", label: "À renouveler (nombre)", type: "text" },
+    ],
+  },
+  {
+    id: "ald_perfadom_npad", categorie: "ALD", label: "Perfadom — NPAD",
+    description: "Bizone ALD — nutrition parentérale à domicile (forfaits).",
+    champs: [
+      { key: "options", label: "Forfaits", type: "checkboxes", options: ["Première installation", "12 premières semaines", "Après les 12 premières semaines"] },
+      { key: "ordonnance_jours", label: "Ordonnance pour (durée)", type: "text" },
+      { key: "a_renouveler", label: "À renouveler (nombre)", type: "text" },
+    ],
+  },
+  {
+    id: "ald_idel_npad", categorie: "ALD", label: "IDEL — NPAD",
+    description: "Bizone ALD — branchement/débranchement nutrition parentérale.",
+    champs: [
+      { key: "voie", label: "Voie d'abord", type: "radio", options: ["Cathéter central", "Picc-line", "Chambre implantable"] },
+      { key: "ordonnance_jours", label: "Ordonnance pour (durée)", type: "text" },
+      { key: "a_renouveler", label: "À renouveler (nombre)", type: "text" },
+    ],
+  },
+  {
+    id: "ald_idel_pca", categorie: "ALD", label: "IDEL — PCA",
+    description: "Bizone ALD — analgésie contrôlée (PCA).",
+    champs: [
+      { key: "produit", label: "Produit", type: "checkboxes", options: ["Chlorhydrate de morphine", "Oxynorm", "Autre"] },
+      { key: "concentration", label: "Concentration (mg/ml)", type: "text" },
+      { key: "debit_continu", label: "Débit continu (mg/heure)", type: "text" },
+      { key: "debit_24h", label: "Soit (mg / 24 h)", type: "text" },
+      { key: "bolus", label: "Bolus (mg)", type: "text" },
+      { key: "interdiction_min", label: "Période d'interdiction (minutes)", type: "text" },
+      { key: "dose_24h", label: "Dose totale sur 24 h bolus compris (mg/24h)", type: "text" },
+      { key: "ordonnance_jours", label: "Ordonnance pour (durée)", type: "text" },
+      { key: "a_renouveler", label: "À renouveler (nombre)", type: "text" },
+    ],
+  },
+  {
+    id: "ald_idel_piccline", categorie: "ALD", label: "IDEL — Entretien PICC-line",
+    description: "Bizone ALD — entretien PICC-line.",
+    champs: [
+      { key: "qsp_jours", label: "QSP (jours)", type: "text" },
+      { key: "a_renouveler", label: "À renouveler (nombre)", type: "text" },
+    ],
+  },
+  {
+    id: "ald_idel", categorie: "ALD", label: "IDEL (soins)",
+    description: "Bizone ALD — soins infirmiers à domicile.",
+    champs: [
+      { key: "ordonnance_jours", label: "Ordonnance pour (durée)", type: "text" },
+      { key: "a_renouveler", label: "À renouveler (nombre)", type: "text" },
     ],
   },
 ];
