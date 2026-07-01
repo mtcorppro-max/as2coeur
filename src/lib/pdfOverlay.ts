@@ -53,8 +53,18 @@ export async function ouvrirTemplate(path: string) {
     page.drawText(String(s), { x: p.x - w / 2, y: H - p.y, size, font, color: rgb(0.1, 0.1, 0.12) });
   };
   const coche = (p: Pt) => page.drawText("X", { x: p.x, y: H - p.y, size: 10, font, color: rgb(0, 0, 0) });
+  // Case à cocher vide (carré) — yTop = bord haut, s = côté.
+  const boite = (x: number, yTop: number, s = 9) =>
+    page.drawRectangle({ x, y: H - yTop - s, width: s, height: s, borderColor: rgb(0.1, 0.1, 0.12), borderWidth: 1 });
   // Masque une zone (rectangle blanc) — yTop = bord haut de la zone.
   const blanc = (x: number, yTop: number, w: number, h: number) => page.drawRectangle({ x, y: H - yTop - h, width: w, height: h, color: rgb(1, 1, 1) });
+  // Déplace un bloc du modèle d'origine (rectangle [x, yTop, largeur, hauteur], repère
+  // haut-gauche) de `dy` points vers le bas — préserve le rendu exact (gras, etc.).
+  const deplacerBloc = async (r: [number, number, number, number], dy: number) => {
+    const [x, yTop, w, h] = r;
+    const emb = await out.embedPage(tpl.getPage(0), { left: x, bottom: H - (yTop + h), right: x + w, top: H - yTop });
+    page.drawPage(emb, { x, y: H - (yTop + h) - dy });
+  };
   const signer = async (dataUrl: string | null | undefined, p: Pt, w = 95, h = 28) => {
     if (!dataUrl) return;
     try { const png = await out.embedPng(dataUrl); page.drawImage(png, { x: p.x, y: H - p.y - h, width: w, height: h }); } catch { /* */ }
@@ -72,7 +82,7 @@ export async function ouvrirTemplate(path: string) {
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   };
 
-  return { txt, txtB, txtC, coche, blanc, signer, finaliser };
+  return { txt, txtB, txtC, coche, boite, blanc, deplacerBloc, signer, finaliser };
 }
 
 export const frDate = (v: unknown) => (v ? new Date(v as string).toLocaleDateString("fr-FR") : "");

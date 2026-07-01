@@ -307,6 +307,7 @@ export const MODELES_ORDONNANCE: ModeleOrdo[] = [
     id: "ald_idel", categorie: "ALD", label: "IDEL ALD",
     description: "Bizone ALD — soins infirmiers à domicile.",
     champs: [
+      { key: "voie", label: "Voie d'abord", type: "radio", options: ["Voie veineuse périphérique ou sous-cutanée", "Cathéter central", "PICC-line", "Chambre implantable"] },
       { key: "ordonnance_jours", label: "Ordonnance pour (durée)", type: "text" },
       { key: "a_renouveler", label: "À renouveler (nombre)", type: "text" },
     ],

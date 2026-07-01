@@ -20,6 +20,8 @@ type Conf = {
   patientGauche?: boolean; // nom patient aligné à gauche (sinon centré sur patient.x)
   rppsBarres?: Rect; // zone des |__| de l'identifiant à masquer
   blancs?: Rect[];
+  blocs?: { clip: Rect; dy: number }[]; // blocs du modèle déplacés vers le bas (embed)
+  boites?: [number, number, number][]; // cases à cocher vides [x, yTop, côté]
   textes?: { s: string; pos: Pt; size?: number }[]; // textes statiques (re)dessinés
   champs: Champ[];
 };
@@ -277,9 +279,26 @@ export const CONFIGS: Record<string, Conf> = {
   },
   ald_idel: {
     template: "/ORDO%20IDEL%20ALD.pdf", ...BIZONE, date: { x: 420, y: 310 }, signature: { x: 380, y: 590 },
+    // On efface l'unique choix pré-imprimé + le bloc perfusion/horaires, on redescend
+    // ce bloc de 36 pt (rendu exact préservé) et on redessine 4 choix de voie d'abord.
+    blancs: [[24, 372, 566, 126]],
+    blocs: [{ clip: [24, 406, 566, 90], dy: 36 }],
+    boites: [[31, 371, 9], [31, 389, 9], [31, 407, 9], [31, 425, 9]],
+    textes: [
+      { s: "Sur voie veineuse périphérique ou en sous cutanée", pos: { x: 61, y: 379 }, size: 11 },
+      { s: "Sur cathéter central", pos: { x: 61, y: 397 }, size: 11 },
+      { s: "Sur PICC-line", pos: { x: 61, y: 415 }, size: 11 },
+      { s: "Sur chambre implantable", pos: { x: 61, y: 433 }, size: 11 },
+    ],
     champs: [
-      { k: "txt", key: "ordonnance_jours", pos: { x: 116, y: 558 } },
-      { k: "txt", key: "a_renouveler", pos: { x: 100, y: 588 } },
+      { k: "radio", key: "voie", map: {
+        "Voie veineuse périphérique ou sous-cutanée": { x: 32, y: 379 },
+        "Cathéter central": { x: 32, y: 397 },
+        "PICC-line": { x: 32, y: 415 },
+        "Chambre implantable": { x: 32, y: 433 },
+      } },
+      { k: "txt", key: "ordonnance_jours", pos: { x: 116, y: 562 }, size: 11 },
+      { k: "txt", key: "a_renouveler", pos: { x: 100, y: 591 }, size: 11 },
     ],
   },
 };
@@ -287,9 +306,11 @@ export const CONFIGS: Record<string, Conf> = {
 export async function genererPdfModele(type: string, d: DocOrdoData, mode: "download" | "bloburl" = "download"): Promise<string | void> {
   const conf = CONFIGS[type];
   if (!conf) return;
-  const { txt, txtB, txtC, coche, blanc, signer, finaliser } = await ouvrirTemplate(conf.template);
+  const { txt, txtB, txtC, coche, boite, blanc, deplacerBloc, signer, finaliser } = await ouvrirTemplate(conf.template);
   if (conf.rppsBarres) blanc(...conf.rppsBarres);
   (conf.blancs ?? []).forEach((b) => blanc(...b));
+  for (const b of conf.blocs ?? []) await deplacerBloc(b.clip, b.dy);
+  (conf.boites ?? []).forEach((b) => boite(...b));
   (conf.textes ?? []).forEach((t) => txt(t.s, t.pos, t.size));
 
   if (conf.presc) txt(nomPrescripteur(d), conf.presc);
