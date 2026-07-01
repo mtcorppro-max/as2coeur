@@ -217,9 +217,9 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   ald_bs: {
-    template: "/ORDO%20BS%20ALD.pdf", ...BIZONE, date: { x: 460, y: 307 }, signature: { x: 380, y: 620 },
+    template: "/ORDO%20BS%20ALD.pdf", ...BIZONE, date: { x: 460, y: 308 }, signature: { x: 380, y: 620 },
     champs: [
-      { k: "radio", key: "voie", map: { "VVP": { x: 281, y: 330 }, "PAC": { x: 345, y: 330 }, "VVC": { x: 404, y: 330 }, "PICCLINE": { x: 486, y: 330 } } },
+      { k: "radio", key: "voie", map: { "VVP": { x: 281, y: 330 }, "PAC": { x: 345, y: 330 }, "VVC": { x: 404, y: 330 }, "PICCLINE": { x: 490, y: 330 } } },
       { k: "checks", key: "analyses", map: { "NFS": { x: 22, y: 356 }, "Plaquettes": { x: 22, y: 369 }, "Ionogramme sanguin": { x: 22, y: 382 }, "Calcémie": { x: 22, y: 395 }, "Urée": { x: 22, y: 408 }, "Créatinémie": { x: 22, y: 422 }, "Albuminémie": { x: 22, y: 435 }, "Pré-albumine": { x: 22, y: 448 }, "VS": { x: 22, y: 461 }, "CRP + PCT": { x: 22, y: 474 }, "Transaminases SGOT SGPT": { x: 22, y: 487 }, "Gamma GT": { x: 22, y: 500 }, "Phosphatases alcalines": { x: 22, y: 513 }, "Bilirubine total": { x: 22, y: 526 } } },
       { k: "txt", key: "autres", pos: { x: 60, y: 548 } },
       { k: "txt", key: "ordonnance_jours", pos: { x: 130, y: 630 } },
