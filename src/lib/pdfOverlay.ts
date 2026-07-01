@@ -34,11 +34,17 @@ export async function ouvrirTemplate(path: string) {
   const [page] = await out.copyPages(tpl, [0]);
   out.addPage(page);
   const font = await out.embedFont(StandardFonts.Helvetica);
+  const fontB = await out.embedFont(StandardFonts.HelveticaBold);
   const H = page.getHeight();
 
   const txt = (s: unknown, p: Pt, size = 9) => {
     if (s == null || s === "") return;
     page.drawText(String(s), { x: p.x, y: H - p.y, size, font, color: rgb(0.1, 0.1, 0.12) });
+  };
+  // Texte en gras.
+  const txtB = (s: unknown, p: Pt, size = 9) => {
+    if (s == null || s === "") return;
+    page.drawText(String(s), { x: p.x, y: H - p.y, size, font: fontB, color: rgb(0.1, 0.1, 0.12) });
   };
   // Texte centré horizontalement autour de p.x.
   const txtC = (s: unknown, p: Pt, size = 9) => {
@@ -66,7 +72,7 @@ export async function ouvrirTemplate(path: string) {
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   };
 
-  return { txt, txtC, coche, blanc, signer, finaliser };
+  return { txt, txtB, txtC, coche, blanc, signer, finaliser };
 }
 
 export const frDate = (v: unknown) => (v ? new Date(v as string).toLocaleDateString("fr-FR") : "");

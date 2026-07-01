@@ -2,7 +2,7 @@ import { ouvrirTemplate, nomPrescripteur, frDate, type DocOrdoData, type Pt } fr
 
 // Moteur générique d'ordonnances à modèle (overlay sur CERFA), piloté par config.
 type Champ =
-  | { k: "txt"; key: string; pos: Pt; size?: number; centre?: boolean; masque?: Rect; auto?: { key: string; option: string; valeur: string } }
+  | { k: "txt"; key: string; pos: Pt; size?: number; centre?: boolean; gras?: boolean; masque?: Rect; auto?: { key: string; option: string; valeur: string } }
   | { k: "date"; key: string; pos: Pt; size?: number }
   | { k: "lignes"; key: string; pos: Pt; lineH?: number }
   | { k: "radio" | "checks"; key: string; map: Record<string, Pt> }
@@ -242,9 +242,9 @@ export const CONFIGS: Record<string, Conf> = {
     template: "/IDEL%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 437, y: 314 }, signature: { x: 380, y: 620 },
     blancs: [[120, 596, 44, 13]], // masque « jours » imprimé (durée libre : jour/semaine/mois)
     champs: [
-      { k: "radio", key: "voie", map: { "Cathéter central": { x: 39, y: 369 }, "Picc-line": { x: 39, y: 398 }, "Chambre implantable": { x: 39, y: 430 } } },
-      { k: "txt", key: "perfusion", pos: { x: 115, y: 470 } },
-      { k: "txt", key: "ordonnance_jours", pos: { x: 110, y: 604 } },
+      { k: "radio", key: "voie", map: { "Cathéter central": { x: 34, y: 370 }, "Picc-line": { x: 34, y: 397 }, "Chambre implantable": { x: 34, y: 428 } } },
+      { k: "txt", key: "perfusion", pos: { x: 115, y: 476 }, size: 11, gras: true },
+      { k: "txt", key: "ordonnance_jours", pos: { x: 122, y: 604 } },
     ],
   },
   ald_idel_pca: {
@@ -284,7 +284,7 @@ export const CONFIGS: Record<string, Conf> = {
 export async function genererPdfModele(type: string, d: DocOrdoData, mode: "download" | "bloburl" = "download"): Promise<string | void> {
   const conf = CONFIGS[type];
   if (!conf) return;
-  const { txt, txtC, coche, blanc, signer, finaliser } = await ouvrirTemplate(conf.template);
+  const { txt, txtB, txtC, coche, blanc, signer, finaliser } = await ouvrirTemplate(conf.template);
   if (conf.rppsBarres) blanc(...conf.rppsBarres);
   (conf.blancs ?? []).forEach((b) => blanc(...b));
   (conf.textes ?? []).forEach((t) => txt(t.s, t.pos, t.size));
@@ -303,7 +303,7 @@ export async function genererPdfModele(type: string, d: DocOrdoData, mode: "down
         if (Array.isArray(cv) && (cv as string[]).includes(ch.auto.option)) val = ch.auto.valeur;
       }
       if (ch.masque && val != null && val !== "") blanc(...ch.masque);
-      (ch.centre ? txtC : txt)(val, ch.pos, ch.size);
+      (ch.gras ? txtB : ch.centre ? txtC : txt)(val, ch.pos, ch.size);
     } else if (ch.k === "date") txt(frDate(c[ch.key]), ch.pos);
     else if (ch.k === "lignes") {
       const v = typeof c[ch.key] === "string" ? (c[ch.key] as string).split("\n").filter((l) => l.trim()) : [];
