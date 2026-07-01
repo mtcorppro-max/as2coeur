@@ -190,10 +190,10 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   ald_taurolock: {
-    template: "/Taurolock%20ALD.pdf", ...BIZONE, date: { x: 400, y: 320 }, signature: { x: 380, y: 590 },
+    template: "/Taurolock%20ALD.pdf", ...BIZONE, date: { x: 415, y: 318 }, signature: { x: 380, y: 590 },
     champs: [
-      { k: "txt", key: "qsp_jours", pos: { x: 55, y: 515 } },
-      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 530 } },
+      { k: "txt", key: "qsp_jours", pos: { x: 52, y: 514 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 110, y: 530 } },
     ],
   },
   ald_pharma: {
@@ -227,7 +227,7 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   ald_perfadom_npad: {
-    template: "/PERFADOM%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 620 },
+    template: "/PERFADOM%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 420, y: 312 }, signature: { x: 380, y: 620 },
     champs: [
       { k: "checks", key: "options", map: { "Première installation": { x: 22, y: 360 }, "12 premières semaines": { x: 22, y: 385 }, "Après les 12 premières semaines": { x: 22, y: 420 } } },
       { k: "txt", key: "ordonnance_jours", pos: { x: 130, y: 650 } },
@@ -235,7 +235,7 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   ald_idel_npad: {
-    template: "/IDEL%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 620 },
+    template: "/IDEL%20NPAD%20ALD.pdf", ...BIZONE, date: { x: 420, y: 312 }, signature: { x: 380, y: 620 },
     champs: [
       { k: "radio", key: "voie", map: { "Cathéter central": { x: 22, y: 360 }, "Picc-line": { x: 22, y: 380 }, "Chambre implantable": { x: 22, y: 400 } } },
       { k: "txt", key: "ordonnance_jours", pos: { x: 130, y: 650 } },
@@ -243,7 +243,7 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   ald_idel_pca: {
-    template: "/IDEL%20PCA%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 640 },
+    template: "/IDEL%20PCA%20ALD.pdf", ...BIZONE, date: { x: 420, y: 312 }, signature: { x: 380, y: 640 },
     champs: [
       { k: "checks", key: "produit", map: { "Chlorhydrate de morphine": { x: 165, y: 405 }, "Oxynorm": { x: 315, y: 405 }, "Autre": { x: 420, y: 405 } } },
       { k: "txt", key: "concentration", pos: { x: 150, y: 460 } },
@@ -257,17 +257,18 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   ald_idel_piccline: {
-    template: "/IDEL%20ENTRETIEN%20PICCLINE%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 590 },
+    template: "/IDEL%20ENTRETIEN%20PICCLINE%20ALD.pdf", ...BIZONE, date: { x: 420, y: 313 }, signature: { x: 380, y: 590 },
+    blancs: [[114, 458, 14, 13], [101, 481, 13, 13]], // masque le « 1 » (MOIS) et le « 2 » (FOIS)
     champs: [
-      { k: "txt", key: "qsp_jours", pos: { x: 55, y: 520 } },
-      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 535 } },
+      { k: "txt", key: "ordonnance_jours", pos: { x: 116, y: 465 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 103, y: 488 } },
     ],
   },
   ald_idel: {
-    template: "/ORDO%20IDEL%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 590 },
+    template: "/ORDO%20IDEL%20ALD.pdf", ...BIZONE, date: { x: 420, y: 310 }, signature: { x: 380, y: 590 },
     champs: [
-      { k: "txt", key: "ordonnance_jours", pos: { x: 130, y: 520 } },
-      { k: "txt", key: "a_renouveler", pos: { x: 118, y: 535 } },
+      { k: "txt", key: "ordonnance_jours", pos: { x: 116, y: 558 } },
+      { k: "txt", key: "a_renouveler", pos: { x: 100, y: 588 } },
     ],
   },
 };
