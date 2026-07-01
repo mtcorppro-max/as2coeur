@@ -254,17 +254,25 @@ export const CONFIGS: Record<string, Conf> = {
   },
   ald_idel_pca: {
     template: "/IDEL%20PCA%20ALD.pdf", ...BIZONE, date: { x: 448, y: 296 }, signature: { x: 380, y: 620 },
+    // Efface les pointillés de chaque blanc (les valeurs sont centrées : champs centre:true).
+    blancs: [
+      [107, 555, 70, 12], [301, 555, 69, 12],   // type d'ampoules / réservoir
+      [150, 581, 39, 12],                        // concentration
+      [101, 629, 59, 12], [228, 629, 50, 12],    // débit /heure, débit /24h
+      [61, 658, 59, 12], [304, 658, 51, 12],     // bolus, période d'interdiction
+      [221, 702, 62, 12],                        // dose totale /24h
+    ],
     champs: [
       { k: "radio", key: "voie", map: { "Cathéter central": { x: 24, y: 368 }, "Picc line": { x: 24, y: 397 }, "Chambre Implantable": { x: 24, y: 425 }, "Voie veineuse périphérique ou sous cutanée": { x: 24, y: 456 } } },
       { k: "radio", key: "produit", map: { "Chlorhydrate de morphine": { x: 172, y: 532 }, "Oxynorm": { x: 339, y: 532 }, "Fentanyl": { x: 415, y: 532 } } },
-      { k: "txt", key: "ampoule_mg", pos: { x: 112, y: 563 }, size: 11 },
-      { k: "txt", key: "reservoir_ml", pos: { x: 298, y: 563 }, size: 11 },
-      { k: "txt", key: "concentration", pos: { x: 150, y: 588 }, size: 11 },
-      { k: "txt", key: "debit_mg_heure", pos: { x: 112, y: 632 }, size: 11 },
-      { k: "txt", key: "debit_mg_24h", pos: { x: 230, y: 632 }, size: 11 },
-      { k: "txt", key: "bolus_mg", pos: { x: 80, y: 660 }, size: 11 },
-      { k: "txt", key: "interdiction_min", pos: { x: 295, y: 660 }, size: 11 },
-      { k: "txt", key: "dose_totale_24h", pos: { x: 224, y: 707 }, size: 11 },
+      { k: "txt", key: "ampoule_mg", pos: { x: 142, y: 562 }, size: 11, centre: true },
+      { k: "txt", key: "reservoir_ml", pos: { x: 335, y: 562 }, size: 11, centre: true },
+      { k: "txt", key: "concentration", pos: { x: 168, y: 588 }, size: 11, centre: true },
+      { k: "txt", key: "debit_mg_heure", pos: { x: 130, y: 636 }, size: 11, centre: true },
+      { k: "txt", key: "debit_mg_24h", pos: { x: 252, y: 636 }, size: 11, centre: true },
+      { k: "txt", key: "bolus_mg", pos: { x: 90, y: 665 }, size: 11, centre: true },
+      { k: "txt", key: "interdiction_min", pos: { x: 329, y: 665 }, size: 11, centre: true },
+      { k: "txt", key: "dose_totale_24h", pos: { x: 251, y: 709 }, size: 11, centre: true },
       { k: "txt", key: "ordonnance_jours", pos: { x: 130, y: 751 }, size: 11 },
       { k: "txt", key: "a_renouveler", pos: { x: 111, y: 767 }, size: 11 },
     ],
