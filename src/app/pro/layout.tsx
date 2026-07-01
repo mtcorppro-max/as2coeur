@@ -197,7 +197,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
       ]
     : estDirigeant
     ? [
-        { href: "/pro/pec", icon: "chart", label: "PEC" },
+        { href: "/pro/pec", icon: "chart", label: "Stats" },
         { href: "/pro/marketing", icon: "megaphone", label: "Marketing" },
         { href: "/pro/equipe-dirigeante", icon: "users", label: "Équipe dirigeante" },
       ]
@@ -226,7 +226,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
         { href: "/pro/messagerie", icon: "message", label: "Messages", badge: nbMessages },
         ...(peutGerer ? [{ href: "/pro/equipe", icon: "users", label: "Équipe" }] : []),
         ...(peutMkt ? [{ href: "/pro/marketing", icon: "megaphone", label: "Marketing" }] : []),
-        ...(peutPec ? [{ href: "/pro/pec", icon: "chart", label: "PEC" }] : []),
+        ...(peutPec ? [{ href: "/pro/pec", icon: "chart", label: "Stats" }] : []),
       ];
   // Au-delà de 5 entrées : 4 visibles + un bouton « Plus » qui ouvre le reste.
   const enDebordement = entreesMobile.length > 5;
@@ -251,7 +251,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                 </>
               ) : estDirigeant ? (
                 <>
-                  <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />
+                  <Onglet href="/pro/pec" icon="chart" label="Stats" pathname={pathname} />
                   <Onglet href="/pro/marketing" icon="megaphone" label="Marketing" pathname={pathname} />
                   <Onglet href="/pro/equipe-dirigeante" icon="users" label="Équipe dirigeante" pathname={pathname} />
                 </>
@@ -281,7 +281,7 @@ export default function ProLayout({ children }: { children: React.ReactNode }) {
                   {peutGerer && <Onglet href="/pro/equipe" icon="users" label="Équipe soignante" pathname={pathname} />}
                   {peutMkt && <Onglet href="/pro/marketing" icon="megaphone" label="Marketing" pathname={pathname} />}
                   <Onglet href="/pro/messagerie" icon="message" label="Messagerie" pathname={pathname} badge={nbMessages} />
-                  {peutPec && <Onglet href="/pro/pec" icon="chart" label="PEC" pathname={pathname} />}
+                  {peutPec && <Onglet href="/pro/pec" icon="chart" label="Stats" pathname={pathname} />}
                 </>
               )}
             </nav>

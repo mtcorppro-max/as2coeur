@@ -220,7 +220,7 @@ export default function PecPage() {
 
   const estDir = pro?.role === "dirigeant";
   if (pro && pro.niveau > 1 && !estDir) {
-    return <div className="card text-sm text-slate-500">La page PEC est réservée aux managers (niveau 1) et à l&apos;administration (niveau 0).</div>;
+    return <div className="card text-sm text-slate-500">La page Stats est réservée aux managers (niveau 1) et à l&apos;administration (niveau 0).</div>;
   }
   if (!pret) return <p className="text-sm text-slate-400">Chargement…</p>;
 
