@@ -231,7 +231,7 @@ export function SoignantForm({ prestataires }: { prestataires?: Prestataire[] })
             value={form.role}
             onChange={(v) => setForm((f) => ({ ...f, role: v, niveau: v === "manager" ? "1" : v === "livreur" ? "2" : (v === "rh" || v === "personnel") ? "5" : (v === "infirmiere_liberale" || v === "pharmacie" || v === "chirurgien" || v === "dirigeant" || v === "magasinier") ? "3" : f.niveau }))}
             options={[
-              { value: "chirurgien", label: "Chirurgien / Médecin" },
+              { value: "chirurgien", label: "Médecin" },
               { value: "coordinatrice", label: "Infirmière coordinatrice" },
               ...(niveauCreateur === 0 ? [{ value: "manager", label: "Manager (région)" }] : []),
               { value: "infirmiere_liberale", label: "Infirmière libérale" },
