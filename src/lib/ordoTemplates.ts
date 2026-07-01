@@ -183,7 +183,7 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   ald_hemocs: {
-    template: "/HEMOCS%20ALD.pdf", ...BIZONE, date: { x: 445, y: 308 }, signature: { x: 380, y: 590 },
+    template: "/HEMOCS%20ALD.pdf", ...BIZONE, date: { x: 462, y: 310 }, signature: { x: 380, y: 590 },
     champs: [
       { k: "txt", key: "ordonnance_jours", pos: { x: 135, y: 527 } },
       { k: "txt", key: "a_renouveler", pos: { x: 118, y: 542 } },
