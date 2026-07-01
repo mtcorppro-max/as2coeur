@@ -12,6 +12,8 @@ export type TypeMesure =
 
 export type StatutAlerte = "declenchee" | "acquittee" | "escaladee" | "resolue";
 export type StatutSurveillance = "active" | "suspendue" | "terminee" | "arret_perfusions" | "hospitalise" | "decede" | "annule";
+// Détail saisi lors d'un statut partiel : perfusions effectuées / total prévu + note.
+export type StatutDetailPEC = { effectuees?: number | null; prevues?: number | null; note?: string | null; le?: string | null };
 
 export interface Prestataire {
   id: string;
@@ -89,6 +91,8 @@ export interface Patient {
   code_unique: string;
   nom: string;
   statut: StatutSurveillance;
+  // Détail du statut partiel (arrêt/suspendu/hospitalisé/décédé) — cf. migration 0120
+  statut_detail: StatutDetailPEC | null;
   code_postal: string | null;
   tel_alerte_1: string | null;
   tel_alerte_2: string | null;
