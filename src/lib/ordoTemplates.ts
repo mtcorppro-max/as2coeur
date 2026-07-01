@@ -293,15 +293,21 @@ export const CONFIGS: Record<string, Conf> = {
     // ce bloc de 36 pt (rendu exact préservé) et on redessine 4 choix de voie d'abord.
     blancs: [[24, 372, 566, 126]],
     blocs: [{ clip: [24, 406, 566, 90], dy: 36 }],
-    // Efface (après déplacement +36) : les 3 valeurs pré-imprimées « Perfusion IV de … »
-    // (produit/volume/durée) et les pointillés de la ligne « matin/midi/soir à … heures ».
-    blancsApres: [[131, 475, 52, 13], [444, 475, 38, 13], [113, 488, 54, 13], [117, 520, 32, 11], [265, 520, 34, 11], [414, 520, 25, 11]],
+    // Efface (après déplacement +36) : toute la ligne « Perfusion IV de … » (réécrite sur
+    // 3 lignes via textes[] pour laisser de la place au produit) et les pointillés
+    // de la ligne « matin/midi/soir à … heures ».
+    blancsApres: [[28, 472, 547, 32], [117, 520, 32, 11], [265, 520, 34, 11], [414, 520, 25, 11]],
     boites: [[31, 371, 9], [31, 389, 9], [31, 407, 9], [31, 425, 9]],
     textes: [
       { s: "Sur voie veineuse périphérique ou en sous cutanée", pos: { x: 61, y: 379 }, size: 11 },
       { s: "Sur cathéter central", pos: { x: 61, y: 397 }, size: 11 },
       { s: "Sur PICC-line", pos: { x: 61, y: 415 }, size: 11 },
       { s: "Sur chambre implantable", pos: { x: 61, y: 433 }, size: 11 },
+      // Ligne « Perfusion IV de … » réécrite sur 3 lignes (place pour le produit).
+      { s: "•", pos: { x: 33, y: 483 }, size: 15 },
+      { s: "Perfusion IV de :", pos: { x: 50, y: 481 }, size: 11 },
+      { s: "Volume total de remplissage du diffuseur portable :", pos: { x: 50, y: 496 }, size: 11 },
+      { s: "pour une durée de perfusion de", pos: { x: 50, y: 511 }, size: 11 },
     ],
     champs: [
       { k: "radio", key: "voie", map: {
@@ -318,10 +324,10 @@ export const CONFIGS: Record<string, Conf> = {
       { k: "cocheSi", key: "heure_matin", pos: { x: 38, y: 526 } },
       { k: "cocheSi", key: "heure_midi", pos: { x: 203, y: 526 } },
       { k: "cocheSi", key: "heure_soir", pos: { x: 355, y: 526 } },
-      // Valeurs « Perfusion IV de … » : taille réduite et sans gras pour tenir dans les espaces.
-      { k: "txt", key: "perfusion_produit", pos: { x: 133, y: 485 }, size: 9 },
-      { k: "txt", key: "perfusion_volume", pos: { x: 446, y: 485 }, size: 9 },
-      { k: "txt", key: "perfusion_duree", pos: { x: 115, y: 498 }, size: 9 },
+      // Valeurs « Perfusion IV de … » : après chaque libellé (3 lignes), sans gras.
+      { k: "txt", key: "perfusion_produit", pos: { x: 137, y: 481 }, size: 9 },
+      { k: "txt", key: "perfusion_volume", pos: { x: 304, y: 496 }, size: 9 },
+      { k: "txt", key: "perfusion_duree", pos: { x: 210, y: 511 }, size: 9 },
       { k: "txt", key: "ordonnance_jours", pos: { x: 116, y: 562 }, size: 11 },
       { k: "txt", key: "a_renouveler", pos: { x: 100, y: 591 }, size: 11 },
     ],
