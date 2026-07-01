@@ -208,12 +208,12 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   ald_pharma_pac: {
-    template: "/PHARMA%20PAC%20ALD.pdf", ...BIZONE, date: { x: 420, y: 309 }, signature: { x: 380, y: 560 },
-    blancs: [[149, 382, 86, 13], [141, 395, 82, 13], [58, 500, 46, 13]],
+    template: "/PHARMA%20PAC%20ALD.pdf", ...BIZONE, date: { x: 385, y: 324 }, signature: { x: 380, y: 560 },
+    blancs: [[149, 387, 88, 14], [141, 400, 84, 14], [56, 503, 54, 14]],
     champs: [
-      { k: "phrase", modele: "{poches_100} poches/jour", pos: { x: 150, y: 391 } },
-      { k: "phrase", modele: "{poches_50} poche/jour", pos: { x: 143, y: 404 } },
-      { k: "phrase", modele: "{qsp_jours} jours", pos: { x: 44, y: 509 } },
+      { k: "phrase", modele: "{poches_100} poches/jour", pos: { x: 150, y: 396 } },
+      { k: "phrase", modele: "{poches_50} poche/jour", pos: { x: 143, y: 409 } },
+      { k: "phrase", modele: "{qsp_jours} jours", pos: { x: 44, y: 512 } },
     ],
   },
   ald_bs: {
