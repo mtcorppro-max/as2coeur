@@ -36,7 +36,7 @@ const STD = {
 const BIZONE = {
   presc: { x: 46, y: 118 } as Pt,
   rpps: { x: 46, y: 141 } as Pt,
-  patient: { x: 300, y: 202 } as Pt, // centre de la case patient
+  patient: { x: 300, y: 205 } as Pt, // centre de la case patient (entre les 2 libellés)
 };
 
 export const CONFIGS: Record<string, Conf> = {
@@ -176,7 +176,7 @@ export const CONFIGS: Record<string, Conf> = {
     ],
   },
   ald_glycemie: {
-    template: "/GLYCEMIE%20ALD.pdf", ...BIZONE, date: { x: 430, y: 308 }, signature: { x: 380, y: 560 },
+    template: "/GLYCEMIE%20ALD.pdf", ...BIZONE, date: { x: 432, y: 309 }, signature: { x: 380, y: 560 },
     champs: [
       { k: "txt", key: "ordonnance_jours", pos: { x: 135, y: 470 } },
       { k: "txt", key: "a_renouveler", pos: { x: 118, y: 485 } },
