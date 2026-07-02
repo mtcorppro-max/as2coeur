@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export type SessionPatient = { id: string; nom: string; code_postal: string | null; user_id: string };
+export type SessionPatient = { id: string; nom: string; code_postal: string | null; user_id: string; date_naissance: string | null; sexe: string | null };
 export type SessionPro = { id: string; nom: string; prenom: string | null; titre: string | null; role: string; niveau: number; agence_id: string | null; region_id: string | null; prestataire_id: string; user_id: string; recevoir_alertes: boolean; photo_url: string | null };
 
 const LS_PATIENT = "sc_patient";
@@ -107,7 +107,7 @@ async function fetchPatient(): Promise<SessionPatient | null> {
   if (!session) return null;
   const { data } = await supabase
     .from("patient")
-    .select("id,nom,code_postal,user_id")
+    .select("id,nom,code_postal,user_id,date_naissance,sexe")
     .eq("user_id", session.user.id)
     .maybeSingle();
   if (!data) return null;

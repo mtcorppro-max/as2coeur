@@ -110,6 +110,8 @@ export interface Patient {
   // Ville, naissance & opération (cf. migration 0004)
   ville: string | null;
   date_naissance: string | null;
+  // Sexe (avatar-guide, cf. migration 0124)
+  sexe: string | null;
   operation: string | null;
   date_operation: string | null;
   // Noms des destinataires d'alerte (cf. migration 0005)

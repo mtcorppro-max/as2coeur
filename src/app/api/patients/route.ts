@@ -92,6 +92,7 @@ export async function POST(request: Request) {
       proche_tel: body.proche_tel || null,
       ville: body.ville || null,
       date_naissance: body.date_naissance || null,
+      sexe: body.sexe || null,
       operation: body.operation || null,
       date_operation: body.date_operation || null,
       alerte_1_nom: body.alerte_1_nom || null,

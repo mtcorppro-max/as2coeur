@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { invalidate } from "@/lib/hooks/useData";
+import { usePatientSession } from "@/lib/hooks/useSession";
+import { encouragement } from "@/lib/avatarGuide";
+import { AvatarGuide } from "@/components/AvatarGuide";
 import { MESURES } from "@/lib/constants";
 import type { TypeMesure } from "@/lib/types";
 
@@ -34,11 +37,13 @@ function IconeConstante({ type }: { type: Choix }) {
 
 export function SaisieMesure({ patientId, pro, onSaved }: { patientId: string; pro?: boolean; onSaved?: () => void }) {
   const router = useRouter();
+  const patient = usePatientSession(); // null côté pro (avatar-guide patient uniquement)
   const [choix, setChoix] = useState<Choix | null>(null);
   const [v1, setV1] = useState("");
   const [v2, setV2] = useState(""); // diastolique pour la tension
   const [etat, setEtat] = useState<"idle" | "envoi" | "ok" | "erreur">("idle");
   const [message, setMessage] = useState("");
+  const [encou, setEncou] = useState(""); // encouragement scripté (fixé au succès)
 
   function reset() {
     setChoix(null);
@@ -69,6 +74,7 @@ export function SaisieMesure({ patientId, pro, onSaved }: { patientId: string; p
     }
     setEtat("ok");
     setMessage("Mesure enregistrée ✓");
+    setEncou(encouragement());
     // Côté pro : on rafraîchit la fiche et on réinitialise (pas de redirection patient).
     if (pro) {
       invalidate(`pro:patient-courbes:${patientId}`);
@@ -80,9 +86,10 @@ export function SaisieMesure({ patientId, pro, onSaved }: { patientId: string; p
     // sans router.refresh() (qui repasse par le serveur et casse la session).
     invalidate(`patient:accueil:${patientId}`);
     invalidate(`patient:suivi:${patientId}`);
+    // Délai un peu plus long : le temps de lire l'encouragement de l'avatar.
     setTimeout(() => {
       router.push("/patient");
-    }, 900);
+    }, 1800);
   }
 
   if (!choix) {
@@ -152,7 +159,20 @@ export function SaisieMesure({ patientId, pro, onSaved }: { patientId: string; p
         </div>
       )}
 
-      {message && (
+      {message && etat === "ok" && !pro && patient ? (
+        /* Encouragement scripté de l'avatar-guide (côté patient) */
+        <AvatarGuide
+          dateNaissance={patient.date_naissance}
+          sexe={patient.sexe}
+          taille={52}
+          bulle={
+            <div className="grid gap-0.5">
+              <p className="text-sm font-semibold text-ok">{message}</p>
+              {encou && <p className="text-sm text-slate-600">{encou}</p>}
+            </div>
+          }
+        />
+      ) : message ? (
         <p
           className={`rounded-lg px-3 py-2 text-sm ${
             etat === "ok"
@@ -162,7 +182,7 @@ export function SaisieMesure({ patientId, pro, onSaved }: { patientId: string; p
         >
           {message}
         </p>
-      )}
+      ) : null}
 
       <div className="flex gap-3">
         <button onClick={reset} className="btn-secondary flex-1">

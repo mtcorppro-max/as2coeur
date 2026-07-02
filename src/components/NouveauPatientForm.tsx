@@ -68,6 +68,7 @@ const VIDE = {
   prenom: "",
   nom: "",
   date_naissance: "",
+  sexe: "",
   code_postal: "",
   ville: "",
   telephone: "",
@@ -293,9 +294,24 @@ export function NouveauPatientForm() {
             <input className="input" value={form.nom} onChange={set("nom")} required />
           </div>
         </div>
-        <div>
-          <label className="label">Date de naissance</label>
-          <DateField value={form.date_naissance} onChange={(v) => setForm((f) => ({ ...f, date_naissance: v }))} placeholder="Date de naissance" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="label">Date de naissance</label>
+            <DateField value={form.date_naissance} onChange={(v) => setForm((f) => ({ ...f, date_naissance: v }))} placeholder="Date de naissance" />
+          </div>
+          <div>
+            <label className="label">Sexe</label>
+            <Select
+              value={form.sexe}
+              onChange={(v) => setForm((f) => ({ ...f, sexe: v }))}
+              placeholder="— Non renseigné —"
+              options={[
+                { value: "feminin", label: "Féminin" },
+                { value: "masculin", label: "Masculin" },
+              ]}
+            />
+            <p className="mt-1 text-xs text-slate-400">Sert à personnaliser l&apos;avatar-guide côté patient.</p>
+          </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>

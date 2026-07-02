@@ -1,16 +1,21 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { usePatientSession } from "@/lib/hooks/useSession";
+import { encouragement } from "@/lib/avatarGuide";
+import { AvatarGuide } from "@/components/AvatarGuide";
 
 // Envoi d'une photo de cicatrice. Sur mobile, `capture` propose l'appareil
 // photo ; sur desktop, la sélection de fichier classique.
 export function PhotoUpload({ onUploaded }: { onUploaded?: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const patient = usePatientSession(); // null côté pro (avatar-guide patient uniquement)
   const [fichier, setFichier] = useState<File | null>(null);
   const [apercu, setApercu] = useState<string | null>(null);
   const [legende, setLegende] = useState("");
   const [etat, setEtat] = useState<"idle" | "envoi" | "ok" | "erreur">("idle");
   const [message, setMessage] = useState("");
+  const [encou, setEncou] = useState(""); // encouragement scripté (fixé au succès)
 
   function choisir(f: File | null) {
     setFichier(f);
@@ -43,11 +48,13 @@ export function PhotoUpload({ onUploaded }: { onUploaded?: () => void }) {
       setMessage(message || "Échec de l'envoi. Réessayez.");
       return;
     }
+    // reset() efface aussi le message : on le pose après.
+    reset();
     setEtat("ok");
     setMessage("Photo envoyée ✓");
-    reset();
+    setEncou(encouragement());
     onUploaded?.();
-    setTimeout(() => setEtat("idle"), 1500);
+    setTimeout(() => { setEtat("idle"); setMessage(""); }, 3000);
   }
 
   return (
@@ -89,7 +96,20 @@ export function PhotoUpload({ onUploaded }: { onUploaded?: () => void }) {
         />
       )}
 
-      {message && (
+      {message && etat === "ok" && patient ? (
+        /* Encouragement scripté de l'avatar-guide (côté patient) */
+        <AvatarGuide
+          dateNaissance={patient.date_naissance}
+          sexe={patient.sexe}
+          taille={52}
+          bulle={
+            <div className="grid gap-0.5">
+              <p className="text-sm font-semibold text-ok">{message}</p>
+              {encou && <p className="text-sm text-slate-600">{encou}</p>}
+            </div>
+          }
+        />
+      ) : message ? (
         <p
           className={`rounded-lg px-3 py-2 text-sm ${
             etat === "ok" ? "bg-green-50 text-ok" : "bg-red-50 text-critique"
@@ -97,7 +117,7 @@ export function PhotoUpload({ onUploaded }: { onUploaded?: () => void }) {
         >
           {message}
         </p>
-      )}
+      ) : null}
 
       {apercu && (
         <div className="flex gap-3">

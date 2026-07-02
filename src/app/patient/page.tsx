@@ -8,6 +8,7 @@ import { useData } from "@/lib/hooks/useData";
 import { MESURES, TYPES_MESURE } from "@/lib/constants";
 import { conseilDuJour, conseilMeteo, type ConseilMeteo } from "@/lib/conseils";
 import { ConseilCard } from "@/components/ConseilCard";
+import { AvatarGuide } from "@/components/AvatarGuide";
 import { RappelDocuments } from "@/components/RappelDocuments";
 import { RappelBilanPatient } from "@/components/RappelBilanPatient";
 import { CalendrierSuivi } from "@/components/CalendrierSuivi";
@@ -57,18 +58,31 @@ export default function PatientAccueil() {
   if (!patient) return <Skeleton />;
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
+    <div className="grid gap-5">
       <div className="grid gap-5">
         <RappelBilanPatient />
         <RappelDocuments />
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">
-            Bonjour {patient.nom.split(" ")[0]} 👋
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {aujourdhui > 0 ? `${aujourdhui} mesure(s) saisie(s) aujourd'hui.` : "Pensez à relever vos constantes du jour."}
-          </p>
-        </div>
+        {/* Avatar-guide : bonjour + conseil du jour dans la bulle */}
+        <AvatarGuide
+          dateNaissance={patient.date_naissance}
+          sexe={patient.sexe}
+          taille={72}
+          bulle={
+            <div className="grid gap-1.5">
+              <p className="text-lg font-bold text-slate-800">Bonjour {patient.nom.split(" ")[0]} !</p>
+              <p className="text-sm text-slate-500">
+                {aujourdhui > 0 ? `${aujourdhui} mesure(s) saisie(s) aujourd'hui.` : "Pensez à relever vos constantes du jour."}
+              </p>
+              <p className="text-sm text-slate-600">
+                <span className="font-semibold text-brand">Conseil du jour — {duJour.titre} : </span>
+                {duJour.contenu}
+              </p>
+              <Link href="/patient/conseils" className="text-xs font-medium text-brand hover:underline">
+                Tous les conseils →
+              </Link>
+            </div>
+          }
+        />
 
         {meteo && <ConseilCard conseil={meteo} highlight />}
 
@@ -103,17 +117,6 @@ export default function PatientAccueil() {
         </section>
 
       </div>
-
-      <aside className="grid gap-5">
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-600">Conseil du jour</h2>
-            <Link href="/patient/conseils" className="text-xs font-medium text-brand hover:underline">Tous →</Link>
-          </div>
-          <ConseilCard conseil={duJour} />
-        </section>
-
-      </aside>
     </div>
   );
 }

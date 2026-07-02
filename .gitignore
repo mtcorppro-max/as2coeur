@@ -35,6 +35,9 @@ yarn-error.log*
 /public/DOSOIGNANT.txt
 DOSOIGNANT.txt
 
+# planche source des avatars (les découpes sont dans public/avatars-guide/)
+/public/avatar.png
+
 # PWA — fichiers générés au build
 /public/sw.js
 /public/sw.js.map

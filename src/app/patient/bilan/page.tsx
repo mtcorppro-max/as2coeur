@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePatientSession } from "@/lib/hooks/useSession";
 import { QUESTIONS_BILAN, type ReponsesBilan } from "@/lib/bilanEtat";
+import { encouragement } from "@/lib/avatarGuide";
+import { AvatarGuide } from "@/components/AvatarGuide";
 
 export default function BilanPage() {
   const patient = usePatientSession();
   const [rep, setRep] = useState<ReponsesBilan>({});
   const [busy, setBusy] = useState(false);
   const [envoye, setEnvoye] = useState(false);
+  const [encou, setEncou] = useState(""); // encouragement scripté (fixé à l'envoi)
   const [dernier, setDernier] = useState<{ created_at: string } | null>(null);
 
   useEffect(() => {
@@ -31,6 +34,7 @@ export default function BilanPage() {
     const { error } = await createClient().from("bilan_etat").insert({ patient_id: patient.id, reponses: rep });
     setBusy(false);
     if (error) { alert("Échec de l'envoi. Réessayez."); return; }
+    setEncou(encouragement());
     setEnvoye(true);
   }
 
@@ -38,8 +42,10 @@ export default function BilanPage() {
     return (
       <div className="mx-auto max-w-xl">
         <div className="card grid place-items-center gap-3 py-12 text-center">
-          <span className="grid h-14 w-14 place-items-center rounded-full bg-green-100 text-2xl">✓</span>
+          {/* L'avatar-guide félicite le patient (message scripté) */}
+          <AvatarGuide dateNaissance={patient?.date_naissance} sexe={patient?.sexe} taille={72} />
           <p className="text-lg font-bold text-slate-800">Vos données ont bien été transmises à votre équipe de soins</p>
+          <p className="max-w-sm text-sm text-slate-600">{encou}</p>
           <p className="max-w-sm text-sm text-slate-500">Vous serez notifié(e) dès que votre infirmière les aura consultées. En cas d&apos;urgence, appelez le 15.</p>
           <button onClick={() => { setRep({}); setEnvoye(false); }} className="btn-secondary mt-2">Faire un nouveau bilan</button>
         </div>

@@ -19,7 +19,7 @@ const nomComplet = (s: { titre: string | null; prenom: string | null; nom: strin
 
 // Champs administratifs éditables de la fiche patient.
 const CHAMPS = [
-  "date_naissance", "telephone", "email", "adresse", "code_postal", "ville",
+  "date_naissance", "sexe", "telephone", "email", "adresse", "code_postal", "ville",
   "operation", "date_operation", "duree_prise_en_charge", "traitement", "chirurgien", "delegue_nom", "pharmacie", "pharmacie_tel", "pharmacie_compte_nom", "infirmiere_nom", "infirmiere_tel",
   "proche_nom", "proche_tel",
   "alerte_1_nom", "tel_alerte_1", "alerte_2_nom", "tel_alerte_2",
@@ -234,8 +234,20 @@ export function InfosPatient({
           <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Coordonnées</p>
           <div className="grid gap-4 sm:grid-cols-2">
             <Champ label="Date de naissance" type="date" value={form.date_naissance} onChange={set("date_naissance")} />
-            <Champ label="Téléphone" value={form.telephone} onChange={set("telephone")} />
+            <div>
+              <label className="label">Sexe</label>
+              <Select
+                value={form.sexe}
+                onChange={(v) => setVal("sexe", v)}
+                placeholder="— Non renseigné —"
+                options={[
+                  { value: "feminin", label: "Féminin" },
+                  { value: "masculin", label: "Masculin" },
+                ]}
+              />
+            </div>
           </div>
+          <Champ label="Téléphone" value={form.telephone} onChange={set("telephone")} />
           <Champ label="Adresse mail" value={form.email} onChange={set("email")} />
           <AdresseAutocomplete
             adresse={form.adresse}
@@ -387,6 +399,7 @@ export function InfosPatient({
               label="Naissance"
               value={vue.date_naissance ? `${formatDate(vue.date_naissance)}${ageAns != null ? ` (${ageAns} ans)` : ""}` : ""}
             />
+            <Ligne label="Sexe" value={vue.sexe === "feminin" ? "Féminin" : vue.sexe === "masculin" ? "Masculin" : ""} />
             <Ligne label="Téléphone" value={vue.telephone} href={vue.telephone ? `tel:${vue.telephone}` : undefined} />
             <Ligne label="Email" value={vue.email} href={vue.email ? `mailto:${vue.email}` : undefined} />
             <Ligne label="Adresse" value={vue.adresse} />

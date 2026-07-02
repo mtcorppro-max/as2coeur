@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePatientSession } from "@/lib/hooks/useSession";
+import { AvatarGuide } from "@/components/AvatarGuide";
 
 type Row = {
   nom: string;
@@ -12,6 +13,8 @@ type Row = {
   jours_suivi: number[] | null;
   traitement: string | null;
   rgpd_signe_le: string | null;
+  date_naissance: string | null;
+  sexe: string | null;
 };
 
 const TUTO = [
@@ -36,7 +39,7 @@ export function OnboardingPatient() {
 
   useEffect(() => {
     if (!patient?.id) return;
-    createClient().from("patient").select("nom,operation,date_operation,duree_prise_en_charge,jours_suivi,traitement,rgpd_signe_le").eq("id", patient.id).maybeSingle()
+    createClient().from("patient").select("nom,operation,date_operation,duree_prise_en_charge,jours_suivi,traitement,rgpd_signe_le,date_naissance,sexe").eq("id", patient.id).maybeSingle()
       .then(({ data }) => { const r = data as Row | null; setRow(r); setShow(!!r && !r.rgpd_signe_le); setNom(r?.nom ?? ""); });
   }, [patient?.id]);
 
@@ -70,7 +73,8 @@ export function OnboardingPatient() {
         <div className="grid flex-1 content-start gap-3 overflow-y-auto px-6 py-6 text-center">
           {step < stepProtocole && (
             <>
-              <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-rose-50 text-3xl">{TUTO[step].emoji}</span>
+              {/* L'avatar-guide (adapté au profil) accompagne le tutoriel */}
+              <AvatarGuide dateNaissance={row.date_naissance} sexe={row.sexe} taille={72} className="mx-auto" />
               <h2 className="text-xl font-bold text-slate-800">{TUTO[step].titre}</h2>
               <p className="text-sm leading-relaxed text-slate-500">{TUTO[step].texte}</p>
             </>
