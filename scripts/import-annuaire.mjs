@@ -14,6 +14,7 @@
 // Usage :
 //   node --env-file=.env.local scripts/import-annuaire.mjs                 # dépt 34 (test)
 //   node --env-file=.env.local scripts/import-annuaire.mjs --depts 34,30,11,66
+//   node --env-file=.env.local scripts/import-annuaire.mjs --tous           # France entière
 //   node --env-file=.env.local scripts/import-annuaire.mjs --fichier /chemin/DOSOIGNANT.txt
 //   node --env-file=.env.local scripts/import-annuaire.mjs --dry            # parse seul, aucun envoi
 // =====================================================================
@@ -35,6 +36,7 @@ const arg = (nom, defaut) => {
   return i > -1 && process.argv[i + 1] ? process.argv[i + 1] : defaut;
 };
 const FICHIER = arg("fichier", "public/DOSOIGNANT.txt");
+const TOUS = process.argv.includes("--tous"); // France entière (aucun filtre CP)
 const DEPTS = arg("depts", "34").split(",").map((d) => d.trim()).filter(Boolean);
 const TAILLE_LOT = 500;
 const PAUSE_MS = 400;
@@ -49,7 +51,7 @@ const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 const db = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
 
 // --- 1) Lecture en streaming + regroupement par RPPS ---
-console.log(`Lecture de ${FICHIER} (départements : ${DEPTS.join(", ")})…`);
+console.log(`Lecture de ${FICHIER} (${TOUS ? "France entière" : `départements : ${DEPTS.join(", ")}`})…`);
 const fiches = new Map(); // rpps -> fiche
 let lignesLues = 0;
 let lignesRetenues = 0;
@@ -65,7 +67,7 @@ for await (const ligne of rl) {
   const type = TYPES[c[9]];
   if (!type) continue;
   const cp = c[35] ?? "";
-  if (!DEPTS.some((d) => cp.startsWith(d))) continue;
+  if (!TOUS && !DEPTS.some((d) => cp.startsWith(d))) continue;
   const rpps = (c[1] ?? "").trim();
   const nom = (c[7] ?? "").trim();
   if (!rpps || !nom) continue;
@@ -139,4 +141,4 @@ if (echecs.length) {
   console.error(`\n⚠️ Terminé avec ${echecs.length} lot(s) en échec : ${echecs.join(", ")}. Relancez le script (upsert : pas de doublon).`);
   process.exit(1);
 }
-console.log(`\n✅ Import terminé : ${liste.length.toLocaleString("fr-FR")} fiches (départements ${DEPTS.join(", ")}).`);
+console.log(`\n✅ Import terminé : ${liste.length.toLocaleString("fr-FR")} fiches (${TOUS ? "France entière" : `départements ${DEPTS.join(", ")}`}).`);
