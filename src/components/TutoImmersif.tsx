@@ -126,13 +126,24 @@ export function TutoImmersif() {
         if (r.width > 0 && r.height > 0) el = l;
       });
       if (!el) { if (++essais < 10) setTimeout(mesurer, 150); return; }
+      // L'onglet ciblé est « allumé » : il passe au-dessus du voile et pulse.
+      if (marque !== el) {
+        marque?.classList.remove("tuto-cible");
+        (el as Element).classList.add("tuto-cible");
+        marque = el;
+      }
       const r = (el as Element).getBoundingClientRect();
       const bas = r.top > window.innerHeight / 2;
       setFleche({ x: r.left + r.width / 2, y: bas ? r.top : r.bottom, bas });
     };
+    let marque: Element | null = null;
     mesurer();
     window.addEventListener("resize", mesurer);
-    return () => { stop = true; window.removeEventListener("resize", mesurer); };
+    return () => {
+      stop = true;
+      marque?.classList.remove("tuto-cible");
+      window.removeEventListener("resize", mesurer);
+    };
   }, [show, step]);
 
   // Initialisation du canvas de signature à l'étape RGPD.
@@ -222,9 +233,27 @@ export function TutoImmersif() {
         @keyframes tuto-pop { 0% { opacity: 0; transform: scale(.85) translateY(14px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
         @keyframes tuto-flotte { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         @keyframes tuto-fleche { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(var(--dy, 7px)); } }
+        @keyframes tuto-lueur {
+          0%, 100% { filter: drop-shadow(0 0 3px rgba(150, 20, 70, .9)) drop-shadow(0 0 10px rgba(150, 20, 70, .45)); }
+          50% { filter: drop-shadow(0 0 7px rgba(150, 20, 70, 1)) drop-shadow(0 0 20px rgba(150, 20, 70, .75)); }
+        }
+        @keyframes tuto-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(150, 20, 70, .5), 0 0 12px 2px rgba(150, 20, 70, .35); }
+          50% { box-shadow: 0 0 0 8px rgba(150, 20, 70, 0), 0 0 22px 6px rgba(150, 20, 70, .55); }
+        }
         .tuto-pop { animation: tuto-pop .45s cubic-bezier(.2,.9,.3,1.2) both; }
         .tuto-flotte { animation: tuto-flotte 3s ease-in-out infinite; }
         .tuto-fleche { animation: tuto-fleche 1s ease-in-out infinite; }
+        .tuto-fleche svg { animation: tuto-lueur 1s ease-in-out infinite; }
+        /* Onglet de navbar ciblé : au-dessus du voile, en couleur, halo pulsant */
+        .tuto-cible {
+          position: relative;
+          z-index: 56;
+          color: #961446 !important;
+          background: #fff;
+          border-radius: .75rem;
+          animation: tuto-pulse 1.2s ease-in-out infinite;
+        }
       `}</style>
 
       {/* Voile léger : la vraie page reste visible, les clics sont captés par le tuto */}
