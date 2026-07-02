@@ -156,7 +156,7 @@ export function RechercheSoignants() {
 
       {ouvert && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 p-4 pt-20" onClick={() => setOuvert(false)}>
-          <div className="card w-full max-w-lg grid max-h-[75vh] gap-3 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="card w-full max-w-lg grid max-h-[75vh] grid-rows-[auto_auto_minmax(0,1fr)] gap-3 overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5 shrink-0 text-slate-400">
                 <circle cx="11" cy="11" r="7" />
@@ -197,7 +197,7 @@ export function RechercheSoignants() {
               />
             </div>
 
-            <div className="grid gap-3 overflow-auto">
+            <div className="grid content-start gap-3 overflow-y-auto">
               {!charge ? (
                 <p className="text-sm text-slate-400">Chargement…</p>
               ) : !q.trim() ? (
