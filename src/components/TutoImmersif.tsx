@@ -43,8 +43,10 @@ const VISITE: { route: string; pos: Pos; titre: string; texte: string; cible?: s
     route: "/patient/bilan", pos: "haut-droite", titre: "Votre bilan du jour",
     texte: "Les jours de suivi, ce court questionnaire « état général » vous est proposé automatiquement. Quelques clics suffisent.",
   },
+  // Étapes avec flèche vers la navbar : bulle placée en HAUT pour laisser
+  // la flèche et l'onglet ciblé bien visibles en bas (mobile).
   {
-    route: "/patient/chat", pos: "bas-droite", titre: "Votre infirmière", cible: "/patient/chat",
+    route: "/patient/chat", pos: "haut-gauche", titre: "Votre infirmière", cible: "/patient/chat",
     texte: "Une question, un doute ? Écrivez à votre infirmière coordinatrice ici — la flèche vous montre l'onglet « Infirmière ».",
   },
   {
@@ -52,7 +54,7 @@ const VISITE: { route: string; pos: Pos; titre: string; texte: string; cible?: s
     texte: "Retrouvez à tout moment vos conseils de soins, vos ordonnances et vos documents — onglet « Conseils ».",
   },
   {
-    route: "/patient/profil", pos: "bas-gauche", titre: "Votre profil", cible: "/patient/profil",
+    route: "/patient/profil", pos: "haut-gauche", titre: "Votre profil", cible: "/patient/profil",
     texte: "Ajoutez ici votre carte Vitale et votre mutuelle, et complétez vos coordonnées — onglet « Profil ».",
   },
 ];
@@ -252,10 +254,10 @@ export function TutoImmersif() {
         .tuto-flotte { animation: tuto-flotte 3s ease-in-out infinite; }
         .tuto-fleche { animation: tuto-fleche 1s ease-in-out infinite; }
         .tuto-fleche svg { animation: tuto-lueur 1s ease-in-out infinite; }
-        /* La nav qui contient l'onglet ciblé passe au-dessus du voile
-           (une nav en position fixed piège les z-index de ses enfants). */
+        /* La nav qui contient l'onglet ciblé passe au-dessus du voile.
+           SURTOUT pas de position:relative ici : la nav mobile est en
+           position:fixed, la re-positionner la décroche du bas de l'écran. */
         .tuto-cible-nav {
-          position: relative;
           z-index: 56;
         }
         /* Onglet de navbar ciblé : icône + libellé en bordeaux, halo pulsant */
