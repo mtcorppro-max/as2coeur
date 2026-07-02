@@ -202,9 +202,11 @@ export function TutoImmersif() {
       <div className="fixed inset-0 z-[55] bg-slate-900/25" />
 
       {enVisite && etape ? (
-        /* key={step} → l'avatar « saute » d'un coin à l'autre avec son animation */
-        <div key={step} className={`tuto-pop fixed z-[60] ${POS_CLS[etape.pos]}`}>
-          <div className="flex items-start gap-3">
+        /* Positionnement sur le parent, animation sur l'enfant (key={step}) :
+           l'animation redéfinit transform et écraserait le -translate-x-1/2
+           du centrage si les deux étaient sur le même élément. */
+        <div className={`fixed z-[60] ${POS_CLS[etape.pos]}`}>
+          <div key={step} className="tuto-pop flex items-start gap-3">
             <span className="tuto-flotte shrink-0">
               <AvatarGuide dateNaissance={row.date_naissance} sexe={row.sexe} taille={64} />
             </span>
