@@ -19,7 +19,9 @@ if (!url || !serviceKey) {
 
 const MIME = ["image/jpeg", "image/png", "image/webp", "image/heic"];
 const BUCKETS = [
-  { name: "cicatrices", public: false, fileSizeLimit: "10MB", allowedMimeTypes: MIME },
+  // "cicatrices" héberge aussi les documents du patient ({id}/documents/…),
+  // dont le PDF du consentement RGPD signé → application/pdf autorisé.
+  { name: "cicatrices", public: false, fileSizeLimit: "10MB", allowedMimeTypes: [...MIME, "application/pdf"] },
   { name: "avatars", public: true, fileSizeLimit: "5MB", allowedMimeTypes: MIME },
 ];
 
