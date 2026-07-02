@@ -34,12 +34,12 @@ const VISITE: { route: string; pos: Pos; titre: string; texte: string }[] = [
     texte: "Je suis votre guide ! Votre application de suivi de soins à domicile — suivez-moi, je vous fais visiter en quelques écrans.",
   },
   {
-    route: "/patient", pos: "haut-droite", titre: "Vos mesures",
-    texte: "Depuis l'accueil, saisissez vos constantes (tension, température, saturation…) à l'aide de votre infirmière libérale. Tout est transmis à votre équipe.",
+    route: "/patient/mesure", pos: "bas-droite", titre: "Vos mesures",
+    texte: "C'est ici que vous saisissez vos constantes (tension, température, saturation…) à l'aide de votre infirmière libérale. Tout est transmis à votre équipe.",
   },
   {
-    route: "/patient", pos: "bas-gauche", titre: "Votre bilan du jour",
-    texte: "Les jours de suivi, un court questionnaire « état général » vous est proposé automatiquement. Quelques clics suffisent.",
+    route: "/patient/bilan", pos: "haut-droite", titre: "Votre bilan du jour",
+    texte: "Les jours de suivi, ce court questionnaire « état général » vous est proposé automatiquement. Quelques clics suffisent.",
   },
   {
     route: "/patient/chat", pos: "bas-droite", titre: "Votre infirmière",
