@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { genererPdfConsignes, type ProtocolePdf } from "@/lib/pdfConsignes";
@@ -58,11 +58,17 @@ export function RechercheSoignants() {
 
   // Annuaire santé national (Open Data RPPS) : recherche serveur à la frappe.
   // Chaque mot tapé doit matcher le nom OU le prénom (≥ 3 caractères).
+  // Anti-course : pendant la frappe, plusieurs requêtes partent ; on
+  // n'accepte que la réponse de la plus récente (sinon une vieille réponse
+  // lente écrase les bons résultats → noms qui « clignotent »).
+  const seqRef = useRef(0);
+
   useEffect(() => {
     const t = q.trim().toLowerCase();
     const exclu = filtre === "patients" || filtre === "soignants";
-    if (!ouvert || t.length < 3 || exclu) { setAnnuaire([]); return; }
+    if (!ouvert || t.length < 3 || exclu) { seqRef.current++; setAnnuaire([]); return; }
     const timer = setTimeout(async () => {
+      const seq = ++seqRef.current;
       // Pas d'order SQL : sur 1 M de lignes, trier tous les homonymes avant
       // de garder 15 résultats coûte des secondes — on trie côté client.
       let req = createClient()
@@ -75,7 +81,9 @@ export function RechercheSoignants() {
         req = req.or(`nom_norm.ilike.%${mot}%,prenom_norm.ilike.%${mot}%`);
       }
       if (deptActif) req = req.contains("depts", [deptActif]);
-      const { data } = await req;
+      const { data, error } = await req;
+      if (seq !== seqRef.current) return; // réponse obsolète : frappe plus récente en cours
+      if (error) return; // échec ponctuel : on garde l'affichage plutôt que de vider
       setAnnuaire((((data as ResAnnuaire[]) ?? [])).sort((a, b) => a.nom.localeCompare(b.nom)));
     }, 300);
     return () => clearTimeout(timer);
