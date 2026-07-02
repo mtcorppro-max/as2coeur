@@ -33,7 +33,7 @@ type Pos = "centre" | "haut-droite" | "haut-gauche" | "bas-droite" | "bas-gauche
 const VISITE: { route: string; pos: Pos; titre: string; texte: string; cible?: string }[] = [
   {
     route: "/patient", pos: "centre", titre: "Bienvenue sur AS2CŒUR",
-    texte: "Je suis votre guide ! Votre application de suivi de soins à domicile — suivez-moi, je vous fais visiter en quelques écrans.",
+    texte: "Je suis votre guide ! Votre application de suivi de soins à domicile. Suivez-moi, je vous fais visiter.",
   },
   {
     route: "/patient/mesure", pos: "bas-droite", titre: "Vos mesures",
