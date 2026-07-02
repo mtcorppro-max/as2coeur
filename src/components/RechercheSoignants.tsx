@@ -58,17 +58,18 @@ export function RechercheSoignants() {
     const exclu = filtre === "patients" || filtre === "soignants";
     if (!ouvert || t.length < 3 || exclu) { setAnnuaire([]); return; }
     const timer = setTimeout(async () => {
+      // Pas d'order SQL : sur 1 M de lignes, trier tous les homonymes avant
+      // de garder 15 résultats coûte des secondes — on trie côté client.
       let req = createClient()
         .from("annuaire_sante")
         .select("rpps,type,civilite,nom,prenom,specialite,mode_exercice,sites")
-        .order("nom")
         .limit(15);
       for (const mot of t.split(/\s+/).map((m) => m.replace(/[,()%.]/g, "")).filter(Boolean)) {
         req = req.or(`nom.ilike.%${mot}%,prenom.ilike.%${mot}%`);
       }
       if (deptActif) req = req.contains("depts", [deptActif]);
       const { data } = await req;
-      setAnnuaire((data as ResAnnuaire[]) ?? []);
+      setAnnuaire((((data as ResAnnuaire[]) ?? [])).sort((a, b) => a.nom.localeCompare(b.nom)));
     }, 300);
     return () => clearTimeout(timer);
   }, [q, ouvert, filtre, deptActif]);
