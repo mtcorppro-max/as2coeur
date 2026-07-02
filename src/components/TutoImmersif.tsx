@@ -126,10 +126,15 @@ export function TutoImmersif() {
         if (r.width > 0 && r.height > 0) el = l;
       });
       if (!el) { if (++essais < 10) setTimeout(mesurer, 150); return; }
-      // L'onglet ciblé est « allumé » : il passe au-dessus du voile et pulse.
+      // L'onglet ciblé est « allumé ». La nav (position fixed) crée son
+      // propre contexte d'empilement : il faut l'élever AU-DESSUS du voile,
+      // sinon l'onglet reste assombri malgré son z-index.
       if (marque !== el) {
         marque?.classList.remove("tuto-cible");
+        marqueNav?.classList.remove("tuto-cible-nav");
         (el as Element).classList.add("tuto-cible");
+        marqueNav = (el as Element).closest("nav");
+        marqueNav?.classList.add("tuto-cible-nav");
         marque = el;
       }
       const r = (el as Element).getBoundingClientRect();
@@ -137,11 +142,13 @@ export function TutoImmersif() {
       setFleche({ x: r.left + r.width / 2, y: bas ? r.top : r.bottom, bas });
     };
     let marque: Element | null = null;
+    let marqueNav: Element | null = null;
     mesurer();
     window.addEventListener("resize", mesurer);
     return () => {
       stop = true;
       marque?.classList.remove("tuto-cible");
+      marqueNav?.classList.remove("tuto-cible-nav");
       window.removeEventListener("resize", mesurer);
     };
   }, [show, step]);
@@ -245,12 +252,18 @@ export function TutoImmersif() {
         .tuto-flotte { animation: tuto-flotte 3s ease-in-out infinite; }
         .tuto-fleche { animation: tuto-fleche 1s ease-in-out infinite; }
         .tuto-fleche svg { animation: tuto-lueur 1s ease-in-out infinite; }
-        /* Onglet de navbar ciblé : au-dessus du voile, en couleur, halo pulsant */
+        /* La nav qui contient l'onglet ciblé passe au-dessus du voile
+           (une nav en position fixed piège les z-index de ses enfants). */
+        .tuto-cible-nav {
+          position: relative;
+          z-index: 56;
+        }
+        /* Onglet de navbar ciblé : icône + libellé en bordeaux, halo pulsant */
         .tuto-cible {
           position: relative;
           z-index: 56;
           color: #961446 !important;
-          background: #fff;
+          background: #fdf2f8;
           border-radius: .75rem;
           animation: tuto-pulse 1.2s ease-in-out infinite;
         }
