@@ -28,7 +28,9 @@ type Row = {
 
 type Pos = "centre" | "haut-droite" | "haut-gauche" | "bas-droite" | "bas-gauche";
 
-const VISITE: { route: string; pos: Pos; titre: string; texte: string }[] = [
+// `cible` : lien de la barre de navigation pointé par une flèche animée
+// (le patient voit OÙ se trouve l'onglet pendant que la page s'affiche).
+const VISITE: { route: string; pos: Pos; titre: string; texte: string; cible?: string }[] = [
   {
     route: "/patient", pos: "centre", titre: "Bienvenue sur AS2CŒUR",
     texte: "Je suis votre guide ! Votre application de suivi de soins à domicile — suivez-moi, je vous fais visiter en quelques écrans.",
@@ -42,16 +44,16 @@ const VISITE: { route: string; pos: Pos; titre: string; texte: string }[] = [
     texte: "Les jours de suivi, ce court questionnaire « état général » vous est proposé automatiquement. Quelques clics suffisent.",
   },
   {
-    route: "/patient/chat", pos: "bas-droite", titre: "Votre infirmière",
-    texte: "Une question, un doute ? Écrivez à votre infirmière coordinatrice ici, dans l'onglet « Infirmière ».",
+    route: "/patient/chat", pos: "bas-droite", titre: "Votre infirmière", cible: "/patient/chat",
+    texte: "Une question, un doute ? Écrivez à votre infirmière coordinatrice ici — la flèche vous montre l'onglet « Infirmière ».",
   },
   {
-    route: "/patient/conseils", pos: "haut-droite", titre: "Conseils & documents",
-    texte: "Retrouvez à tout moment vos conseils de soins, vos ordonnances et vos documents.",
+    route: "/patient/conseils", pos: "haut-droite", titre: "Conseils & documents", cible: "/patient/conseils",
+    texte: "Retrouvez à tout moment vos conseils de soins, vos ordonnances et vos documents — onglet « Conseils ».",
   },
   {
-    route: "/patient/profil", pos: "bas-gauche", titre: "Votre profil",
-    texte: "Ajoutez ici votre carte Vitale et votre mutuelle, et complétez vos coordonnées.",
+    route: "/patient/profil", pos: "bas-gauche", titre: "Votre profil", cible: "/patient/profil",
+    texte: "Ajoutez ici votre carte Vitale et votre mutuelle, et complétez vos coordonnées — onglet « Profil ».",
   },
 ];
 
@@ -59,8 +61,8 @@ const POS_CLS: Record<Pos, string> = {
   centre: "left-1/2 top-1/2 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2",
   "haut-droite": "right-3 top-16 w-[calc(100vw-2rem)] max-w-sm",
   "haut-gauche": "left-3 top-16 w-[calc(100vw-2rem)] max-w-sm",
-  "bas-droite": "bottom-20 right-3 w-[calc(100vw-2rem)] max-w-sm md:bottom-8",
-  "bas-gauche": "bottom-20 left-3 w-[calc(100vw-2rem)] max-w-sm md:bottom-8",
+  "bas-droite": "bottom-28 right-3 w-[calc(100vw-2rem)] max-w-sm md:bottom-8",
+  "bas-gauche": "bottom-28 left-3 w-[calc(100vw-2rem)] max-w-sm md:bottom-8",
 };
 
 const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" }) : "—");
@@ -107,6 +109,31 @@ export function TutoImmersif() {
       router.push(route);
     }
   }, [show, step, router]);
+
+  // Flèche vers l'onglet de la barre de navigation (mobile : nav du bas,
+  // ordinateur : nav du haut). On mesure le lien VISIBLE correspondant.
+  const [fleche, setFleche] = useState<{ x: number; y: number; bas: boolean } | null>(null);
+  useEffect(() => {
+    const cible = show && step < VISITE.length ? VISITE[step].cible : null;
+    if (!cible) { setFleche(null); return; }
+    let essais = 0;
+    let stop = false;
+    const mesurer = () => {
+      if (stop) return;
+      let el: Element | null = null;
+      document.querySelectorAll(`nav a[href="${cible}"]`).forEach((l) => {
+        const r = l.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) el = l;
+      });
+      if (!el) { if (++essais < 10) setTimeout(mesurer, 150); return; }
+      const r = (el as Element).getBoundingClientRect();
+      const bas = r.top > window.innerHeight / 2;
+      setFleche({ x: r.left + r.width / 2, y: bas ? r.top : r.bottom, bas });
+    };
+    mesurer();
+    window.addEventListener("resize", mesurer);
+    return () => { stop = true; window.removeEventListener("resize", mesurer); };
+  }, [show, step]);
 
   // Initialisation du canvas de signature à l'étape RGPD.
   useEffect(() => {
@@ -194,12 +221,36 @@ export function TutoImmersif() {
       <style>{`
         @keyframes tuto-pop { 0% { opacity: 0; transform: scale(.85) translateY(14px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
         @keyframes tuto-flotte { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes tuto-fleche { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(var(--dy, 7px)); } }
         .tuto-pop { animation: tuto-pop .45s cubic-bezier(.2,.9,.3,1.2) both; }
         .tuto-flotte { animation: tuto-flotte 3s ease-in-out infinite; }
+        .tuto-fleche { animation: tuto-fleche 1s ease-in-out infinite; }
       `}</style>
 
       {/* Voile léger : la vraie page reste visible, les clics sont captés par le tuto */}
       <div className="fixed inset-0 z-[55] bg-slate-900/25" />
+
+      {/* Flèche animée vers l'onglet de la navbar (« c'est là que ça se trouve ») */}
+      {fleche && (
+        <div
+          className="tuto-fleche pointer-events-none fixed z-[60]"
+          style={
+            fleche.bas
+              ? ({ left: fleche.x, top: fleche.y - 48, "--dy": "7px" } as React.CSSProperties)
+              : ({ left: fleche.x, top: fleche.y + 10, "--dy": "-7px" } as React.CSSProperties)
+          }
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.6}
+            className={`h-9 w-9 text-brand drop-shadow-lg ${fleche.bas ? "" : "rotate-180"}`}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v14M6 12l6 6 6-6" />
+          </svg>
+        </div>
+      )}
 
       {enVisite && etape ? (
         /* Positionnement sur le parent, animation sur l'enfant (key={step}) :
