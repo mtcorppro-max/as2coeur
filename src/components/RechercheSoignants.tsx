@@ -102,6 +102,12 @@ export function RechercheSoignants() {
       // Mots normalisés comme les colonnes indexées → insensible aux accents,
       // apostrophes et tirets (« frédéric » trouve FREDERIC, « dangelo » D'ANGELO).
       const mots = t.split(/\s+/).map(normaliser).filter(Boolean);
+      // « pharmacie … » détecté → recherche d'officine : inutile (et très
+      // coûteux) de chercher ce mot parmi 1 M de personnes, et toutes les
+      // pharmacies contenant « pharmacie », le mot ne filtre rien.
+      const motsPharma = mots.filter((m) => !m.startsWith("pharma"));
+      const cherchePharmacie = motsPharma.length !== mots.length;
+
       for (const mot of mots) {
         req = req.or(`nom_norm.ilike.%${mot}%,prenom_norm.ilike.%${mot}%`);
       }
@@ -113,15 +119,19 @@ export function RechercheSoignants() {
         .select("finess,nom,adresse,cp,commune,telephone")
         .limit(8)
         .abortSignal(ctrl.signal);
-      for (const mot of mots) {
+      for (const mot of motsPharma) {
         reqPh = reqPh.or(`nom_norm.ilike.%${mot}%,commune_norm.ilike.%${mot}%`);
       }
       if (deptActif) reqPh = reqPh.eq("dept", deptActif);
-      const [{ data, error }, { data: dPh, error: ePh }] = await Promise.all([req, reqPh]);
+      const [pers, ph] = await Promise.all([
+        cherchePharmacie ? Promise.resolve(null) : req, // personnes non interrogées sur « pharmacie »
+        reqPh,
+      ]);
       if (seq !== seqRef.current) return; // réponse obsolète : frappe plus récente en cours
       setBusyAnnuaire(false);
-      if (!error) setAnnuaire((((data as ResAnnuaire[]) ?? [])).sort((a, b) => a.nom.localeCompare(b.nom)));
-      if (!ePh) setPharmacies((((dPh as ResPharma[]) ?? [])).sort((a, b) => a.nom.localeCompare(b.nom)));
+      if (pers === null) setAnnuaire([]);
+      else if (!pers.error) setAnnuaire((((pers.data as ResAnnuaire[]) ?? [])).sort((a, b) => a.nom.localeCompare(b.nom)));
+      if (!ph.error) setPharmacies((((ph.data as ResPharma[]) ?? [])).sort((a, b) => a.nom.localeCompare(b.nom)));
     }, 250);
     return () => clearTimeout(timer);
   }, [q, ouvert, filtre, deptActif]);
