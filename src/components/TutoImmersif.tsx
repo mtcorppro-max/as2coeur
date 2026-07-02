@@ -46,15 +46,15 @@ const VISITE: { route: string; pos: Pos; titre: string; texte: string; cible?: s
   // Étapes avec flèche vers la navbar : bulle placée en HAUT pour laisser
   // la flèche et l'onglet ciblé bien visibles en bas (mobile).
   {
-    route: "/patient/chat", pos: "haut-gauche", titre: "Votre infirmière", cible: "/patient/chat",
+    route: "/patient/chat", pos: "centre", titre: "Votre infirmière", cible: "/patient/chat",
     texte: "Une question, un doute ? Écrivez à votre infirmière coordinatrice ici. La flèche vous montre l'onglet « Infirmière ».",
   },
   {
-    route: "/patient/conseils", pos: "haut-droite", titre: "Conseils", cible: "/patient/conseils",
+    route: "/patient/conseils", pos: "bas-droite", titre: "Conseils", cible: "/patient/conseils",
     texte: "Retrouvez à tout moment vos conseils de soins. La flèche vous montre l'onglet « Conseils ».",
   },
   {
-    route: "/patient/profil", pos: "haut-gauche", titre: "Votre profil", cible: "/patient/profil",
+    route: "/patient/profil", pos: "centre", titre: "Votre profil", cible: "/patient/profil",
     texte: "Ajoutez ici votre carte Vitale et votre mutuelle, et complétez vos coordonnées. La flèche vous montre l'onglet « Profil ».",
   },
 ];
