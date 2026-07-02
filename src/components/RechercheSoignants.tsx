@@ -38,6 +38,10 @@ type ResAnnuaire = {
   specialite: string | null; mode_exercice: string | null;
   sites: { rs: string | null; commune: string | null; cp: string | null }[] | null;
 };
+type ResPharma = {
+  finess: string; nom: string; adresse: string | null;
+  cp: string | null; commune: string | null; telephone: string | null;
+};
 const LIBELLE_ANNUAIRE = { medecin: "Médecin", infirmiere: "Infirmier(ère)", pharmacie: "Pharmacien(ne)" } as const;
 
 const nomComplet = (p: { titre: string | null; prenom: string | null; nom: string }) =>
@@ -64,6 +68,7 @@ export function RechercheSoignants() {
   const seqRef = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
   const [busyAnnuaire, setBusyAnnuaire] = useState(false);
+  const [pharmacies, setPharmacies] = useState<ResPharma[]>([]);
 
   useEffect(() => {
     const t = q.trim().toLowerCase();
@@ -72,6 +77,7 @@ export function RechercheSoignants() {
       seqRef.current++;
       abortRef.current?.abort();
       setAnnuaire([]);
+      setPharmacies([]);
       setBusyAnnuaire(false);
       return;
     }
@@ -95,15 +101,27 @@ export function RechercheSoignants() {
         .abortSignal(ctrl.signal);
       // Mots normalisés comme les colonnes indexées → insensible aux accents,
       // apostrophes et tirets (« frédéric » trouve FREDERIC, « dangelo » D'ANGELO).
-      for (const mot of t.split(/\s+/).map(normaliser).filter(Boolean)) {
+      const mots = t.split(/\s+/).map(normaliser).filter(Boolean);
+      for (const mot of mots) {
         req = req.or(`nom_norm.ilike.%${mot}%,prenom_norm.ilike.%${mot}%`);
       }
       if (deptActif) req = req.contains("depts", [deptActif]);
-      const { data, error } = await req;
+      // Pharmacies de France (FINESS) : chaque mot matche le nom OU la commune
+      // (« pharmacie lattes » → les pharmacies de Lattes).
+      let reqPh = createClient()
+        .from("annuaire_pharmacie")
+        .select("finess,nom,adresse,cp,commune,telephone")
+        .limit(8)
+        .abortSignal(ctrl.signal);
+      for (const mot of mots) {
+        reqPh = reqPh.or(`nom_norm.ilike.%${mot}%,commune_norm.ilike.%${mot}%`);
+      }
+      if (deptActif) reqPh = reqPh.eq("dept", deptActif);
+      const [{ data, error }, { data: dPh, error: ePh }] = await Promise.all([req, reqPh]);
       if (seq !== seqRef.current) return; // réponse obsolète : frappe plus récente en cours
       setBusyAnnuaire(false);
-      if (error) return; // échec ponctuel : on garde l'affichage plutôt que de vider
-      setAnnuaire((((data as ResAnnuaire[]) ?? [])).sort((a, b) => a.nom.localeCompare(b.nom)));
+      if (!error) setAnnuaire((((data as ResAnnuaire[]) ?? [])).sort((a, b) => a.nom.localeCompare(b.nom)));
+      if (!ePh) setPharmacies((((dPh as ResPharma[]) ?? [])).sort((a, b) => a.nom.localeCompare(b.nom)));
     }, 250);
     return () => clearTimeout(timer);
   }, [q, ouvert, filtre, deptActif]);
@@ -236,7 +254,7 @@ export function RechercheSoignants() {
                 <p className="text-sm text-slate-400">Chargement…</p>
               ) : !q.trim() ? (
                 <p className="text-sm text-slate-400">Tapez un nom de patient, un médecin, une intervention…</p>
-              ) : filtres.length === 0 && annuaire.length === 0 ? (
+              ) : filtres.length === 0 && annuaire.length === 0 && pharmacies.length === 0 ? (
                 <p className="text-sm text-slate-400">
                   {busyAnnuaire ? "Recherche dans l'annuaire santé…" : "Aucun résultat."}
                 </p>
@@ -326,6 +344,28 @@ export function RechercheSoignants() {
                           </Link>
                         );
                       })}
+                    </div>
+                  )}
+
+                  {pharmacies.length > 0 && (
+                    <div className="grid gap-2">
+                      <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Pharmacies (France)</p>
+                      {pharmacies.map((p) => (
+                        <div key={p.finess} className="rounded-lg border border-rose-100 px-3 py-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-semibold text-slate-800">{p.nom}</span>
+                            <span className="badge shrink-0 bg-slate-100 text-slate-600">Pharmacie</span>
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            {[p.adresse, [p.cp, p.commune].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
+                          </p>
+                          {p.telephone && (
+                            <a href={`tel:${p.telephone}`} className="text-sm font-medium text-brand hover:underline">
+                              {p.telephone}
+                            </a>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </>
