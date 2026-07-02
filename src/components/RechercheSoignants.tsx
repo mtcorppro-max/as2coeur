@@ -62,19 +62,37 @@ export function RechercheSoignants() {
   // n'accepte que la réponse de la plus récente (sinon une vieille réponse
   // lente écrase les bons résultats → noms qui « clignotent »).
   const seqRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const [busyAnnuaire, setBusyAnnuaire] = useState(false);
 
   useEffect(() => {
     const t = q.trim().toLowerCase();
     const exclu = filtre === "patients" || filtre === "soignants";
-    if (!ouvert || t.length < 3 || exclu) { seqRef.current++; setAnnuaire([]); return; }
+    if (!ouvert || t.length < 3 || exclu) {
+      seqRef.current++;
+      abortRef.current?.abort();
+      setAnnuaire([]);
+      setBusyAnnuaire(false);
+      return;
+    }
     const timer = setTimeout(async () => {
       const seq = ++seqRef.current;
+      // La requête précédente encore en vol est annulée : elle n'occupe plus
+      // la base pour rien et ne peut plus écraser des résultats plus récents.
+      abortRef.current?.abort();
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+      setBusyAnnuaire(true);
       // Pas d'order SQL : sur 1 M de lignes, trier tous les homonymes avant
       // de garder 15 résultats coûte des secondes — on trie côté client.
+      // Pharmaciens exclus de la loupe (essentiellement des salariés
+      // d'officine : du bruit dans les résultats).
       let req = createClient()
         .from("annuaire_sante")
         .select("rpps,type,civilite,nom,prenom,specialite,mode_exercice,sites")
-        .limit(15);
+        .neq("type", "pharmacie")
+        .limit(15)
+        .abortSignal(ctrl.signal);
       // Mots normalisés comme les colonnes indexées → insensible aux accents,
       // apostrophes et tirets (« frédéric » trouve FREDERIC, « dangelo » D'ANGELO).
       for (const mot of t.split(/\s+/).map(normaliser).filter(Boolean)) {
@@ -83,9 +101,10 @@ export function RechercheSoignants() {
       if (deptActif) req = req.contains("depts", [deptActif]);
       const { data, error } = await req;
       if (seq !== seqRef.current) return; // réponse obsolète : frappe plus récente en cours
+      setBusyAnnuaire(false);
       if (error) return; // échec ponctuel : on garde l'affichage plutôt que de vider
       setAnnuaire((((data as ResAnnuaire[]) ?? [])).sort((a, b) => a.nom.localeCompare(b.nom)));
-    }, 300);
+    }, 250);
     return () => clearTimeout(timer);
   }, [q, ouvert, filtre, deptActif]);
 
@@ -218,7 +237,9 @@ export function RechercheSoignants() {
               ) : !q.trim() ? (
                 <p className="text-sm text-slate-400">Tapez un nom de patient, un médecin, une intervention…</p>
               ) : filtres.length === 0 && annuaire.length === 0 ? (
-                <p className="text-sm text-slate-400">Aucun résultat.</p>
+                <p className="text-sm text-slate-400">
+                  {busyAnnuaire ? "Recherche dans l'annuaire santé…" : "Aucun résultat."}
+                </p>
               ) : (
                 <>
                   {patients.length > 0 && (
@@ -280,7 +301,10 @@ export function RechercheSoignants() {
 
                   {annuaire.length > 0 && (
                     <div className="grid gap-2">
-                      <p className="text-xs font-bold uppercase tracking-widest text-rose-400">Annuaire santé (France)</p>
+                      <p className="text-xs font-bold uppercase tracking-widest text-rose-400">
+                        Annuaire santé (France)
+                        {busyAnnuaire && <span className="ml-2 font-normal normal-case tracking-normal text-slate-400">recherche…</span>}
+                      </p>
                       {annuaire.map((a) => {
                         const communes = [...new Set((a.sites ?? []).map((s) => s.commune).filter(Boolean))].slice(0, 3).join(" · ");
                         return (
