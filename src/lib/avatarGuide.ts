@@ -4,7 +4,7 @@
 
 export type SexePatient = "feminin" | "masculin";
 
-const ageDe = (dateNaissance: string | null | undefined): number | null => {
+export const ageDe = (dateNaissance: string | null | undefined): number | null => {
   if (!dateNaissance) return null;
   const d = new Date(dateNaissance);
   if (isNaN(d.getTime())) return null;
@@ -38,3 +38,19 @@ const ENCOURAGEMENTS = [
   "Bien joué ! Votre suivi est à jour.",
 ];
 export const encouragement = () => ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+
+// Rappel des documents manquants (carte Vitale, mutuelle…), formulé par
+// l'avatar avec un ton adapté à l'âge du patient : tutoiement complice
+// pour les jeunes, vouvoiement pour les adultes et les seniors.
+export function rappelDocuments(dateNaissance: string | null | undefined, manquants: string[]): string {
+  const age = ageDe(dateNaissance);
+  if (age != null && age < 18) {
+    const liste = manquants.map((m) => `ta ${m}`).join(" et ");
+    return `Eh ! N'oublie pas d'ajouter ${liste} dans ton profil — promis, c'est rapide.`;
+  }
+  const liste = manquants.map((m) => `votre ${m}`).join(" et ");
+  if (age != null && age >= 65) {
+    return `N'oubliez pas d'ajouter ${liste} — appuyez ici, je vous emmène au bon endroit.`;
+  }
+  return `Pensez à ajouter ${liste} dans votre profil pour faciliter votre prise en charge.`;
+}

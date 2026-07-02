@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { LogoutButton } from "@/components/LogoutButton";
-import { OnboardingPatient } from "@/components/OnboardingPatient";
+import { TutoImmersif } from "@/components/TutoImmersif";
 import { usePatientSession } from "@/lib/hooks/useSession";
 
 const NAV = [
@@ -59,7 +59,7 @@ export default function PatientLayout({ children }: { children: React.ReactNode 
         {children}
       </main>
 
-      <OnboardingPatient />
+      <TutoImmersif />
 
       <nav className="fixed inset-x-0 bottom-0 flex justify-around border-t border-rose-100 bg-white py-2 md:hidden">
         {NAV.map((n) => {

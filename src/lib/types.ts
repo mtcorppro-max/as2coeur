@@ -137,6 +137,8 @@ export interface Patient {
   rgpd_signe_le: string | null;
   rgpd_nom_signature: string | null;
   rgpd_version: string | null;
+  // PDF du consentement RGPD signé (bucket privé, cf. migration 0129)
+  rgpd_pdf_chemin: string | null;
   created_at: string;
 }
 

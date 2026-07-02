@@ -365,6 +365,21 @@ export function InfosPatient({
   // ── Mode lecture ──────────────────────────────────────────────────
   const aucune = CHAMPS.every((c) => !vue[c]);
   const ageAns = age(vue.date_naissance);
+
+  // Consentement RGPD signé : PDF dans le bucket privé (URL signée à la demande).
+  async function voirRgpd() {
+    const chemin = patient.rgpd_pdf_chemin;
+    if (!chemin) return;
+    const res = await fetch("/api/signed-urls", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chemins: [chemin] }),
+    });
+    const { urls } = await res.json().catch(() => ({ urls: {} }));
+    const u = urls?.[chemin];
+    if (u) window.open(u, "_blank");
+    else alert("PDF indisponible.");
+  }
   const villeLigne = [vue.code_postal, vue.ville].filter(Boolean).join(" ");
   const duree = vue.duree_prise_en_charge ? Number(vue.duree_prise_en_charge) : null;
   // Tél. de la pharmacie rattachée (compte portail ou soignant externe) — auto.
@@ -410,6 +425,19 @@ export function InfosPatient({
               extra={vue.proche_nom ? vue.proche_tel : undefined}
               href={vue.proche_tel ? `tel:${vue.proche_tel}` : undefined}
             />
+            {patient.rgpd_signe_le && (
+              <div className="flex justify-between gap-3 text-sm">
+                <dt className="text-slate-400">RGPD</dt>
+                <dd className="text-right font-semibold text-slate-700">
+                  Signé le {formatDate(patient.rgpd_signe_le)}
+                  {patient.rgpd_pdf_chemin && (
+                    <button onClick={voirRgpd} className="ml-2 font-medium text-brand hover:underline">
+                      Voir le PDF
+                    </button>
+                  )}
+                </dd>
+              </div>
+            )}
           </Bloc>
 
           <Bloc titre="Environnement de soins">

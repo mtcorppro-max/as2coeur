@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { usePatientSession } from "@/lib/hooks/useSession";
+import { rappelDocuments } from "@/lib/avatarGuide";
+import { AvatarGuide } from "@/components/AvatarGuide";
 
-// Rappel au patient de renseigner sa carte Vitale / mutuelle si ce n'est pas fait.
+// À chaque connexion, tant qu'il manque un document (carte Vitale,
+// mutuelle), l'avatar-guide le rappelle — ton adapté à l'âge du patient.
 export function RappelDocuments() {
   const patient = usePatientSession();
   const [manquants, setManquants] = useState<string[] | null>(null);
@@ -20,27 +23,27 @@ export function RappelDocuments() {
       .then(({ data }) => {
         const d = (data ?? {}) as { carte_vitale_chemin?: string | null; mutuelle_chemin?: string | null };
         const m: string[] = [];
-        if (!d.carte_vitale_chemin) m.push("votre carte Vitale");
-        if (!d.mutuelle_chemin) m.push("votre mutuelle");
+        if (!d.carte_vitale_chemin) m.push("carte Vitale");
+        if (!d.mutuelle_chemin) m.push("mutuelle");
         setManquants(m);
       });
   }, [patient?.id]);
 
-  if (!manquants || manquants.length === 0) return null;
+  if (!patient || !manquants || manquants.length === 0) return null;
 
   return (
-    <Link
-      href="/patient/profil"
-      className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 transition hover:border-brand"
-    >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-6 w-6 shrink-0 text-brand">
-        <rect x="3" y="5" width="18" height="14" rx="2" /><path strokeLinecap="round" d="M3 9h18M7 14h5" />
-      </svg>
-      <div className="text-sm">
-        <p className="font-semibold text-slate-800">Complétez votre profil</p>
-        <p className="text-slate-600">Pensez à ajouter {manquants.join(" et ")} dans votre profil.</p>
-      </div>
-      <span className="ml-auto text-brand">→</span>
+    <Link href="/patient/profil" className="block transition hover:opacity-90">
+      <AvatarGuide
+        dateNaissance={patient.date_naissance}
+        sexe={patient.sexe}
+        taille={52}
+        bulle={
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-slate-700">{rappelDocuments(patient.date_naissance, manquants)}</p>
+            <span className="ml-auto shrink-0 text-brand">→</span>
+          </div>
+        }
+      />
     </Link>
   );
 }
