@@ -26,6 +26,11 @@ const FILTRES: { value: Filtre; label: string }[] = [
 // Départements repérés dans une adresse via les codes postaux (best effort).
 const deptsDe = (...textes: (string | null | undefined)[]) =>
   [...new Set((textes.filter(Boolean).join(" ").match(/\b\d{5}\b/g) ?? []).map((cp) => cp.slice(0, 2)))];
+
+// Normalisation identique aux colonnes nom_norm/prenom_norm de l'annuaire :
+// minuscules, sans accents, sans apostrophes/tirets (« frédéric » = « frederic »).
+const normaliser = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/['\s-]+/g, "").replace(/[,()%.]/g, "");
 type Resultat = ResPatient | ResSoignant;
 type ResAnnuaire = {
   rpps: string; type: "medecin" | "infirmiere" | "pharmacie";
@@ -64,8 +69,10 @@ export function RechercheSoignants() {
         .from("annuaire_sante")
         .select("rpps,type,civilite,nom,prenom,specialite,mode_exercice,sites")
         .limit(15);
-      for (const mot of t.split(/\s+/).map((m) => m.replace(/[,()%.]/g, "")).filter(Boolean)) {
-        req = req.or(`nom.ilike.%${mot}%,prenom.ilike.%${mot}%`);
+      // Mots normalisés comme les colonnes indexées → insensible aux accents,
+      // apostrophes et tirets (« frédéric » trouve FREDERIC, « dangelo » D'ANGELO).
+      for (const mot of t.split(/\s+/).map(normaliser).filter(Boolean)) {
+        req = req.or(`nom_norm.ilike.%${mot}%,prenom_norm.ilike.%${mot}%`);
       }
       if (deptActif) req = req.contains("depts", [deptActif]);
       const { data } = await req;
